@@ -1,48 +1,32 @@
-import { Redis } from '@upstash/redis';
+import Redis from 'ioredis';
 import { UserSettings, TaskPlacement } from '@/types';
 import { DEFAULT_SETTINGS, KV_KEYS, PLACEMENT_TTL_SECONDS } from '../constants';
 
-function _parseRedisUrl(redisUrl: string): { url: string; token: string } {
-  const urlPattern = /redis:\/\/[^:]+:([^@]+)@([^:/]+)/;
-  const match = redisUrl.match(urlPattern);
-
-  if (!match) {
-    throw new Error('Invalid REDIS_URL format. Expected: redis://default:TOKEN@ENDPOINT');
-  }
-
-  const [, token, host] = match;
-  return {
-    url: `https://${host}`,
-    token,
-  };
-}
-
 function _createRedisClient(): Redis {
-  const restUrl = process.env.UPSTASH_REDIS_REST_URL;
-  const restToken = process.env.UPSTASH_REDIS_REST_TOKEN;
-
-  if (restUrl && restToken) {
-    return new Redis({ url: restUrl, token: restToken });
-  }
-
   const redisUrl = process.env.REDIS_URL;
 
   if (!redisUrl) {
-    throw new Error(
-      'Redis configuration missing. Set either UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN, or REDIS_URL'
-    );
+    throw new Error('REDIS_URL environment variable is not set');
   }
 
-  const { url, token } = _parseRedisUrl(redisUrl);
-  return new Redis({ url, token });
+  return new Redis(redisUrl);
 }
 
 const redis = _createRedisClient();
 
 export async function getUserSettings(userId: string): Promise<UserSettings> {
   const key = KV_KEYS.settings(userId);
-  const settings = await redis.get<UserSettings>(key);
-  return settings || DEFAULT_SETTINGS;
+  const data = await redis.get(key);
+
+  if (!data) {
+    return DEFAULT_SETTINGS;
+  }
+
+  try {
+    return JSON.parse(data) as UserSettings;
+  } catch {
+    return DEFAULT_SETTINGS;
+  }
 }
 
 export async function setUserSettings(
@@ -52,14 +36,23 @@ export async function setUserSettings(
   const key = KV_KEYS.settings(userId);
   const currentSettings = await getUserSettings(userId);
   const newSettings = { ...currentSettings, ...settings };
-  await redis.set(key, newSettings);
+  await redis.set(key, JSON.stringify(newSettings));
   return newSettings;
 }
 
 export async function getPlacements(userId: string, date: string): Promise<TaskPlacement[]> {
   const key = KV_KEYS.placements(userId, date);
-  const placements = await redis.get<TaskPlacement[]>(key);
-  return placements || [];
+  const data = await redis.get(key);
+
+  if (!data) {
+    return [];
+  }
+
+  try {
+    return JSON.parse(data) as TaskPlacement[];
+  } catch {
+    return [];
+  }
 }
 
 export async function setPlacements(
@@ -68,7 +61,7 @@ export async function setPlacements(
   placements: TaskPlacement[]
 ): Promise<void> {
   const key = KV_KEYS.placements(userId, date);
-  await redis.set(key, placements, { ex: PLACEMENT_TTL_SECONDS });
+  await redis.setex(key, PLACEMENT_TTL_SECONDS, JSON.stringify(placements));
 }
 
 export async function addPlacement(
