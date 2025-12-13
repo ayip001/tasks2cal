@@ -47,25 +47,26 @@ export default function DayPage() {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const { tasks, taskLists, loading: tasksLoading, refetch: refetchTasks } = useTasks();
+  const { tasks, taskLists, loading: tasksLoading } = useTasks();
   const { settings, loading: settingsLoading, updateSettings } = useSettings();
-  const { calendars, loading: calendarsLoading } = useCalendars();
+  const { calendars } = useCalendars();
   const {
     events,
-    loading: eventsLoading,
     refetch: refetchEvents,
   } = useCalendarEvents(dateParam, settings.selectedCalendarId);
   const {
     placements,
-    loading: placementsLoading,
     addPlacement,
     updatePlacement,
     removePlacement,
     clearPlacements,
     setPlacements,
-    refetch: refetchPlacements,
   } = usePlacements(dateParam);
   const { runAutoFit, loading: autoFitLoading } = useAutoFit();
+
+  const handleFilterChange = useCallback((filtered: GoogleTask[]) => {
+    setFilteredTasks(filtered);
+  }, []);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -188,10 +189,6 @@ export default function DayPage() {
       setSaving(false);
     }
   };
-
-  const handleFilterChange = useCallback((filtered: GoogleTask[]) => {
-    setFilteredTasks(filtered);
-  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">

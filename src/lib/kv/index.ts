@@ -3,25 +3,34 @@ import { UserSettings, TaskPlacement } from '@/types';
 import { DEFAULT_SETTINGS, KV_KEYS, PLACEMENT_TTL_SECONDS } from '../constants';
 
 function _parseRedisUrl(redisUrl: string): { url: string; token: string } {
-  const urlPattern = /redis:\/\/[^:]+:([^@]+)@(.+)/;
+  const urlPattern = /redis:\/\/[^:]+:([^@]+)@([^:/]+)/;
   const match = redisUrl.match(urlPattern);
 
   if (!match) {
     throw new Error('Invalid REDIS_URL format. Expected: redis://default:TOKEN@ENDPOINT');
   }
 
-  const [, token, endpoint] = match;
+  const [, token, host] = match;
   return {
-    url: `https://${endpoint}`,
+    url: `https://${host}`,
     token,
   };
 }
 
 function _createRedisClient(): Redis {
+  const restUrl = process.env.UPSTASH_REDIS_REST_URL;
+  const restToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+  if (restUrl && restToken) {
+    return new Redis({ url: restUrl, token: restToken });
+  }
+
   const redisUrl = process.env.REDIS_URL;
 
   if (!redisUrl) {
-    throw new Error('REDIS_URL environment variable is not set');
+    throw new Error(
+      'Redis configuration missing. Set either UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN, or REDIS_URL'
+    );
   }
 
   const { url, token } = _parseRedisUrl(redisUrl);
