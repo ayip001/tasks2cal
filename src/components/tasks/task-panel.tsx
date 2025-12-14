@@ -48,8 +48,7 @@ export function TaskPanel({
         eventData: (eventEl) => {
           return {
             title: eventEl.dataset.taskTitle || 'Task',
-            duration: '00:30', // Default duration, will be overridden by settings
-            create: false, // Don't create event on drop, we handle it manually
+            duration: '00:30', // Default duration, actual duration set by settings on drop
           };
         },
       });
