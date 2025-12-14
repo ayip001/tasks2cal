@@ -218,3 +218,18 @@
 .fc-event[data-task-id]:active {
   cursor: grabbing;
 }
+
+/* Google Calendar style now indicator - red line with dot */
+.fc-timegrid-now-indicator-line {
+  border-top: 3px solid #ea4335 !important;
+}
+
+.fc-timegrid-now-indicator-arrow {
+  border: none !important;
+  width: 12px !important;
+  height: 12px !important;
+  background-color: #ea4335 !important;
+  border-radius: 50% !important;
+  margin-top: -6px !important;
+  margin-left: -6px !important;
+}
