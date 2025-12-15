@@ -208,6 +208,7 @@ export default function HomePage() {
           disabled={isDateDisabled}
           onDayMouseEnter={(date) => setHoveredDate(date)}
           onDayMouseLeave={() => setHoveredDate(null)}
+          getDayEvents={getEventsForDate}
           className="rounded-lg border [--cell-size:--spacing(11)] md:[--cell-size:--spacing(12)]"
         />
 
