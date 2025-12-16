@@ -64,6 +64,20 @@ export function SettingsPanel({ settings, calendars, onSave }: SettingsPanelProp
   const updateWorkingHours = (index: number, field: 'start' | 'end', value: string) => {
     const newWorkingHours = [...localSettings.workingHours];
     newWorkingHours[index] = { ...newWorkingHours[index], [field]: value };
+
+    // If changing start time, ensure end time is still valid (after start)
+    if (field === 'start') {
+      const startMinutes = timeToMinutes(value);
+      const endMinutes = timeToMinutes(newWorkingHours[index].end);
+      if (endMinutes <= startMinutes) {
+        // Set end to 1 hour after start, or 23:45 if that would exceed midnight
+        const newEndMinutes = Math.min(startMinutes + 60, 23 * 60 + 45);
+        const newEndHours = Math.floor(newEndMinutes / 60);
+        const newEndMins = newEndMinutes % 60;
+        newWorkingHours[index].end = `${newEndHours.toString().padStart(2, '0')}:${newEndMins.toString().padStart(2, '0')}`;
+      }
+    }
+
     setLocalSettings({ ...localSettings, workingHours: newWorkingHours });
   };
 
@@ -93,13 +107,24 @@ export function SettingsPanel({ settings, calendars, onSave }: SettingsPanelProp
     { value: '#dc2127', label: 'Tomato' },
   ];
 
-  // Generate hour options for time range dropdowns
+  // Generate hour options for calendar range "from" dropdown
   const hourOptions = useMemo(() => {
     return Array.from({ length: 24 }, (_, i) => {
       const value = `${i.toString().padStart(2, '0')}:00`;
       return { value, label: formatTime(value, localSettings.timeFormat) };
     });
   }, [localSettings.timeFormat]);
+
+  // Generate hour options for calendar range "to" dropdown (only hours after minTime + 1 hour)
+  const hourOptionsAfterMin = useMemo(() => {
+    const minMinutes = timeToMinutes(localSettings.slotMinTime);
+    const minHourForMax = Math.floor(minMinutes / 60) + 1; // At least 1 hour after
+    return Array.from({ length: 24 - minHourForMax }, (_, i) => {
+      const hour = minHourForMax + i;
+      const value = `${hour.toString().padStart(2, '0')}:00`;
+      return { value, label: formatTime(value, localSettings.timeFormat) };
+    });
+  }, [localSettings.timeFormat, localSettings.slotMinTime]);
 
   // Generate 15-minute interval options for working hours
   const timeOptions = useMemo(() => {
@@ -110,6 +135,12 @@ export function SettingsPanel({ settings, calendars, onSave }: SettingsPanelProp
       return { value, label: formatTime(value, localSettings.timeFormat) };
     });
   }, [localSettings.timeFormat]);
+
+  // Get filtered "to" options for a specific working hours entry (only times after start)
+  const getEndTimeOptions = (startTime: string) => {
+    const startMinutes = timeToMinutes(startTime);
+    return timeOptions.filter((option) => timeToMinutes(option.value) > startMinutes);
+  };
 
   // Check if calendar range is valid (at least 1 hour)
   const calendarRangeValid = useMemo(() => {
@@ -313,7 +344,7 @@ export function SettingsPanel({ settings, calendars, onSave }: SettingsPanelProp
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {hourOptions.map((option) => (
+                  {hourOptionsAfterMin.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>
@@ -378,7 +409,7 @@ export function SettingsPanel({ settings, calendars, onSave }: SettingsPanelProp
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {timeOptions.map((option) => (
+                    {getEndTimeOptions(hours.start).map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
                       </SelectItem>
