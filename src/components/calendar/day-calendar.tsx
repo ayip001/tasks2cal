@@ -244,10 +244,9 @@ export function DayCalendar({
     endTime: hours.end,
   }));
 
-  // Time format for slot labels
-  const slotLabelFormat = settings.timeFormat === '24h'
-    ? { hour: '2-digit' as const, minute: '2-digit' as const, hour12: false }
-    : { hour: 'numeric' as const, minute: '2-digit' as const, hour12: true };
+  // Use fallback values if settings are missing (e.g., from old saved settings)
+  const slotMinTime = settings.slotMinTime || '06:00';
+  const slotMaxTime = settings.slotMaxTime || '22:00';
 
   return (
     <div
@@ -263,9 +262,8 @@ export function DayCalendar({
         headerToolbar={false}
         allDaySlot={false}
         slotDuration={`00:${TIME_SLOT_INTERVAL}:00`}
-        slotMinTime={`${settings.slotMinTime}:00`}
-        slotMaxTime={`${settings.slotMaxTime}:00`}
-        slotLabelFormat={slotLabelFormat}
+        slotMinTime={`${slotMinTime}:00`}
+        slotMaxTime={`${slotMaxTime}:00`}
         height="100%"
         events={calendarEvents}
         editable={true}
