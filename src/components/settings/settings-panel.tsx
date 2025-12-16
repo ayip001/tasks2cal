@@ -3,7 +3,6 @@
 import { useState, useMemo } from 'react';
 import { UserSettings, GoogleCalendar } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
@@ -98,6 +97,16 @@ export function SettingsPanel({ settings, calendars, onSave }: SettingsPanelProp
   const hourOptions = useMemo(() => {
     return Array.from({ length: 24 }, (_, i) => {
       const value = `${i.toString().padStart(2, '0')}:00`;
+      return { value, label: formatTime(value, localSettings.timeFormat) };
+    });
+  }, [localSettings.timeFormat]);
+
+  // Generate 15-minute interval options for working hours
+  const timeOptions = useMemo(() => {
+    return Array.from({ length: 24 * 4 }, (_, i) => {
+      const hours = Math.floor(i / 4);
+      const minutes = (i % 4) * 15;
+      const value = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
       return { value, label: formatTime(value, localSettings.timeFormat) };
     });
   }, [localSettings.timeFormat]);
@@ -332,7 +341,12 @@ export function SettingsPanel({ settings, calendars, onSave }: SettingsPanelProp
 
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label>Working Hours</Label>
+              <div>
+                <Label>Working Hours</Label>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Auto-fit tasks will only fill in working hours.
+                </p>
+              </div>
               <Button variant="ghost" size="sm" onClick={addWorkingHoursRange}>
                 <Plus className="h-4 w-4 mr-1" />
                 Add Range
@@ -340,19 +354,37 @@ export function SettingsPanel({ settings, calendars, onSave }: SettingsPanelProp
             </div>
             {localSettings.workingHours.map((hours, index) => (
               <div key={index} className="flex items-center gap-2">
-                <Input
-                  type="time"
+                <Select
                   value={hours.start}
-                  onChange={(e) => updateWorkingHours(index, 'start', e.target.value)}
-                  className="w-auto"
-                />
+                  onValueChange={(value) => updateWorkingHours(index, 'start', value)}
+                >
+                  <SelectTrigger className="w-[110px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {timeOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <span>to</span>
-                <Input
-                  type="time"
+                <Select
                   value={hours.end}
-                  onChange={(e) => updateWorkingHours(index, 'end', e.target.value)}
-                  className="w-auto"
-                />
+                  onValueChange={(value) => updateWorkingHours(index, 'end', value)}
+                >
+                  <SelectTrigger className="w-[110px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {timeOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {localSettings.workingHours.length > 1 && (
                   <Button
                     variant="ghost"
