@@ -1,21 +1,29 @@
 'use client';
 
 import { signIn } from 'next-auth/react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar } from 'lucide-react';
+import { Footer } from '@/components/ui/footer';
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="flex-1 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
-            <Calendar className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+          <div className="mx-auto mb-4">
+            <Image
+              src="/tasks2cal-logo.svg"
+              alt="Tasks2Cal Logo"
+              width={120}
+              height={60}
+              className="h-15 w-30"
+            />
           </div>
-          <CardTitle className="text-2xl">Google Task to Calendar</CardTitle>
+          <CardTitle className="text-2xl">Tasks2Cal</CardTitle>
           <CardDescription>
-            Schedule your Google Tasks onto your Calendar with ease
+            The no-nonsense utility for Google Task timeboxing
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -49,7 +57,10 @@ export default function LoginPage() {
             effectively.
           </p>
         </CardContent>
-      </Card>
+        </Card>
+      </div>
+
+      <Footer />
     </div>
   );
 }

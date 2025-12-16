@@ -18,6 +18,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import {
   useTasks,
   useCalendarEvents,
   useCalendars,
@@ -26,7 +33,7 @@ import {
   useAutoFit,
   filterTasks,
 } from '@/hooks/use-data';
-import { TaskPlacement, TaskFilter } from '@/types';
+import { TaskPlacement, TaskFilter, GoogleTask } from '@/types';
 import {
   Calendar,
   ChevronLeft,
@@ -36,6 +43,9 @@ import {
   Wand2,
   Save,
   Trash2,
+  Menu,
+  CalendarDays,
+  ListTodo,
 } from 'lucide-react';
 
 export default function DayPage() {
@@ -47,6 +57,8 @@ export default function DayPage() {
   const [filter, setFilter] = useState<TaskFilter>({});
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileView, setMobileView] = useState<'calendar' | 'tasks'>('calendar');
 
   const { tasks, taskLists, loading: tasksLoading } = useTasks();
   const { settings, loading: settingsLoading, updateSettings } = useSettings();
@@ -161,6 +173,105 @@ export default function DayPage() {
     }
   };
 
+  // Handle adding a single task via + button (mobile)
+  const handleAddTask = async (task: GoogleTask) => {
+    try {
+      // Try to auto-fit this single task
+      const result = await runAutoFit(dateParam, [task]);
+
+      if (result.placements.length > 0) {
+        // Task was placed in working hours
+        setPlacements(result.allPlacements);
+        toast.success(`Added "${task.title}" to calendar`);
+        setMobileView('calendar'); // Switch to calendar view to show result
+      } else {
+        // No working hours slot available, try to find any available slot
+        // Calculate all busy times from events and existing placements
+        const busySlots: { start: Date; end: Date }[] = [];
+
+        // Add existing events as busy
+        events.forEach((event) => {
+          if (event.start.dateTime && event.end.dateTime) {
+            busySlots.push({
+              start: new Date(event.start.dateTime),
+              end: new Date(event.end.dateTime),
+            });
+          }
+        });
+
+        // Add existing placements as busy
+        placements.forEach((p) => {
+          busySlots.push({
+            start: new Date(p.startTime),
+            end: new Date(new Date(p.startTime).getTime() + p.duration * 60 * 1000),
+          });
+        });
+
+        // Sort busy slots by start time
+        busySlots.sort((a, b) => a.start.getTime() - b.start.getTime());
+
+        // Find first available slot in calendar range
+        const slotMinTime = settings.slotMinTime || '06:00';
+        const slotMaxTime = settings.slotMaxTime || '22:00';
+        const [minH, minM] = slotMinTime.split(':').map(Number);
+        const [maxH, maxM] = slotMaxTime.split(':').map(Number);
+
+        const [year, month, day] = dateParam.split('-').map(Number);
+        const calendarStart = new Date(year, month - 1, day, minH, minM);
+        const calendarEnd = new Date(year, month - 1, day, maxH, maxM);
+        const taskDuration = settings.defaultTaskDuration * 60 * 1000;
+
+        let foundSlot: Date | null = null;
+        let currentTime = new Date(Math.max(calendarStart.getTime(), Date.now()));
+
+        // Round up to next 15-minute slot
+        const minutes = currentTime.getMinutes();
+        const remainder = minutes % 15;
+        if (remainder > 0) {
+          currentTime.setMinutes(minutes + (15 - remainder));
+          currentTime.setSeconds(0);
+          currentTime.setMilliseconds(0);
+        }
+
+        while (currentTime.getTime() + taskDuration <= calendarEnd.getTime()) {
+          const slotEnd = new Date(currentTime.getTime() + taskDuration);
+
+          // Check if this slot overlaps with any busy slot
+          const hasConflict = busySlots.some((busy) => {
+            return currentTime < busy.end && slotEnd > busy.start;
+          });
+
+          if (!hasConflict) {
+            foundSlot = currentTime;
+            break;
+          }
+
+          // Move to next 15-minute slot
+          currentTime = new Date(currentTime.getTime() + 15 * 60 * 1000);
+        }
+
+        if (foundSlot) {
+          const newPlacement: TaskPlacement = {
+            id: `${task.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            taskId: task.id,
+            taskTitle: task.title,
+            listTitle: task.listTitle,
+            startTime: foundSlot.toISOString(),
+            duration: settings.defaultTaskDuration,
+          };
+
+          await addPlacement(newPlacement);
+          toast.success(`Added "${task.title}" to calendar`);
+          setMobileView('calendar');
+        } else {
+          toast.error('No available time slots on this day');
+        }
+      }
+    } catch {
+      toast.error('Failed to add task');
+    }
+  };
+
   const handleSaveToCalendar = async () => {
     setSaving(true);
     try {
@@ -199,19 +310,24 @@ export default function DayPage() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <header className="border-b">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => router.push('/')} className="gap-2">
+        <div className="container mx-auto px-4 py-3 md:py-4 flex items-center justify-between">
+          {/* Mobile: Back button and date */}
+          <div className="flex items-center gap-2 md:gap-4">
+            <Button variant="ghost" size="icon" onClick={() => router.push('/')} className="md:hidden">
+              <Calendar className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" onClick={() => router.push('/')} className="gap-2 hidden md:flex">
               <Calendar className="h-5 w-5" />
               <span className="text-sm">Back to Calendar</span>
             </Button>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 md:gap-2">
               <Button variant="ghost" size="icon" onClick={() => navigateDay('prev')}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <h1 className="text-lg font-semibold min-w-[180px] text-center">
-                {format(parsedDate, 'EEEE, MMMM d, yyyy')}
+              <h1 className="text-sm md:text-lg font-semibold min-w-[120px] md:min-w-[180px] text-center">
+                <span className="md:hidden">{format(parsedDate, 'MMM d')}</span>
+                <span className="hidden md:inline">{format(parsedDate, 'EEEE, MMMM d, yyyy')}</span>
               </h1>
               <Button variant="ghost" size="icon" onClick={() => navigateDay('next')}>
                 <ChevronRight className="h-4 w-4" />
@@ -219,7 +335,8 @@ export default function DayPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          {/* Desktop: Action buttons */}
+          <div className="hidden md:flex items-center gap-2">
             <Button
               variant="outline"
               onClick={handleAutoFit}
@@ -267,10 +384,108 @@ export default function DayPage() {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
+
+          {/* Mobile: Burger menu */}
+          <div className="flex md:hidden items-center gap-2">
+            {placements.length > 0 && (
+              <Button size="sm" onClick={() => setConfirmDialogOpen(true)}>
+                <Save className="h-4 w-4 mr-1" />
+                {placements.length}
+              </Button>
+            )}
+
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-72">
+                <SheetHeader>
+                  <SheetTitle>Menu</SheetTitle>
+                </SheetHeader>
+                <div className="flex flex-col gap-2 mt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      handleAutoFit();
+                      setMobileMenuOpen(false);
+                    }}
+                    disabled={autoFitLoading || filteredTasks.length === 0}
+                    className="justify-start"
+                  >
+                    <Wand2 className="h-4 w-4 mr-2" />
+                    Auto-fit all tasks
+                  </Button>
+
+                  {placements.length > 0 && (
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        clearPlacements();
+                        setMobileMenuOpen(false);
+                      }}
+                      className="justify-start text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Clear placements
+                    </Button>
+                  )}
+
+                  <div className="border-t my-2" />
+
+                  <SettingsPanel
+                    settings={settings}
+                    calendars={calendars}
+                    onSave={updateSettings}
+                  />
+
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      signOut();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="justify-start"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sign out
+                  </Button>
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
       </header>
 
-      <main className="flex-1 flex overflow-hidden">
+      {/* Mobile: Tab switcher */}
+      <div className="md:hidden border-b flex">
+        <button
+          onClick={() => setMobileView('calendar')}
+          className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 border-b-2 transition-colors ${
+            mobileView === 'calendar'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground'
+          }`}
+        >
+          <CalendarDays className="h-4 w-4" />
+          Calendar
+        </button>
+        <button
+          onClick={() => setMobileView('tasks')}
+          className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 border-b-2 transition-colors ${
+            mobileView === 'tasks'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground'
+          }`}
+        >
+          <ListTodo className="h-4 w-4" />
+          Tasks
+        </button>
+      </div>
+
+      {/* Desktop: Split view */}
+      <main className="flex-1 hidden md:flex overflow-hidden">
         <div className="flex-1 border-r p-4 overflow-hidden">
           <DayCalendar
             date={dateParam}
@@ -294,6 +509,35 @@ export default function DayPage() {
             filteredTasks={filteredTasks}
           />
         </div>
+      </main>
+
+      {/* Mobile: Tab content */}
+      <main className="flex-1 md:hidden overflow-hidden">
+        {mobileView === 'calendar' ? (
+          <div className="h-full p-4 overflow-hidden">
+            <DayCalendar
+              date={dateParam}
+              events={events}
+              placements={placements}
+              onPlacementDrop={handlePlacementDrop}
+              onExternalDrop={handleExternalDrop}
+              onPlacementClick={handlePlacementClick}
+              onPastTimeDrop={() => toast.error('Cannot place tasks in the past')}
+              settings={settings}
+            />
+          </div>
+        ) : (
+          <TaskPanel
+            taskLists={taskLists}
+            placements={placements}
+            loading={tasksLoading}
+            filter={filter}
+            onFilterChange={setFilter}
+            filteredTasks={filteredTasks}
+            onAddTask={handleAddTask}
+            isMobile={true}
+          />
+        )}
       </main>
 
       <ConfirmDialog
