@@ -1,4 +1,4 @@
-import { Github, Coffee } from 'lucide-react';
+import { Star, Coffee } from 'lucide-react';
 
 export function Footer() {
   return (
@@ -10,8 +10,8 @@ export function Footer() {
           rel="noopener noreferrer"
           className="flex items-center gap-2 hover:text-foreground transition-colors"
         >
-          <Github className="h-4 w-4" />
-          <span>GitHub</span>
+          <Star className="h-4 w-4" />
+          <span>Star on GitHub</span>
         </a>
         <a
           href="https://buymeacoffee.com/angusflies"
