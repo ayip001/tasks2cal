@@ -10,8 +10,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Google Task to Calendar Helper',
-  description: 'Schedule your Google Tasks onto your Calendar with ease',
+  title: 'Tasks2Cal',
+  description: 'The no-nonsense utility for Google Task timeboxing',
   icons: {
     icon: '/tasks2cal-favicon.png',
     apple: '/tasks2cal-webclip.png',

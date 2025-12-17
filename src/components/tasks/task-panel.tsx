@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -15,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search, Calendar, GripVertical, Check } from 'lucide-react';
+import { Search, Calendar, GripVertical, Check, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface TaskPanelProps {
@@ -25,6 +26,8 @@ interface TaskPanelProps {
   filter: TaskFilter;
   onFilterChange: Dispatch<SetStateAction<TaskFilter>>;
   filteredTasks: GoogleTask[];
+  onAddTask?: (task: GoogleTask) => void;
+  isMobile?: boolean;
 }
 
 export function TaskPanel({
@@ -34,15 +37,17 @@ export function TaskPanel({
   filter,
   onFilterChange,
   filteredTasks,
+  onAddTask,
+  isMobile = false,
 }: TaskPanelProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const placedTaskIds = new Set(placements.map((p) => p.taskId));
 
   const setFilter = onFilterChange;
 
-  // Initialize FullCalendar Draggable for external drag and drop
+  // Initialize FullCalendar Draggable for external drag and drop (desktop only)
   useEffect(() => {
-    if (containerRef.current) {
+    if (containerRef.current && !isMobile) {
       const draggable = new Draggable(containerRef.current, {
         itemSelector: '[data-task-id]',
         eventData: (eventEl) => {
@@ -57,7 +62,7 @@ export function TaskPanel({
         draggable.destroy();
       };
     }
-  }, []);
+  }, [isMobile]);
 
   return (
     <div className="h-full flex flex-col">
@@ -142,6 +147,8 @@ export function TaskPanel({
                 key={task.id}
                 task={task}
                 isPlaced={placedTaskIds.has(task.id)}
+                onAddTask={onAddTask}
+                isMobile={isMobile}
               />
             ))
           )}
@@ -154,17 +161,21 @@ export function TaskPanel({
 interface TaskItemProps {
   task: GoogleTask;
   isPlaced: boolean;
+  onAddTask?: (task: GoogleTask) => void;
+  isMobile?: boolean;
 }
 
-function TaskItem({ task, isPlaced }: TaskItemProps) {
+function TaskItem({ task, isPlaced, onAddTask, isMobile = false }: TaskItemProps) {
   return (
     <div
       data-task-id={task.id}
       data-task-title={task.title}
       data-task-list-title={task.listTitle}
-      className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 cursor-grab active:cursor-grabbing transition-colors fc-event"
+      className={`flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors fc-event ${
+        isMobile ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'
+      }`}
     >
-      <GripVertical className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+      {!isMobile && <GripVertical className="h-4 w-4 text-muted-foreground flex-shrink-0" />}
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
@@ -196,6 +207,17 @@ function TaskItem({ task, isPlaced }: TaskItemProps) {
           )}
         </div>
       </div>
+
+      {isMobile && onAddTask && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="flex-shrink-0 h-8 w-8"
+          onClick={() => onAddTask(task)}
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
+      )}
     </div>
   );
 }

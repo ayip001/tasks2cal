@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { LogOut, User } from 'lucide-react';
+import { Footer } from '@/components/ui/footer';
 import Image from 'next/image';
 import { GoogleCalendarEvent } from '@/types';
 import { useSettings } from '@/hooks/use-data';
@@ -168,18 +169,18 @@ export default function HomePage() {
   const hasMoreEvents = hoveredEvents.length > 3;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Image 
-              src="/tasks2cal logo.svg" 
-              alt="Tasks2Cal Logo" 
-              width={48} 
+            <Image
+              src="/tasks2cal-logo.svg"
+              alt="Tasks2Cal Logo"
+              width={48}
               height={24}
               className="h-6 w-12"
             />
-            <h1 className="text-xl font-semibold">Task to Calendar</h1>
+            <h1 className="text-xl font-semibold">Tasks2Cal</h1>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -198,7 +199,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 flex flex-col items-center">
+      <main className="container mx-auto px-4 py-8 flex flex-col items-center flex-1">
         <div className="text-center mb-6">
           <h2 className="text-2xl font-semibold">Select a Day</h2>
           <p className="text-sm text-muted-foreground mt-1">
@@ -270,6 +271,8 @@ export default function HomePage() {
           ) : null}
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }
