@@ -337,10 +337,11 @@ export function DayCalendar({
   };
 
   // Convert working hours to FullCalendar businessHours format
+  // Also convert to UTC since FullCalendar interprets these as UTC when timeZone is set
   const businessHours = settings.workingHours.map((hours) => ({
     daysOfWeek: [0, 1, 2, 3, 4, 5, 6], // All days
-    startTime: hours.start,
-    endTime: hours.end,
+    startTime: convertToUTC(hours.start),
+    endTime: convertToUTC(hours.end),
   }));
 
   // Use fallback values if settings are missing (e.g., from old saved settings)
