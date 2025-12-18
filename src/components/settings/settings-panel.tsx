@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Settings, Plus, X, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Settings, Plus, X, AlertTriangle, RefreshCw, LocateFixed } from 'lucide-react';
 import { TimezonePicker } from '@/components/settings/timezone-picker';
 import { Input } from '@/components/ui/input';
 
@@ -365,10 +365,31 @@ export function SettingsPanel({ settings, calendars, onSave, showLabel = false, 
 
           <div className="space-y-2">
             <Label>Your Timezone</Label>
-            <TimezonePicker
-              value={localSettings.timezone}
-              onChange={(timezone) => setLocalSettings({ ...localSettings, timezone })}
-            />
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <TimezonePicker
+                  value={localSettings.timezone}
+                  onChange={(timezone) => setLocalSettings({ ...localSettings, timezone })}
+                />
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  try {
+                    const detected = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                    if (detected) {
+                      setLocalSettings({ ...localSettings, timezone: detected });
+                    }
+                  } catch {
+                    // Ignore detection errors
+                  }
+                }}
+                title="Auto-detect timezone"
+              >
+                <LocateFixed className="h-4 w-4" />
+              </Button>
+            </div>
             <p className="text-xs text-muted-foreground">
               Your local timezone for display purposes
             </p>
