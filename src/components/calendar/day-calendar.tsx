@@ -374,6 +374,7 @@ export function DayCalendar({
         businessHours={businessHours}
         slotLaneClassNames="fc-slot-lane"
         slotLabelContent={renderSlotLabel}
+        timeZone={selectedTimezone || 'local'}
         />
       </div>
     </div>
