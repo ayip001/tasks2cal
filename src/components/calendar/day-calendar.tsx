@@ -43,20 +43,28 @@ function formatTimeInTimezone(
     hour12: format === '12h',
   });
 
-  // Get the day in both timezones to calculate offset
-  // The offset is relative to the selected timezone (the "base" day)
-  const targetDayFormatter = new Intl.DateTimeFormat('en-US', {
+  // Get the full date in both timezones to properly calculate day offset
+  // Using en-CA locale gives YYYY-MM-DD format which is easy to compare
+  const targetDateFormatter = new Intl.DateTimeFormat('en-CA', {
     timeZone: timezone,
-    day: 'numeric',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
   });
-  const selectedDayFormatter = new Intl.DateTimeFormat('en-US', {
+  const selectedDateFormatter = new Intl.DateTimeFormat('en-CA', {
     timeZone: selectedTimezone,
-    day: 'numeric',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
   });
 
-  const targetDay = parseInt(targetDayFormatter.format(date), 10);
-  const selectedDay = parseInt(selectedDayFormatter.format(date), 10);
-  const dayOffset = targetDay - selectedDay;
+  const targetDateStr = targetDateFormatter.format(date);
+  const selectedDateStr = selectedDateFormatter.format(date);
+
+  // Parse dates and calculate difference in days
+  const targetDate = new Date(targetDateStr + 'T00:00:00');
+  const selectedDate = new Date(selectedDateStr + 'T00:00:00');
+  const dayOffset = Math.round((targetDate.getTime() - selectedDate.getTime()) / (24 * 60 * 60 * 1000));
 
   return {
     time: formatter.format(date),
