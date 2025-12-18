@@ -85,6 +85,12 @@ export default function DayPage() {
   // Compute filtered tasks from filter state
   const filteredTasks = useMemo(() => filterTasks(tasks, filter), [tasks, filter]);
 
+  // Get the selected calendar's timezone
+  const selectedCalendarTimezone = useMemo(() => {
+    const selectedCalendar = calendars.find((c) => c.id === settings.selectedCalendarId);
+    return selectedCalendar?.timeZone;
+  }, [calendars, settings.selectedCalendarId]);
+
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login');
@@ -499,6 +505,7 @@ export default function DayPage() {
             onPlacementClick={handlePlacementClick}
             onPastTimeDrop={() => toast.error('Cannot place tasks in the past')}
             settings={settings}
+            calendarTimezone={selectedCalendarTimezone}
           />
         </div>
 
@@ -527,6 +534,8 @@ export default function DayPage() {
               onPlacementClick={handlePlacementClick}
               onPastTimeDrop={() => toast.error('Cannot place tasks in the past')}
               settings={settings}
+              calendarTimezone={selectedCalendarTimezone}
+              isMobile={true}
             />
           </div>
         ) : (
