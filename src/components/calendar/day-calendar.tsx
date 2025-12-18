@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -27,13 +27,6 @@ interface DayCalendarProps {
     timezone?: string;
   };
   calendarTimezone?: string;
-}
-
-// Extract city name from IANA timezone string
-function getCityFromTimezone(tz: string): string {
-  const parts = tz.split('/');
-  const city = parts[parts.length - 1];
-  return city.replace(/_/g, ' ');
 }
 
 // Helper to format time in a specific timezone and calculate day offset relative to selected timezone
@@ -89,15 +82,45 @@ export function DayCalendar({
   const selectedTimezone = settings.timezone;
   const hasDifferentTimezones = selectedTimezone && calendarTimezone && selectedTimezone !== calendarTimezone;
 
-  // Generate column heading text
-  const columnHeadingData = useMemo(() => {
-    if (!hasDifferentTimezones) {
-      return { single: true, text: 'Time' };
-    }
-    const yourCity = getCityFromTimezone(selectedTimezone!);
-    const calCity = getCityFromTimezone(calendarTimezone!);
-    return { single: false, yourCity, calCity };
-  }, [hasDifferentTimezones, selectedTimezone, calendarTimezone]);
+  // Convert time from selected timezone to browser local timezone
+  // This ensures the calendar range displays correctly regardless of browser timezone
+  const convertSelectedTimeToLocal = useCallback((timeStr: string): string => {
+    if (!selectedTimezone) return timeStr;
+
+    const [hours, minutes] = timeStr.split(':').map(Number);
+
+    // Use a reference date to calculate timezone offset
+    const now = new Date();
+
+    const localFormatter = new Intl.DateTimeFormat('en-US', {
+      hour: 'numeric',
+      hour12: false,
+    });
+    const selectedFormatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: selectedTimezone,
+      hour: 'numeric',
+      hour12: false,
+    });
+
+    const localHour = parseInt(localFormatter.format(now), 10);
+    const selectedHour = parseInt(selectedFormatter.format(now), 10);
+
+    // Offset in hours (local - selected)
+    let offsetHours = localHour - selectedHour;
+
+    // Handle day boundary (normalize to -12 to +12 range)
+    if (offsetHours > 12) offsetHours -= 24;
+    if (offsetHours < -12) offsetHours += 24;
+
+    // Apply offset
+    let newHours = hours + offsetHours;
+
+    // Handle wraparound
+    if (newHours < 0) newHours += 24;
+    if (newHours >= 24) newHours -= 24;
+
+    return `${newHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  }, [selectedTimezone]);
 
   useEffect(() => {
     if (calendarRef.current) {
@@ -105,32 +128,6 @@ export function DayCalendar({
       calendarApi.gotoDate(date);
     }
   }, [date]);
-
-  // Inject column heading into FullCalendar's time axis header
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    // Find the time axis header cell (top-left corner of the calendar)
-    const axisHeader = containerRef.current.querySelector('.fc-timegrid-axis');
-    if (!axisHeader) return;
-
-    // Clear existing content and add our heading
-    axisHeader.innerHTML = '';
-
-    const headingDiv = document.createElement('div');
-    headingDiv.className = 'flex flex-col text-[10px] leading-tight p-1';
-
-    if (columnHeadingData.single) {
-      headingDiv.innerHTML = `<span class="font-medium">${columnHeadingData.text}</span>`;
-    } else {
-      headingDiv.innerHTML = `
-        <span class="font-medium">${columnHeadingData.yourCity}</span>
-        <span class="text-muted-foreground">${columnHeadingData.calCity}</span>
-      `;
-    }
-
-    axisHeader.appendChild(headingDiv);
-  }, [columnHeadingData]);
 
   // Set CSS variable on document root for drag ghost color
   useEffect(() => {
@@ -330,8 +327,9 @@ export function DayCalendar({
   }));
 
   // Use fallback values if settings are missing (e.g., from old saved settings)
-  const slotMinTime = settings.slotMinTime || '06:00';
-  const slotMaxTime = settings.slotMaxTime || '22:00';
+  // Convert from selected timezone to browser local time for correct display
+  const slotMinTime = convertSelectedTimeToLocal(settings.slotMinTime || '06:00');
+  const slotMaxTime = convertSelectedTimeToLocal(settings.slotMaxTime || '22:00');
 
   // Custom slot label content for dual timezone display
   const renderSlotLabel = useCallback((arg: SlotLabelContentArg) => {
