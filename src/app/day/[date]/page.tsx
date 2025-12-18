@@ -535,7 +535,6 @@ export default function DayPage() {
               onPastTimeDrop={() => toast.error('Cannot place tasks in the past')}
               settings={settings}
               calendarTimezone={selectedCalendarTimezone}
-              isMobile={true}
             />
           </div>
         ) : (

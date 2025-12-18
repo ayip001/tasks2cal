@@ -1,13 +1,13 @@
 'use client';
 
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import type { EventDropArg, EventInput, EventContentArg, SlotLabelContentArg } from '@fullcalendar/core';
 import { GoogleCalendarEvent, TaskPlacement, WorkingHours } from '@/types';
 import { TIME_SLOT_INTERVAL } from '@/lib/constants';
-import { X, RefreshCw } from 'lucide-react';
+import { X } from 'lucide-react';
 
 interface DayCalendarProps {
   date: string;
@@ -27,11 +27,22 @@ interface DayCalendarProps {
     timezone?: string;
   };
   calendarTimezone?: string;
-  isMobile?: boolean;
 }
 
-// Helper to format time in a specific timezone
-function formatTimeInTimezone(date: Date, timezone: string, format: '12h' | '24h'): { time: string; dayOffset: number } {
+// Extract city name from IANA timezone string
+function getCityFromTimezone(tz: string): string {
+  const parts = tz.split('/');
+  const city = parts[parts.length - 1];
+  return city.replace(/_/g, ' ');
+}
+
+// Helper to format time in a specific timezone and calculate day offset relative to selected timezone
+function formatTimeInTimezone(
+  date: Date,
+  timezone: string,
+  selectedTimezone: string,
+  format: '12h' | '24h'
+): { time: string; dayOffset: number } {
   const formatter = new Intl.DateTimeFormat('en-US', {
     timeZone: timezone,
     hour: 'numeric',
@@ -40,14 +51,19 @@ function formatTimeInTimezone(date: Date, timezone: string, format: '12h' | '24h
   });
 
   // Get the day in both timezones to calculate offset
-  const dayFormatter = new Intl.DateTimeFormat('en-US', {
+  // The offset is relative to the selected timezone (the "base" day)
+  const targetDayFormatter = new Intl.DateTimeFormat('en-US', {
     timeZone: timezone,
     day: 'numeric',
   });
+  const selectedDayFormatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: selectedTimezone,
+    day: 'numeric',
+  });
 
-  const originalDay = date.getDate();
-  const targetDay = parseInt(dayFormatter.format(date), 10);
-  const dayOffset = targetDay - originalDay;
+  const targetDay = parseInt(targetDayFormatter.format(date), 10);
+  const selectedDay = parseInt(selectedDayFormatter.format(date), 10);
+  const dayOffset = targetDay - selectedDay;
 
   return {
     time: formatter.format(date),
@@ -65,17 +81,23 @@ export function DayCalendar({
   onPastTimeDrop,
   settings,
   calendarTimezone,
-  isMobile = false,
 }: DayCalendarProps) {
   const calendarRef = useRef<FullCalendar>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Mobile toggle for showing calendar timezone vs selected timezone
-  const [showCalendarTimezone, setShowCalendarTimezone] = useState(false);
-
   // Determine if we need to show dual timezones
   const selectedTimezone = settings.timezone;
   const hasDifferentTimezones = selectedTimezone && calendarTimezone && selectedTimezone !== calendarTimezone;
+
+  // Generate column heading
+  const columnHeading = useMemo(() => {
+    if (!hasDifferentTimezones) {
+      return 'Time';
+    }
+    const yourCity = getCityFromTimezone(selectedTimezone!);
+    const calCity = getCityFromTimezone(calendarTimezone!);
+    return `${yourCity} / ${calCity}`;
+  }, [hasDifferentTimezones, selectedTimezone, calendarTimezone]);
 
   useEffect(() => {
     if (calendarRef.current) {
@@ -289,7 +311,7 @@ export function DayCalendar({
   const renderSlotLabel = useCallback((arg: SlotLabelContentArg) => {
     const slotDate = arg.date;
 
-    if (!hasDifferentTimezones) {
+    if (!hasDifferentTimezones || !selectedTimezone || !calendarTimezone) {
       // Single timezone - just use default formatting
       const timeStr = settings.timeFormat === '12h'
         ? slotDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
@@ -298,39 +320,25 @@ export function DayCalendar({
     }
 
     // Dual timezone display
-    const calTz = formatTimeInTimezone(slotDate, calendarTimezone!, settings.timeFormat);
-    const selTz = formatTimeInTimezone(slotDate, selectedTimezone!, settings.timeFormat);
+    // Your TZ (selected) is the base - shown above, bold
+    // Calendar TZ shown below, muted, with +1/-1 if different day
+    const selTz = formatTimeInTimezone(slotDate, selectedTimezone, selectedTimezone, settings.timeFormat);
+    const calTz = formatTimeInTimezone(slotDate, calendarTimezone, selectedTimezone, settings.timeFormat);
 
-    if (isMobile) {
-      // Mobile: show one timezone with toggle
-      const displayed = showCalendarTimezone ? calTz : selTz;
-      const dayIndicator = displayed.dayOffset !== 0
-        ? <span className="text-[10px] text-muted-foreground ml-0.5">{displayed.dayOffset > 0 ? '+1' : '-1'}</span>
-        : null;
-
-      return (
-        <span className="text-xs flex items-center">
-          {displayed.time}
-          {dayIndicator}
-        </span>
-      );
-    }
-
-    // Desktop: show both timezones
     const calDayIndicator = calTz.dayOffset !== 0
       ? <span className="text-[9px] text-muted-foreground ml-0.5">{calTz.dayOffset > 0 ? '+1' : '-1'}</span>
       : null;
 
     return (
       <div className="flex flex-col text-[10px] leading-tight -my-1">
+        <span className="font-medium">{selTz.time}</span>
         <span className="text-muted-foreground flex items-center">
           {calTz.time}
           {calDayIndicator}
         </span>
-        <span className="font-medium">{selTz.time}</span>
       </div>
     );
-  }, [hasDifferentTimezones, calendarTimezone, selectedTimezone, settings.timeFormat, isMobile, showCalendarTimezone]);
+  }, [hasDifferentTimezones, calendarTimezone, selectedTimezone, settings.timeFormat]);
 
   return (
     <div
@@ -338,43 +346,37 @@ export function DayCalendar({
       className="h-full day-calendar-container flex flex-col"
       style={{ '--task-color': settings.taskColor } as React.CSSProperties}
     >
-      {/* Mobile timezone toggle header */}
-      {isMobile && hasDifferentTimezones && (
-        <button
-          onClick={() => setShowCalendarTimezone(!showCalendarTimezone)}
-          className="flex items-center justify-center gap-1 py-1 px-2 text-xs text-muted-foreground hover:text-foreground transition-colors border-b bg-muted/30"
-        >
-          <RefreshCw className="h-3 w-3" />
-          <span>{showCalendarTimezone ? 'Calendar TZ' : 'Your TZ'}</span>
-        </button>
-      )}
+      {/* Timezone column heading */}
+      <div className="flex-shrink-0 text-[10px] text-muted-foreground px-1 py-0.5 border-b bg-muted/20">
+        {columnHeading}
+      </div>
       <div className="flex-1 overflow-hidden">
         <FullCalendar
-        ref={calendarRef}
-        plugins={[timeGridPlugin, interactionPlugin]}
-        initialView="timeGridDay"
-        initialDate={date}
-        headerToolbar={false}
-        allDaySlot={false}
-        slotDuration={`00:${TIME_SLOT_INTERVAL}:00`}
-        slotMinTime={`${slotMinTime}:00`}
-        slotMaxTime={`${slotMaxTime}:00`}
-        height="100%"
-        events={calendarEvents}
-        editable={true}
-        selectable={false}
-        droppable={true}
-        eventDrop={handleEventDrop}
-        eventContent={renderEventContent}
-        eventReceive={handleEventReceive}
-        eventOverlap={false}
-        slotEventOverlap={false}
-        snapDuration={`00:${TIME_SLOT_INTERVAL}:00`}
-        nowIndicator={true}
-        businessHours={businessHours}
-        slotLaneClassNames="fc-slot-lane"
-        slotLabelContent={renderSlotLabel}
-        timeZone={selectedTimezone || 'local'}
+          ref={calendarRef}
+          plugins={[timeGridPlugin, interactionPlugin]}
+          initialView="timeGridDay"
+          initialDate={date}
+          headerToolbar={false}
+          allDaySlot={false}
+          slotDuration={`00:${TIME_SLOT_INTERVAL}:00`}
+          slotMinTime={`${slotMinTime}:00`}
+          slotMaxTime={`${slotMaxTime}:00`}
+          height="100%"
+          events={calendarEvents}
+          editable={true}
+          selectable={false}
+          droppable={true}
+          eventDrop={handleEventDrop}
+          eventContent={renderEventContent}
+          eventReceive={handleEventReceive}
+          eventOverlap={false}
+          slotEventOverlap={false}
+          snapDuration={`00:${TIME_SLOT_INTERVAL}:00`}
+          nowIndicator={true}
+          businessHours={businessHours}
+          slotLaneClassNames="fc-slot-lane"
+          slotLabelContent={renderSlotLabel}
+          timeZone={selectedTimezone || 'local'}
         />
       </div>
     </div>
