@@ -9,6 +9,19 @@ import type { EventResizeDoneArg } from '@fullcalendar/interaction';
 import { GoogleCalendarEvent, TaskPlacement, WorkingHours } from '@/types';
 import { TIME_SLOT_INTERVAL } from '@/lib/constants';
 import { X } from 'lucide-react';
+import {
+  logDayOpen,
+  logCalendarLoad,
+  logTaskDrag,
+  logTaskResize,
+  logTaskPlacement,
+  createTimezoneContext,
+} from '@/lib/debug-logger';
+import {
+  getRenderedTimeRange,
+  getSlotLabelForTime,
+  getEventSlotLabel,
+} from '@/lib/fullcalendar-utils';
 
 interface DayCalendarProps {
   date: string;
@@ -142,7 +155,10 @@ export function DayCalendar({
       const calendarApi = calendarRef.current.getApi();
       calendarApi.gotoDate(date);
     }
-  }, [date]);
+
+    const timezones = createTimezoneContext(calendarTimezone, settings.timezone);
+    logDayOpen(date, calendarTimezone, settings.timezone);
+  }, [date, calendarTimezone, settings.timezone]);
 
   // Set CSS variable on document root for drag ghost color
   useEffect(() => {
@@ -329,7 +345,51 @@ export function DayCalendar({
         onPastTimeDrop?.();
         return;
       }
-      onPlacementDrop(placementId, info.event.start.toISOString());
+
+      const oldStartTime = info.oldEvent.start?.toISOString() || '';
+      const newStartTime = info.event.start.toISOString();
+      
+      // Find the placement to get task title and duration
+      const placement = placements.find(p => p.id === placementId);
+      const taskTitle = placement?.taskTitle || info.event.title || 'Unknown Task';
+      const duration = placement?.duration || (info.event.end && info.event.start 
+        ? Math.round((new Date(info.event.end).getTime() - new Date(info.event.start).getTime()) / (60 * 1000))
+        : 0);
+
+      if (containerRef.current) {
+        const timezones = createTimezoneContext(calendarTimezone, settings.timezone);
+        let targetSlotLabel = getSlotLabelForTime(
+          info.event.start,
+          containerRef.current,
+          calendarRef.current?.getApi()
+        );
+        
+        // If slot label not found, calculate it from the time using the same format as renderSlotLabel
+        if (!targetSlotLabel) {
+          const slotDate = info.event.start;
+          if (hasDifferentTimezones && selectedTimezone && calendarTimezone) {
+            const selTz = formatTimeInTimezone(slotDate, selectedTimezone, selectedTimezone, settings.timeFormat);
+            const calTz = formatTimeInTimezone(slotDate, calendarTimezone, selectedTimezone, settings.timeFormat);
+            targetSlotLabel = `${selTz.time} | ${calTz.time}`;
+          } else {
+            const timeStr = settings.timeFormat === '12h'
+              ? slotDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+              : slotDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+            targetSlotLabel = timeStr;
+          }
+        }
+
+        logTaskDrag(
+          taskTitle,
+          targetSlotLabel,
+          oldStartTime,
+          newStartTime,
+          duration,
+          timezones
+        );
+      }
+
+      onPlacementDrop(placementId, newStartTime);
     }
   };
 
@@ -340,6 +400,20 @@ export function DayCalendar({
       // Calculate new duration in minutes
       const durationMs = info.event.end.getTime() - info.event.start.getTime();
       const durationMinutes = Math.round(durationMs / (60 * 1000));
+      
+      // Find the placement to get task title and old duration
+      const placement = placements.find(p => p.id === placementId);
+      const taskTitle = placement?.taskTitle || info.event.title || 'Unknown Task';
+      const oldDuration = placement?.duration || durationMinutes;
+
+      const timezones = createTimezoneContext(calendarTimezone, settings.timezone);
+      logTaskResize(
+        taskTitle,
+        oldDuration,
+        durationMinutes,
+        timezones
+      );
+
       onPlacementResize(placementId, durationMinutes);
     }
   };
@@ -357,10 +431,58 @@ export function DayCalendar({
         onPastTimeDrop?.();
         return;
       }
+
+      const startTime = info.event.start.toISOString();
+      const duration = settings.defaultTaskDuration;
+
+      if (containerRef.current) {
+        const timezones = createTimezoneContext(calendarTimezone, settings.timezone);
+        let targetSlotLabel = getSlotLabelForTime(
+          info.event.start,
+          containerRef.current,
+          calendarRef.current?.getApi()
+        );
+        
+        // If slot label not found, calculate it from the time using the same format as renderSlotLabel
+        if (!targetSlotLabel) {
+          const slotDate = info.event.start;
+          if (hasDifferentTimezones && selectedTimezone && calendarTimezone) {
+            const selTz = formatTimeInTimezone(slotDate, selectedTimezone, selectedTimezone, settings.timeFormat);
+            const calTz = formatTimeInTimezone(slotDate, calendarTimezone, selectedTimezone, settings.timeFormat);
+            targetSlotLabel = `${selTz.time} | ${calTz.time}`;
+          } else {
+            const timeStr = settings.timeFormat === '12h'
+              ? slotDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+              : slotDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+            targetSlotLabel = timeStr;
+          }
+        }
+
+        const [minHour, minMin] = settings.slotMinTime.split(':').map(Number);
+        const [maxHour, maxMin] = settings.slotMaxTime.split(':').map(Number);
+        const dropHour = info.event.start.getHours();
+        const dropMinute = info.event.start.getMinutes();
+        const dropMinutes = dropHour * 60 + dropMinute;
+        const minMinutes = minHour * 60 + minMin;
+        const maxMinutes = maxHour * 60 + maxMin;
+        const isOutOfRange = dropMinutes < minMinutes || dropMinutes >= maxMinutes;
+
+        logTaskPlacement(
+          taskId,
+          taskTitle,
+          targetSlotLabel,
+          startTime,
+          duration,
+          timezones,
+          isOutOfRange,
+          taskListTitle
+        );
+      }
+
       // Remove the temporary event that FullCalendar created
       info.event.remove();
       // Create our own placement through the callback
-      onExternalDrop(taskId, taskTitle, info.event.start.toISOString(), taskListTitle);
+      onExternalDrop(taskId, taskTitle, startTime, taskListTitle);
     }
   };
 
@@ -412,6 +534,219 @@ export function DayCalendar({
       </div>
     );
   }, [hasDifferentTimezones, calendarTimezone, selectedTimezone, settings.timeFormat]);
+
+  // Log calendar load when dates are set
+  useEffect(() => {
+    if (!containerRef.current || !calendarRef.current) return;
+
+    const handleDatesSet = () => {
+      // Use a longer timeout to ensure events are rendered
+      setTimeout(() => {
+        if (!containerRef.current || !calendarRef.current) return;
+
+        const timezones = createTimezoneContext(calendarTimezone, settings.timezone);
+
+        const [year, month, day] = date.split('-').map(Number);
+        const [minHour, minMin] = settings.slotMinTime.split(':').map(Number);
+        const [maxHour, maxMin] = settings.slotMaxTime.split(':').map(Number);
+
+        const firstSlot = new Date(year, month - 1, day, minHour, minMin);
+        const lastSlot = new Date(year, month - 1, day, maxHour, maxMin);
+
+        const expectedRange = {
+          start: settings.slotMinTime,
+          end: settings.slotMaxTime,
+        };
+
+        const renderedRange = getRenderedTimeRange(containerRef.current);
+        
+        let renderedTimeRange;
+
+        if (renderedRange) {
+          renderedTimeRange = {
+            firstRenderedLabel: renderedRange.firstLabel,
+            lastRenderedLabel: renderedRange.lastLabel,
+            firstRenderedTime: renderedRange.firstTime,
+            lastRenderedTime: renderedRange.lastTime,
+          };
+        } else {
+          // Could not detect rendered slots - calendar likely failed to render
+          renderedTimeRange = {
+            firstRenderedLabel: `${settings.slotMinTime} (expected, not detected)`,
+            lastRenderedLabel: `${settings.slotMaxTime} (expected, not detected)`,
+            firstRenderedTime: firstSlot,
+            lastRenderedTime: lastSlot,
+          };
+        }
+
+        // Get rendered events from FullCalendar API (ordered by rendered position)
+        const calendarApi = calendarRef.current.getApi();
+        const fullCalendarEvents = calendarApi.getEvents();
+        
+        // Filter to only Google Calendar events (not placements)
+        const googleEvents = fullCalendarEvents.filter((fcEvent) => {
+          const extendedProps = fcEvent.extendedProps;
+          return extendedProps?.type === 'google-event' || (!extendedProps?.type && fcEvent.id?.startsWith('event-'));
+        });
+        
+        // Sort by start time to match rendered order
+        googleEvents.sort((a, b) => {
+          const aStart = a.start ? a.start.getTime() : 0;
+          const bStart = b.start ? b.start.getTime() : 0;
+          return aStart - bStart;
+        });
+        
+        const formattedRenderedEvents = googleEvents.map((fcEvent, displayIndex) => {
+          // Extract original event ID from FullCalendar event ID (format: "event-{id}")
+          const fcEventId = fcEvent.id;
+          if (!fcEventId || !fcEventId.startsWith('event-')) {
+            return null;
+          }
+          
+          const originalEventId = fcEventId.replace('event-', '');
+          const eventIndex = events.findIndex(e => e.id === originalEventId);
+          
+          if (eventIndex < 0 || !fcEvent.start || !fcEvent.end) {
+            return null;
+          }
+          
+          const event = events[eventIndex];
+          
+          if (!event.start.dateTime || !event.end.dateTime) {
+            return null;
+          }
+          
+          // Get time from DOM slot label where event is positioned
+          let timeDisplay = '';
+          
+          if (containerRef.current) {
+            const eventElement = containerRef.current.querySelector(`[data-event-id="${fcEventId}"], .fc-event[class*="${fcEventId}"]`) as HTMLElement;
+            if (eventElement && fcEvent.start) {
+              const slotLabel = getEventSlotLabel(eventElement, containerRef.current);
+              if (slotLabel) {
+                // Parse the slot label (may have dual timezone like "22:00 | 21:00")
+                const times = slotLabel.split(' | ');
+                if (times.length > 1 && timezones.userSelected !== timezones.calendar) {
+                  const userTime = times[0].trim();
+                  const calendarTime = times[1].trim();
+                  
+                  // Calculate day offset for calendar time
+                  const startDate = new Date(fcEvent.start);
+                  const userDateStr = new Intl.DateTimeFormat('en-CA', {
+                    timeZone: timezones.userSelected,
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                  }).format(startDate);
+                  const calendarDateStr = new Intl.DateTimeFormat('en-CA', {
+                    timeZone: timezones.calendar,
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                  }).format(startDate);
+                  
+                  const userDate = new Date(`${userDateStr}T00:00:00`);
+                  const calendarDate = new Date(`${calendarDateStr}T00:00:00`);
+                  const dayOffset = Math.round((calendarDate.getTime() - userDate.getTime()) / (24 * 60 * 60 * 1000));
+                  
+                  if (dayOffset !== 0) {
+                    const offsetStr = dayOffset > 0 ? `+${dayOffset}` : `${dayOffset}`;
+                    timeDisplay = `${userTime} | ${calendarTime} (${offsetStr})`;
+                  } else {
+                    timeDisplay = `${userTime} | ${calendarTime}`;
+                  }
+                } else {
+                  timeDisplay = times[0] || slotLabel;
+                }
+              }
+            }
+          }
+          
+          // Fallback: calculate time from event dates if DOM lookup fails
+          if (!timeDisplay && fcEvent.start) {
+            const startDate = new Date(fcEvent.start);
+            const startTimeStr = startDate.toLocaleTimeString('en-GB', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false,
+              timeZone: timezones.userSelected,
+            });
+            
+            if (timezones.userSelected !== timezones.calendar) {
+              const calendarTimeStr = startDate.toLocaleTimeString('en-GB', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false,
+                timeZone: timezones.calendar,
+              });
+              
+              // Calculate day offset
+              const userDateStr = new Intl.DateTimeFormat('en-CA', {
+                timeZone: timezones.userSelected,
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+              }).format(startDate);
+              const calendarDateStr = new Intl.DateTimeFormat('en-CA', {
+                timeZone: timezones.calendar,
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+              }).format(startDate);
+              
+              const userDate = new Date(`${userDateStr}T00:00:00`);
+              const calendarDate = new Date(`${calendarDateStr}T00:00:00`);
+              const dayOffset = Math.round((calendarDate.getTime() - userDate.getTime()) / (24 * 60 * 60 * 1000));
+              
+              if (dayOffset !== 0) {
+                const offsetStr = dayOffset > 0 ? `+${dayOffset}` : `${dayOffset}`;
+                timeDisplay = `${startTimeStr} | ${calendarTimeStr} (${offsetStr})`;
+              } else {
+                timeDisplay = `${startTimeStr} | ${calendarTimeStr}`;
+              }
+            } else {
+              timeDisplay = startTimeStr;
+            }
+          }
+          
+          // Calculate duration in minutes
+          const startDate = new Date(event.start.dateTime);
+          const endDate = new Date(event.end.dateTime);
+          const durationMinutes = Math.round((endDate.getTime() - startDate.getTime()) / (60 * 1000));
+          
+          // Find original index in events array for numbering
+          const originalIndex = eventIndex + 1;
+          
+          return {
+            index: originalIndex,
+            displayIndex: displayIndex + 1,
+            time: timeDisplay || 'N/A',
+            duration: durationMinutes,
+            name: event.summary,
+          };
+        }).filter((e): e is { index: number; displayIndex: number; time: string; duration: number; name: string } => e !== null);
+
+        logCalendarLoad(
+          expectedRange,
+          settings.workingHours,
+          firstSlot,
+          lastSlot,
+          renderedTimeRange,
+          timezones,
+          formattedRenderedEvents
+        );
+      }, 500); // Increased timeout to allow events to render
+    };
+
+    const calendarApi = calendarRef.current.getApi();
+    calendarApi.on('datesSet', handleDatesSet);
+
+    handleDatesSet();
+
+    return () => {
+      calendarApi.off('datesSet', handleDatesSet);
+    };
+  }, [date, settings.slotMinTime, settings.slotMaxTime, settings.workingHours, calendarTimezone, settings.timezone, events]);
 
   return (
     <div

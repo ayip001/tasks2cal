@@ -1,6 +1,7 @@
 import { google } from 'googleapis';
 import { GoogleCalendarEvent, GoogleCalendar, TaskPlacement } from '@/types';
 import { UTILITY_MARKER } from '@/lib/constants';
+import { logApiCall, createTimezoneContext } from '@/lib/debug-logger';
 
 export function createCalendarClient(accessToken: string) {
   const auth = new google.auth.OAuth2();
@@ -104,7 +105,8 @@ export async function getEventsForDay(
     orderBy: 'startTime',
   });
 
-  return (response.data.items || [])
+  const items = response.data.items || [];
+  const events = items
     .filter((item) => item.start?.dateTime && item.end?.dateTime)
     .map((item) => ({
       id: item.id!,
@@ -122,6 +124,8 @@ export async function getEventsForDay(
       },
       colorId: item.colorId ?? undefined,
     }));
+
+  return events;
 }
 
 export async function getEventsForMonth(

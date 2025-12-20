@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { TaskPlacement } from '@/types';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,6 +12,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { logSave, createTimezoneContext } from '@/lib/debug-logger';
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -21,6 +23,7 @@ interface ConfirmDialogProps {
   taskColor: string;
   calendarTimezone?: string;
   timeFormat: '12h' | '24h';
+  userTimezone?: string;
 }
 
 // Extract city name from IANA timezone string
@@ -59,7 +62,25 @@ export function ConfirmDialog({
   taskColor,
   calendarTimezone,
   timeFormat,
+  userTimezone,
 }: ConfirmDialogProps) {
+  useEffect(() => {
+    if (open && placements.length > 0) {
+      const timezones = createTimezoneContext(calendarTimezone, userTimezone);
+      
+      const displayedTimes = placements.map((placement) => {
+        const time = formatTimeInCalendarTimezone(
+          placement.startTime,
+          calendarTimezone,
+          timeFormat
+        );
+        return { time, duration: placement.duration };
+      });
+
+      logSave(placements, displayedTimes, timezones);
+    }
+  }, [open, placements, calendarTimezone, userTimezone, timeFormat]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">

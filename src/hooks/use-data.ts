@@ -12,6 +12,7 @@ import {
   AutoFitResult,
 } from '@/types';
 import { DEFAULT_SETTINGS } from '@/lib/constants';
+import { logApiCall, logSettingsSave, createTimezoneContext } from '@/lib/debug-logger';
 
 export function useTasks() {
   const [tasks, setTasks] = useState<GoogleTask[]>([]);
@@ -51,7 +52,7 @@ export function useTasks() {
   return { tasks, taskLists, loading, error, refetch: fetchTasks };
 }
 
-export function useCalendarEvents(date: string, calendarId: string = 'primary', timezone?: string) {
+export function useCalendarEvents(date: string, calendarId: string = 'primary', timezone?: string, calendarTimezone?: string) {
   const [events, setEvents] = useState<GoogleCalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -74,13 +75,62 @@ export function useCalendarEvents(date: string, calendarId: string = 'primary', 
       }
 
       const data = await res.json();
+      
+      const timezones = createTimezoneContext(calendarTimezone, timezone);
+      
+      const formattedEvents = Array.isArray(data) ? data.map((event: any) => {
+        const startDate = event.start?.dateTime ? new Date(event.start.dateTime) : null;
+        const endDate = event.end?.dateTime ? new Date(event.end.dateTime) : null;
+        
+        let timeRange = 'N/A';
+        if (startDate && endDate) {
+          const startTime = startDate.toLocaleTimeString('en-GB', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+            timeZone: calendarTimezone || timezone,
+          });
+          const endTime = endDate.toLocaleTimeString('en-GB', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+            timeZone: calendarTimezone || timezone,
+          });
+          timeRange = `${startTime} - ${endTime}`;
+        }
+        
+        const eventDate = startDate ? startDate.toLocaleDateString('en-GB', {
+          year: '2-digit',
+          month: '2-digit',
+          day: '2-digit',
+          timeZone: calendarTimezone || timezone,
+        }) : date.split('-').reverse().join('/').slice(0, 8);
+        
+        return {
+          date: eventDate,
+          time: timeRange,
+          name: event.summary || 'Untitled Event',
+        };
+      }) : [];
+      
+      logApiCall(
+        'getEventsForDay',
+        { date, calendarId, timezone, calendarTimezone },
+        {
+          count: formattedEvents.length,
+          events: formattedEvents,
+          calendarTimezone,
+        },
+        timezones
+      );
+      
       setEvents(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
     }
-  }, [date, calendarId, timezone]);
+  }, [date, calendarId, timezone, calendarTimezone]);
 
   useEffect(() => {
     fetchEvents();
@@ -141,6 +191,10 @@ export function useSettings() {
 
     if (res.ok) {
       const data = await res.json();
+      
+      // Log settings save to browser console
+      logSettingsSave(settings, data);
+      
       setSettings(data);
       return data;
     }
