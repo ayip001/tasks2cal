@@ -23,26 +23,17 @@ export async function getCalendars(accessToken: string): Promise<GoogleCalendar[
 export async function getEventsForDay(
   accessToken: string,
   calendarId: string,
-  date: string,
-  timezone?: string
+  date: string
 ): Promise<GoogleCalendarEvent[]> {
   const calendar = createCalendarClient(accessToken);
 
-  // Create time boundaries in the specified timezone
-  // If timezone is provided, interpret date in that timezone
-  // Otherwise fall back to UTC
-  const tz = timezone || 'UTC';
-
-  // Use the date directly with timezone info for Google Calendar API
-  // Google Calendar API accepts ISO 8601 format with timezone
-  const timeMin = `${date}T00:00:00`;
-  const timeMax = `${date}T23:59:59`;
+  const startOfDay = new Date(`${date}T00:00:00`);
+  const endOfDay = new Date(`${date}T23:59:59`);
 
   const response = await calendar.events.list({
     calendarId,
-    timeMin: timeMin,
-    timeMax: timeMax,
-    timeZone: tz,
+    timeMin: startOfDay.toISOString(),
+    timeMax: endOfDay.toISOString(),
     singleEvents: true,
     orderBy: 'startTime',
   });
@@ -111,30 +102,24 @@ export async function createCalendarEvent(
   accessToken: string,
   calendarId: string,
   placement: TaskPlacement,
-  taskColor: string,
-  timezone?: string
+  taskColor: string
 ): Promise<GoogleCalendarEvent> {
   const calendar = createCalendarClient(accessToken);
 
   const startTime = new Date(placement.startTime);
   const endTime = new Date(startTime.getTime() + placement.duration * 60 * 1000);
 
-  // If timezone is provided, send dateTime with explicit timezone
-  // This ensures Google Calendar interprets the time correctly
-  const startDateTime = timezone
-    ? { dateTime: startTime.toISOString(), timeZone: timezone }
-    : { dateTime: startTime.toISOString() };
-  const endDateTime = timezone
-    ? { dateTime: endTime.toISOString(), timeZone: timezone }
-    : { dateTime: endTime.toISOString() };
-
   const response = await calendar.events.insert({
     calendarId,
     requestBody: {
       // Append invisible marker to identify events created by this utility
       summary: placement.taskTitle + UTILITY_MARKER,
-      start: startDateTime,
-      end: endDateTime,
+      start: {
+        dateTime: startTime.toISOString(),
+      },
+      end: {
+        dateTime: endTime.toISOString(),
+      },
       colorId: getGoogleColorId(taskColor),
     },
   });
@@ -159,15 +144,14 @@ export async function createCalendarEvents(
   accessToken: string,
   calendarId: string,
   placements: TaskPlacement[],
-  taskColor: string,
-  timezone?: string
+  taskColor: string
 ): Promise<{ success: GoogleCalendarEvent[]; errors: string[] }> {
   const results: GoogleCalendarEvent[] = [];
   const errors: string[] = [];
 
   for (const placement of placements) {
     try {
-      const event = await createCalendarEvent(accessToken, calendarId, placement, taskColor, timezone);
+      const event = await createCalendarEvent(accessToken, calendarId, placement, taskColor);
       results.push(event);
     } catch (error) {
       errors.push(`Failed to create event for "${placement.taskTitle}": ${error}`);

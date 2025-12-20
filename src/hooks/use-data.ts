@@ -51,7 +51,7 @@ export function useTasks() {
   return { tasks, taskLists, loading, error, refetch: fetchTasks };
 }
 
-export function useCalendarEvents(date: string, calendarId: string = 'primary', timezone?: string) {
+export function useCalendarEvents(date: string, calendarId: string = 'primary') {
   const [events, setEvents] = useState<GoogleCalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -63,11 +63,9 @@ export function useCalendarEvents(date: string, calendarId: string = 'primary', 
     setError(null);
 
     try {
-      let url = `/api/calendar?type=events&date=${date}&calendarId=${encodeURIComponent(calendarId)}`;
-      if (timezone) {
-        url += `&timezone=${encodeURIComponent(timezone)}`;
-      }
-      const res = await fetch(url);
+      const res = await fetch(
+        `/api/calendar?type=events&date=${date}&calendarId=${encodeURIComponent(calendarId)}`
+      );
 
       if (!res.ok) {
         throw new Error('Failed to fetch calendar events');
@@ -80,7 +78,7 @@ export function useCalendarEvents(date: string, calendarId: string = 'primary', 
     } finally {
       setLoading(false);
     }
-  }, [date, calendarId, timezone]);
+  }, [date, calendarId]);
 
   useEffect(() => {
     fetchEvents();
