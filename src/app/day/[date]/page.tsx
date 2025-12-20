@@ -63,10 +63,20 @@ export default function DayPage() {
   const { tasks, taskLists, loading: tasksLoading } = useTasks();
   const { settings, loading: settingsLoading, updateSettings } = useSettings();
   const { calendars, refetch: refetchCalendars } = useCalendars();
+
+  // Get the selected calendar's timezone
+  const selectedCalendarTimezone = useMemo(() => {
+    const selectedCalendar = calendars.find((c) => c.id === settings.selectedCalendarId);
+    return selectedCalendar?.timeZone;
+  }, [calendars, settings.selectedCalendarId]);
+
+  // Display timezone: user-selected timezone, or fall back to calendar timezone
+  const displayTimezone = settings.timezone || selectedCalendarTimezone;
+
   const {
     events,
     refetch: refetchEvents,
-  } = useCalendarEvents(dateParam, settings.selectedCalendarId);
+  } = useCalendarEvents(dateParam, settings.selectedCalendarId, displayTimezone);
   const {
     placements,
     addPlacement,
@@ -84,12 +94,6 @@ export default function DayPage() {
 
   // Compute filtered tasks from filter state
   const filteredTasks = useMemo(() => filterTasks(tasks, filter), [tasks, filter]);
-
-  // Get the selected calendar's timezone
-  const selectedCalendarTimezone = useMemo(() => {
-    const selectedCalendar = calendars.find((c) => c.id === settings.selectedCalendarId);
-    return selectedCalendar?.timeZone;
-  }, [calendars, settings.selectedCalendarId]);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -179,7 +183,7 @@ export default function DayPage() {
     }
 
     try {
-      const result = await runAutoFit(dateParam, filteredTasks);
+      const result = await runAutoFit(dateParam, filteredTasks, displayTimezone);
       setPlacements(result.allPlacements);
       toast.success(result.message);
     } catch {
@@ -191,7 +195,7 @@ export default function DayPage() {
   const handleAddTask = async (task: GoogleTask) => {
     try {
       // Try to auto-fit this single task
-      const result = await runAutoFit(dateParam, [task]);
+      const result = await runAutoFit(dateParam, [task], displayTimezone);
 
       if (result.placements.length > 0) {
         // Task was placed in working hours
@@ -289,9 +293,6 @@ export default function DayPage() {
   const handleSaveToCalendar = async () => {
     setSaving(true);
     try {
-      // Use selected timezone if set, otherwise use calendar timezone
-      const displayTimezone = settings.timezone || selectedCalendarTimezone;
-
       const response = await fetch('/api/calendar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -299,7 +300,6 @@ export default function DayPage() {
           calendarId: settings.selectedCalendarId,
           placements,
           taskColor: settings.taskColor,
-          timezone: displayTimezone,
         }),
       });
 

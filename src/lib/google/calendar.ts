@@ -23,17 +23,83 @@ export async function getCalendars(accessToken: string): Promise<GoogleCalendar[
 export async function getEventsForDay(
   accessToken: string,
   calendarId: string,
-  date: string
+  date: string,
+  timezone?: string
 ): Promise<GoogleCalendarEvent[]> {
   const calendar = createCalendarClient(accessToken);
 
-  const startOfDay = new Date(`${date}T00:00:00`);
-  const endOfDay = new Date(`${date}T23:59:59`);
+  // Calculate start and end of day in the specified timezone
+  // If no timezone provided, use UTC
+  let timeMin: string;
+  let timeMax: string;
+
+  if (timezone) {
+    // Parse the date and create ISO strings for start/end of day in the timezone
+    // We need to find what UTC time corresponds to 00:00 and 23:59:59 in the timezone
+    const [year, month, day] = date.split('-').map(Number);
+
+    // Create a reference date at noon to get the timezone offset
+    const refDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+
+    // Get the offset by comparing how the date appears in the timezone vs UTC
+    const tzFormatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+    const utcFormatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'UTC',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+
+    const getParts = (formatter: Intl.DateTimeFormat, d: Date) => {
+      const parts = formatter.formatToParts(d);
+      return {
+        hour: parseInt(parts.find(p => p.type === 'hour')?.value || '0', 10),
+        day: parseInt(parts.find(p => p.type === 'day')?.value || '0', 10),
+      };
+    };
+
+    const tzParts = getParts(tzFormatter, refDate);
+    const utcParts = getParts(utcFormatter, refDate);
+
+    // Calculate offset in hours (positive = timezone is ahead of UTC)
+    let offsetHours = tzParts.hour - utcParts.hour;
+    if (tzParts.day !== utcParts.day) {
+      // Day crossed, adjust offset
+      if (tzParts.day > utcParts.day) offsetHours += 24;
+      else offsetHours -= 24;
+    }
+    // Normalize
+    if (offsetHours > 12) offsetHours -= 24;
+    if (offsetHours < -12) offsetHours += 24;
+
+    // Start of day in timezone = 00:00 in TZ = (00:00 - offset) in UTC
+    const startUTC = new Date(Date.UTC(year, month - 1, day, -offsetHours, 0, 0));
+    // End of day in timezone = 23:59:59 in TZ
+    const endUTC = new Date(Date.UTC(year, month - 1, day, 23 - offsetHours, 59, 59));
+
+    timeMin = startUTC.toISOString();
+    timeMax = endUTC.toISOString();
+  } else {
+    // Fallback: use date as UTC (old behavior)
+    timeMin = `${date}T00:00:00.000Z`;
+    timeMax = `${date}T23:59:59.999Z`;
+  }
 
   const response = await calendar.events.list({
     calendarId,
-    timeMin: startOfDay.toISOString(),
-    timeMax: endOfDay.toISOString(),
+    timeMin,
+    timeMax,
     singleEvents: true,
     orderBy: 'startTime',
   });
@@ -102,26 +168,14 @@ export async function createCalendarEvent(
   accessToken: string,
   calendarId: string,
   placement: TaskPlacement,
-  taskColor: string,
-  timezone?: string
+  taskColor: string
 ): Promise<GoogleCalendarEvent> {
   const calendar = createCalendarClient(accessToken);
 
-  // The placement.startTime is pseudo-UTC from FullCalendar (wall-clock time in UTC fields)
-  // We need to interpret it as the display timezone, not as actual UTC
-  const startDate = new Date(placement.startTime);
-  const endDate = new Date(startDate.getTime() + placement.duration * 60 * 1000);
-
-  // Extract wall-clock components from the pseudo-UTC date
-  const formatDateTime = (date: Date): string => {
-    const year = date.getUTCFullYear();
-    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(date.getUTCDate()).padStart(2, '0');
-    const hours = String(date.getUTCHours()).padStart(2, '0');
-    const minutes = String(date.getUTCMinutes()).padStart(2, '0');
-    const seconds = String(date.getUTCSeconds()).padStart(2, '0');
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-  };
+  // placement.startTime is actual UTC (e.g., "2024-12-20T02:00:00.000Z" for 10am HK)
+  // Google Calendar API correctly interprets UTC and converts to calendar timezone
+  const startTime = new Date(placement.startTime);
+  const endTime = new Date(startTime.getTime() + placement.duration * 60 * 1000);
 
   const response = await calendar.events.insert({
     calendarId,
@@ -129,12 +183,10 @@ export async function createCalendarEvent(
       // Append invisible marker to identify events created by this utility
       summary: placement.taskTitle + UTILITY_MARKER,
       start: {
-        dateTime: formatDateTime(startDate),
-        timeZone: timezone,
+        dateTime: startTime.toISOString(),
       },
       end: {
-        dateTime: formatDateTime(endDate),
-        timeZone: timezone,
+        dateTime: endTime.toISOString(),
       },
       colorId: getGoogleColorId(taskColor),
     },
@@ -160,15 +212,14 @@ export async function createCalendarEvents(
   accessToken: string,
   calendarId: string,
   placements: TaskPlacement[],
-  taskColor: string,
-  timezone?: string
+  taskColor: string
 ): Promise<{ success: GoogleCalendarEvent[]; errors: string[] }> {
   const results: GoogleCalendarEvent[] = [];
   const errors: string[] = [];
 
   for (const placement of placements) {
     try {
-      const event = await createCalendarEvent(accessToken, calendarId, placement, taskColor, timezone);
+      const event = await createCalendarEvent(accessToken, calendarId, placement, taskColor);
       results.push(event);
     } catch (error) {
       errors.push(`Failed to create event for "${placement.taskTitle}": ${error}`);
