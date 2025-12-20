@@ -63,10 +63,17 @@ export default function DayPage() {
   const { tasks, taskLists, loading: tasksLoading } = useTasks();
   const { settings, loading: settingsLoading, updateSettings } = useSettings();
   const { calendars, refetch: refetchCalendars } = useCalendars();
+
+  // Get the selected calendar's timezone
+  const selectedCalendarTimezone = useMemo(() => {
+    const selectedCalendar = calendars.find((c) => c.id === settings.selectedCalendarId);
+    return selectedCalendar?.timeZone;
+  }, [calendars, settings.selectedCalendarId]);
+
   const {
     events,
     refetch: refetchEvents,
-  } = useCalendarEvents(dateParam, settings.selectedCalendarId);
+  } = useCalendarEvents(dateParam, settings.selectedCalendarId, selectedCalendarTimezone);
   const {
     placements,
     addPlacement,
@@ -84,12 +91,6 @@ export default function DayPage() {
 
   // Compute filtered tasks from filter state
   const filteredTasks = useMemo(() => filterTasks(tasks, filter), [tasks, filter]);
-
-  // Get the selected calendar's timezone
-  const selectedCalendarTimezone = useMemo(() => {
-    const selectedCalendar = calendars.find((c) => c.id === settings.selectedCalendarId);
-    return selectedCalendar?.timeZone;
-  }, [calendars, settings.selectedCalendarId]);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -288,6 +289,7 @@ export default function DayPage() {
           calendarId: settings.selectedCalendarId,
           placements,
           taskColor: settings.taskColor,
+          timezone: selectedCalendarTimezone,
         }),
       });
 

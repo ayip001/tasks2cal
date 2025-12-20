@@ -16,6 +16,7 @@ export async function GET(request: Request) {
   const year = searchParams.get('year');
   const month = searchParams.get('month');
   const calendarId = searchParams.get('calendarId') || 'primary';
+  const timezone = searchParams.get('timezone') || undefined;
 
   try {
     if (type === 'calendars') {
@@ -36,7 +37,7 @@ export async function GET(request: Request) {
 
     // Day-based events fetching (legacy, still used by day view)
     if (type === 'events' && date) {
-      const events = await getEventsForDay(session.accessToken, calendarId, date);
+      const events = await getEventsForDay(session.accessToken, calendarId, date, timezone);
       return NextResponse.json(events);
     }
 
@@ -56,17 +57,18 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { calendarId, placements, taskColor } = body as {
+    const { calendarId, placements, taskColor, timezone } = body as {
       calendarId: string;
       placements: TaskPlacement[];
       taskColor: string;
+      timezone?: string;
     };
 
     if (!calendarId || !placements || !Array.isArray(placements) || !taskColor) {
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
     }
 
-    const result = await createCalendarEvents(session.accessToken, calendarId, placements, taskColor);
+    const result = await createCalendarEvents(session.accessToken, calendarId, placements, taskColor, timezone);
 
     return NextResponse.json({
       success: true,
