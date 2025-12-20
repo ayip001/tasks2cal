@@ -112,13 +112,16 @@ export function DayCalendar({
 
   // Convert time from display timezone to UTC for FullCalendar
   // FullCalendar interprets slotMinTime/slotMaxTime as UTC when timeZone is set
+  // IMPORTANT: Uses target date (not now) to calculate offset correctly for DST
   const convertToUTC = useCallback((timeStr: string, allowOver24 = false): string => {
     if (!displayTimezone) return timeStr;
 
     const [hours, minutes] = timeStr.split(':').map(Number);
 
-    // Get the offset between display timezone and UTC
-    const now = new Date();
+    // Use target date at noon to calculate timezone offset (handles DST correctly)
+    const [year, month, day] = date.split('-').map(Number);
+    const refDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+
     const tzFormatter = new Intl.DateTimeFormat('en-US', {
       timeZone: displayTimezone,
       hour: 'numeric',
@@ -130,8 +133,8 @@ export function DayCalendar({
       hour12: false,
     });
 
-    const tzHour = parseInt(tzFormatter.format(now), 10);
-    const utcHour = parseInt(utcFormatter.format(now), 10);
+    const tzHour = parseInt(tzFormatter.format(refDate), 10);
+    const utcHour = parseInt(utcFormatter.format(refDate), 10);
 
     // Offset in hours (UTC - TZ), i.e., what to add to TZ time to get UTC
     let offsetHours = utcHour - tzHour;
@@ -148,7 +151,7 @@ export function DayCalendar({
     if (!allowOver24 && newHours >= 24) newHours -= 24;
 
     return `${newHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-  }, [displayTimezone]);
+  }, [displayTimezone, date]);
 
   useEffect(() => {
     if (calendarRef.current) {
