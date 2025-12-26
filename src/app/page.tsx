@@ -1,130 +1,38 @@
 'use client';
 
-import { useSession, signOut } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { format, isBefore, startOfDay } from 'date-fns';
-import { Calendar } from '@/components/ui/calendar';
+import { useSession, signIn } from 'next-auth/react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState, Suspense } from 'react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { LogOut, User } from 'lucide-react';
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Footer } from '@/components/ui/footer';
-import Image from 'next/image';
-import { GoogleCalendarEvent } from '@/types';
-import { useSettings } from '@/hooks/use-data';
-import { isUtilityCreatedEvent } from '@/lib/constants';
-import { normalizeIanaTimeZone } from '@/lib/timezone';
+import { AlertCircle } from 'lucide-react';
 
-// Cache key for localStorage
-const getMonthCacheKey = (calendarId: string, year: number, month: number) =>
-  `events-cache:${calendarId}:${year}:${month}`;
-
-// Cache structure stored in localStorage
-interface MonthEventsCache {
-  events: GoogleCalendarEvent[];
-  fetchedAt: number;
-}
-
-export default function HomePage() {
+function LoginContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
-  const [displayedMonth, setDisplayedMonth] = useState<Date>(new Date());
-  const [monthEvents, setMonthEvents] = useState<GoogleCalendarEvent[]>([]);
-  const [loadingMonth, setLoadingMonth] = useState(false);
-  const { settings } = useSettings();
-  const fetchingRef = useRef<string | null>(null);
+  const searchParams = useSearchParams();
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/login');
+    const errorParam = searchParams.get('error');
+    if (errorParam) {
+      setError('An error occurred during sign in. Please try again.');
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (status === 'authenticated') {
+      router.push('/dashboard');
     }
   }, [status, router]);
-
-  // Fetch events for the displayed month
-  const fetchMonthEvents = useCallback(async (year: number, month: number) => {
-    if (!settings.selectedCalendarId) return;
-
-    const cacheKey = getMonthCacheKey(settings.selectedCalendarId, year, month);
-
-    // Prevent duplicate fetches
-    if (fetchingRef.current === cacheKey) return;
-
-    // Check localStorage cache first
-    try {
-      const cached = localStorage.getItem(cacheKey);
-      if (cached) {
-        const parsedCache: MonthEventsCache = JSON.parse(cached);
-        // Use cache if less than 5 minutes old
-        if (Date.now() - parsedCache.fetchedAt < 5 * 60 * 1000) {
-          setMonthEvents(parsedCache.events);
-          return;
-        }
-      }
-    } catch {
-      // Ignore localStorage errors
-    }
-
-    fetchingRef.current = cacheKey;
-    setLoadingMonth(true);
-
-    try {
-      const effectiveTimeZone = normalizeIanaTimeZone(settings.timezone ?? 'UTC');
-      const response = await fetch(
-        `/api/calendar?type=events&year=${year}&month=${month}&calendarId=${encodeURIComponent(settings.selectedCalendarId)}&timeZone=${encodeURIComponent(effectiveTimeZone)}`
-      );
-      if (response.ok) {
-        const data = await response.json();
-        // Filter out events created by this utility using invisible marker
-        const filteredEvents = (data.events as GoogleCalendarEvent[]).filter(
-          (event) => !isUtilityCreatedEvent(event.summary)
-        );
-        setMonthEvents(filteredEvents);
-
-        // Cache in localStorage
-        try {
-          const cacheData: MonthEventsCache = {
-            events: filteredEvents,
-            fetchedAt: Date.now(),
-          };
-          localStorage.setItem(cacheKey, JSON.stringify(cacheData));
-        } catch {
-          // Ignore localStorage errors (quota exceeded, etc.)
-        }
-      }
-    } catch (error) {
-      console.error('Failed to fetch month events:', error);
-    } finally {
-      setLoadingMonth(false);
-      fetchingRef.current = null;
-    }
-  }, [settings.selectedCalendarId]);
-
-  // Fetch events when month changes or on initial load
-  useEffect(() => {
-    const year = displayedMonth.getFullYear();
-    const month = displayedMonth.getMonth();
-    fetchMonthEvents(year, month);
-  }, [displayedMonth, fetchMonthEvents]);
-
-  // Get events for the hovered date from cached month events
-  const getEventsForDate = useCallback((date: Date): GoogleCalendarEvent[] => {
-    const dateStr = format(date, 'yyyy-MM-dd');
-    return monthEvents.filter((event) => {
-      const eventDate = event.start.dateTime
-        ? format(new Date(event.start.dateTime), 'yyyy-MM-dd')
-        : event.start.date;
-      return eventDate === dateStr;
-    });
-  }, [monthEvents]);
-
-  const hoveredEvents = hoveredDate ? getEventsForDate(hoveredDate) : [];
 
   if (status === 'loading') {
     return (
@@ -134,147 +42,84 @@ export default function HomePage() {
     );
   }
 
-  if (!session) {
+  if (status === 'authenticated') {
     return null;
   }
 
-  const handleDateSelect = (date: Date | undefined) => {
-    if (date) {
-      setSelectedDate(date);
-      const formattedDate = format(date, 'yyyy-MM-dd');
-      router.push(`/day/${formattedDate}`);
-    }
-  };
-
-  const today = startOfDay(new Date());
-  const isDateDisabled = (date: Date) => isBefore(date, today);
-
-  // Get color for event (map Google's colorId to actual colors)
-  const getEventColor = (colorId?: string) => {
-    const colors: Record<string, string> = {
-      '1': '#a4bdfc',
-      '2': '#7ae7bf',
-      '3': '#dbadff',
-      '4': '#ff887c',
-      '5': '#fbd75b',
-      '6': '#ffb878',
-      '7': '#46d6db',
-      '8': '#e1e1e1',
-      '9': '#5484ed',
-      '10': '#51b749',
-      '11': '#dc2127',
-    };
-    return colors[colorId || ''] || '#4285f4';
-  };
-
-  const displayEvents = hoveredEvents.slice(0, 3);
-  const hasMoreEvents = hoveredEvents.length > 3;
-
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <header className="border-b">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Image
-              src="/tasks2cal-logo.svg"
-              alt="Tasks2Cal Logo"
-              width={48}
-              height={24}
-              className="h-6 w-12"
-            />
-            <h1 className="text-xl font-semibold">Tasks2Cal</h1>
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center gap-2">
-                <User className="h-4 w-4" />
-                <span className="hidden sm:inline">{session.user?.name || session.user?.email}</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => signOut()}>
-                <LogOut className="mr-2 h-4 w-4" />
-                Sign out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8 flex flex-col items-center flex-1">
-        <div className="text-center mb-6">
-          <h2 className="text-2xl font-semibold">Select a Day</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Click on a day to view and schedule tasks
-          </p>
-        </div>
-
-        <Calendar
-          mode="single"
-          selected={selectedDate}
-          month={displayedMonth}
-          onMonthChange={setDisplayedMonth}
-          onSelect={handleDateSelect}
-          disabled={isDateDisabled}
-          onDayMouseEnter={(date) => setHoveredDate(date)}
-          onDayMouseLeave={() => setHoveredDate(null)}
-          getDayEvents={getEventsForDate}
-          className="rounded-lg border [--cell-size:--spacing(11)] md:[--cell-size:--spacing(12)]"
-        />
-
-        {/* Event preview section */}
-        <div className="mt-6 w-full max-w-sm min-h-[120px]">
-          {loadingMonth && !monthEvents.length ? (
-            <div className="text-sm text-muted-foreground text-center">Loading events...</div>
-          ) : hoveredDate ? (
-            <div className="flex flex-col gap-3">
-              <div className="text-sm font-medium text-center">
-                {hoveredDate.toLocaleDateString('en-US', {
-                  weekday: 'long',
-                  day: 'numeric',
-                  month: 'long',
-                })}
-              </div>
-
-              {displayEvents.length > 0 ? (
-                <div className="flex flex-col gap-2">
-                  {displayEvents.map((event) => (
-                    <div
-                      key={event.id}
-                      className="bg-muted relative rounded-md p-2 pl-6 text-sm"
-                    >
-                      <div
-                        className="absolute inset-y-2 left-2 w-1 rounded-full"
-                        style={{ backgroundColor: getEventColor(event.colorId) }}
-                      />
-                      <div className="font-medium truncate">{event.summary}</div>
-                      <div className="text-muted-foreground text-xs">
-                        {event.start.dateTime
-                          ? format(new Date(event.start.dateTime), 'h:mm a')
-                          : 'All day'}
-                        {event.end.dateTime && (
-                          <> – {format(new Date(event.end.dateTime), 'h:mm a')}</>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                  {hasMoreEvents && (
-                    <div className="text-xs text-muted-foreground text-center">
-                      and {hoveredEvents.length - 3} more...
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="text-sm text-muted-foreground text-center">
-                  No events scheduled
-                </div>
-              )}
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="flex-1 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4">
+              <Image
+                src="/tasks2cal-logo.svg"
+                alt="Tasks2Cal Logo"
+                width={120}
+                height={60}
+                className="h-15 w-30"
+              />
             </div>
-          ) : null}
-        </div>
-      </main>
+            <CardTitle className="text-2xl">Tasks2Cal</CardTitle>
+            <CardDescription>
+              The no-nonsense utility for Google Task timeboxing
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {error && (
+              <div className="mb-4 p-3 rounded-md bg-destructive/10 border border-destructive/20 text-destructive text-sm flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+            <Button
+              onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
+              className="w-full"
+              size="lg"
+            >
+              <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
+                <path
+                  fill="currentColor"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="currentColor"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="currentColor"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                />
+                <path
+                  fill="currentColor"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                />
+              </svg>
+              Sign in with Google
+            </Button>
+            <p className="mt-4 text-center text-sm text-muted-foreground">
+              This app requires access to your Google Calendar and Tasks to
+              help you schedule effectively.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
 
       <Footer />
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-pulse text-muted-foreground">Loading...</div>
+        </div>
+      }
+    >
+      <LoginContent />
+    </Suspense>
   );
 }

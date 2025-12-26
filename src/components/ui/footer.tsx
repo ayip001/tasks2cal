@@ -5,14 +5,17 @@ export function Footer() {
     <footer className="border-t py-6">
       <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-center gap-6 text-sm text-muted-foreground">
         <div className="flex items-center gap-6">
-          <iframe
-            src="https://ghbtns.com/github-btn.html?user=ayip001&repo=tasks2cal&type=star&count=true"
-            frameBorder="0"
-            scrolling="0"
-            width="100"
-            height="20"
-            title="GitHub Stars"
-          />
+          <a
+            href="https://github.com/ayip001/tasks2cal"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center"
+          >
+            <img
+              src="https://img.shields.io/github/stars/ayip001/tasks2cal?style=social"
+              alt="GitHub Stars"
+            />
+          </a>
           <a
             href="https://buymeacoffee.com/angusflies"
             target="_blank"

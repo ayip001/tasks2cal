@@ -94,7 +94,7 @@ export default function DayPage() {
 
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.push('/login');
+      router.push('/');
     }
   }, [status, router]);
 
@@ -109,7 +109,7 @@ export default function DayPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Invalid Date</h1>
-          <Button onClick={() => router.push('/')}>Go Back</Button>
+          <Button onClick={() => router.push('/dashboard')}>Go Back</Button>
         </div>
       </div>
     );
@@ -320,10 +320,10 @@ export default function DayPage() {
         <div className="container mx-auto px-4 py-3 md:py-4 flex items-center justify-between">
           {/* Mobile: Back button */}
           <div className="flex items-center gap-2 md:gap-4">
-            <Button variant="ghost" size="icon" onClick={() => router.push('/')} className="md:hidden">
+            <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard')} className="md:hidden">
               <Calendar className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" onClick={() => router.push('/')} className="gap-2 hidden md:flex">
+            <Button variant="ghost" onClick={() => router.push('/dashboard')} className="gap-2 hidden md:flex">
               <Calendar className="h-5 w-5" />
               <span className="text-sm">Back to Calendar</span>
             </Button>
