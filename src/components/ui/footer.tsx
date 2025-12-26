@@ -1,5 +1,3 @@
-import { Coffee } from 'lucide-react';
-
 export function Footer() {
   return (
     <footer className="border-t py-4">
@@ -16,10 +14,11 @@ export function Footer() {
           href="https://buymeacoffee.com/angusflies"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-2 hover:text-foreground transition-colors"
         >
-          <Coffee className="h-4 w-4" />
-          <span>Buy me a coffee</span>
+          <img
+            src="https://img.shields.io/badge/Buy_Me_A_Coffee-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black"
+            alt="Buy Me A Coffee"
+          />
         </a>
       </div>
     </footer>

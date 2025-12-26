@@ -38,8 +38,6 @@ import { TIME_SLOT_INTERVAL } from '@/lib/constants';
 import { normalizeIanaTimeZone, wallTimeOnDateToUtc } from '@/lib/timezone';
 import {
   Calendar,
-  ChevronLeft,
-  ChevronRight,
   LogOut,
   User,
   Wand2,
@@ -320,7 +318,7 @@ export default function DayPage() {
     <div className="min-h-screen flex flex-col bg-background">
       <header className="border-b">
         <div className="container mx-auto px-4 py-3 md:py-4 flex items-center justify-between">
-          {/* Mobile: Back button and date */}
+          {/* Mobile: Back button */}
           <div className="flex items-center gap-2 md:gap-4">
             <Button variant="ghost" size="icon" onClick={() => router.push('/')} className="md:hidden">
               <Calendar className="h-5 w-5" />
@@ -329,19 +327,6 @@ export default function DayPage() {
               <Calendar className="h-5 w-5" />
               <span className="text-sm">Back to Calendar</span>
             </Button>
-
-            <div className="flex items-center gap-1 md:gap-2">
-              <Button variant="ghost" size="icon" onClick={() => navigateDay('prev')}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <h1 className="text-sm md:text-lg font-semibold min-w-[120px] md:min-w-[180px] text-center">
-                <span className="md:hidden">{viewedDayInSelectedZone.toFormat('MMM d')}</span>
-                <span className="hidden md:inline">{viewedDayInSelectedZone.toFormat('EEEE, MMMM d, yyyy')}</span>
-              </h1>
-              <Button variant="ghost" size="icon" onClick={() => navigateDay('next')}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
           </div>
 
           {/* Desktop: Action buttons */}
@@ -507,6 +492,7 @@ export default function DayPage() {
             onExternalDrop={handleExternalDrop}
             onPlacementClick={handlePlacementClick}
             onPastTimeDrop={() => toast.error('Cannot place tasks in the past')}
+            onNavigate={navigateDay}
             settings={settings}
             selectedTimeZone={settings.timezone ?? calendars.find((c) => c.id === settings.selectedCalendarId)?.timeZone ?? 'UTC'}
             calendarTimeZone={calendars.find((c) => c.id === settings.selectedCalendarId)?.timeZone}
@@ -537,6 +523,7 @@ export default function DayPage() {
               onExternalDrop={handleExternalDrop}
               onPlacementClick={handlePlacementClick}
               onPastTimeDrop={() => toast.error('Cannot place tasks in the past')}
+              onNavigate={navigateDay}
               settings={settings}
               selectedTimeZone={settings.timezone ?? calendars.find((c) => c.id === settings.selectedCalendarId)?.timeZone ?? 'UTC'}
               calendarTimeZone={calendars.find((c) => c.id === settings.selectedCalendarId)?.timeZone}

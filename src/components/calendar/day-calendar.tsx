@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useMemo } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -17,7 +17,8 @@ import {
   wallTimeOnDateToUtc,
 } from '@/lib/timezone';
 import { logTimezoneDebug, onTimezoneDebugRefresh } from '@/lib/debug-timezone';
-import { X } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface DayCalendarProps {
   date: string;
@@ -30,6 +31,7 @@ interface DayCalendarProps {
   settings: UserSettings;
   selectedTimeZone: string;
   calendarTimeZone?: string;
+  onNavigate: (direction: 'prev' | 'next') => void;
 }
 
 export function DayCalendar({
@@ -43,9 +45,15 @@ export function DayCalendar({
   settings,
   selectedTimeZone,
   calendarTimeZone,
+  onNavigate,
 }: DayCalendarProps) {
   const calendarRef = useRef<FullCalendar>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const viewedDay = useMemo(
+    () => DateTime.fromISO(date, { zone: selectedTimeZone }),
+    [date, selectedTimeZone]
+  );
 
   useEffect(() => {
     if (calendarRef.current) {
@@ -323,36 +331,51 @@ export function DayCalendar({
   return (
     <div
       ref={containerRef}
-      className="h-full day-calendar-container"
+      className="h-full flex flex-col day-calendar-container"
       style={{ '--task-color': settings.taskColor } as React.CSSProperties}
     >
-      <FullCalendar
-        ref={calendarRef}
-        plugins={[timeGridPlugin, interactionPlugin, luxonPlugin]}
-        initialView="timeGridDay"
-        initialDate={date}
-        headerToolbar={false}
-        allDaySlot={false}
-        timeZone={normalizeIanaTimeZone(selectedTimeZone)}
-        slotDuration={`00:${TIME_SLOT_INTERVAL}:00`}
-        slotMinTime={`${slotMinTime}:00`}
-        slotMaxTime={`${slotMaxTime}:00`}
-        height="100%"
-        events={calendarEvents}
-        editable={true}
-        selectable={false}
-        droppable={true}
-        eventDrop={handleEventDrop}
-        eventContent={renderEventContent}
-        eventReceive={handleEventReceive}
-        eventOverlap={false}
-        slotEventOverlap={false}
-        snapDuration={`00:${TIME_SLOT_INTERVAL}:00`}
-        nowIndicator={true}
-        businessHours={businessHours}
-        slotLaneClassNames="fc-slot-lane"
-        slotLabelContent={renderSlotLabelContent}
-      />
+      <div className="flex items-center justify-center gap-1 md:gap-2 mb-2 md:mb-4">
+        <Button variant="ghost" size="icon" onClick={() => onNavigate('prev')}>
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <h2 className="text-sm md:text-lg font-semibold min-w-[120px] md:min-w-[240px] text-center">
+          <span className="md:hidden">{viewedDay.toFormat('MMM d')}</span>
+          <span className="hidden md:inline">{viewedDay.toFormat('EEEE, MMMM d, yyyy')}</span>
+        </h2>
+        <Button variant="ghost" size="icon" onClick={() => onNavigate('next')}>
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+
+      <div className="flex-1 min-h-0">
+        <FullCalendar
+          ref={calendarRef}
+          plugins={[timeGridPlugin, interactionPlugin, luxonPlugin]}
+          initialView="timeGridDay"
+          initialDate={date}
+          headerToolbar={false}
+          allDaySlot={false}
+          timeZone={normalizeIanaTimeZone(selectedTimeZone)}
+          slotDuration={`00:${TIME_SLOT_INTERVAL}:00`}
+          slotMinTime={`${slotMinTime}:00`}
+          slotMaxTime={`${slotMaxTime}:00`}
+          height="100%"
+          events={calendarEvents}
+          editable={true}
+          selectable={false}
+          droppable={true}
+          eventDrop={handleEventDrop}
+          eventContent={renderEventContent}
+          eventReceive={handleEventReceive}
+          eventOverlap={false}
+          slotEventOverlap={false}
+          snapDuration={`00:${TIME_SLOT_INTERVAL}:00`}
+          nowIndicator={true}
+          businessHours={businessHours}
+          slotLaneClassNames="fc-slot-lane"
+          slotLabelContent={renderSlotLabelContent}
+        />
+      </div>
     </div>
   );
 }
