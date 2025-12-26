@@ -18,6 +18,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
   useTasks,
   useCalendarEvents,
   useCalendars,
@@ -48,6 +56,7 @@ export default function DayPage() {
 
   const [filter, setFilter] = useState<TaskFilter>({});
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [mobileView, setMobileView] = useState<'calendar' | 'tasks'>('calendar');
 
@@ -321,7 +330,7 @@ export default function DayPage() {
           </div>
 
           {/* Action buttons (unified for mobile and desktop) */}
-          <div className="flex items-center gap-0.5 md:gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 md:gap-3">
             <Button
               variant="ghost"
               size="icon"
@@ -338,7 +347,7 @@ export default function DayPage() {
                 <Button 
                   size="sm" 
                   onClick={() => setConfirmDialogOpen(true)}
-                  className="h-9 px-2 md:h-10 md:px-4 md:py-2"
+                  className="h-9 px-2 md:h-9 md:px-4 md:py-2"
                 >
                   <Save className="h-4 w-4 md:mr-2" />
                   <span className="ml-1 md:ml-0">
@@ -350,7 +359,7 @@ export default function DayPage() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => clearPlacements()}
+                  onClick={() => setClearConfirmOpen(true)}
                   className="text-destructive hover:text-destructive md:w-auto md:px-3 md:border md:border-input md:bg-background"
                 >
                   <Trash2 className="h-5 w-5 md:h-4 md:w-4 md:mr-2" />
@@ -364,6 +373,8 @@ export default function DayPage() {
               calendars={calendars}
               onSave={updateSettings}
               onRefetchCalendars={refetchCalendars}
+              triggerVariant="ghost"
+              triggerClassName="md:border md:border-input md:bg-background md:hover:bg-accent"
             />
 
             <DropdownMenu>
@@ -481,6 +492,31 @@ export default function DayPage() {
         saving={saving}
         taskColor={settings.taskColor}
       />
+
+      <Dialog open={clearConfirmOpen} onOpenChange={setClearConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Clear all placements?</DialogTitle>
+            <DialogDescription>
+              This will remove all scheduled tasks from the current day. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setClearConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                clearPlacements();
+                setClearConfirmOpen(false);
+              }}
+            >
+              Clear all
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -32,6 +32,8 @@ interface SettingsPanelProps {
   onSave: (updates: Partial<UserSettings>) => Promise<void>;
   showLabel?: boolean;
   onRefetchCalendars?: () => Promise<void>;
+  triggerClassName?: string;
+  triggerVariant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
 }
 
 // Convert HH:MM to minutes since midnight
@@ -51,7 +53,15 @@ function formatTime(time: string, format: '12h' | '24h'): string {
   return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
 }
 
-export function SettingsPanel({ settings, calendars, onSave, showLabel = false, onRefetchCalendars }: SettingsPanelProps) {
+export function SettingsPanel({ 
+  settings, 
+  calendars, 
+  onSave, 
+  showLabel = false, 
+  onRefetchCalendars,
+  triggerClassName = "",
+  triggerVariant
+}: SettingsPanelProps) {
   const [localSettings, setLocalSettings] = useState<UserSettings>(settings);
   const [saving, setSaving] = useState(false);
   const [open, setOpen] = useState(false);
@@ -228,7 +238,11 @@ export function SettingsPanel({ settings, calendars, onSave, showLabel = false, 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant={showLabel ? "ghost" : "outline"} size={showLabel ? "default" : "icon"} className={showLabel ? "justify-start w-full" : ""}>
+        <Button 
+          variant={triggerVariant || (showLabel ? "ghost" : "outline")} 
+          size={showLabel ? "default" : "icon"} 
+          className={triggerClassName || (showLabel ? "justify-start w-full" : "")}
+        >
           <Settings className="h-4 w-4" />
           {showLabel && <span className="ml-2">Settings</span>}
         </Button>
