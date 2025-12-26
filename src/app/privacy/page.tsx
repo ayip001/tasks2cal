@@ -57,7 +57,7 @@ export default function PrivacyPage() {
           </p>
           <div className="mt-2">
             <img 
-              src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='30'%3E%3Ctext x='0' y='20' font-family='Arial' font-size='16' fill='%23666'%3Eayip002@gmail.com%3C/text%3E%3C/svg%3E" 
+              src="/contact-email.png" 
               alt="Contact Email"
               className="h-6 w-auto"
             />
