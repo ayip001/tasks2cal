@@ -18,13 +18,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
-import {
   useTasks,
   useCalendarEvents,
   useCalendars,
@@ -43,7 +36,6 @@ import {
   Wand2,
   Save,
   Trash2,
-  Menu,
   CalendarDays,
   ListTodo,
 } from 'lucide-react';
@@ -57,7 +49,6 @@ export default function DayPage() {
   const [filter, setFilter] = useState<TaskFilter>({});
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileView, setMobileView] = useState<'calendar' | 'tasks'>('calendar');
 
   const { tasks, taskLists, loading: tasksLoading } = useTasks();
@@ -329,31 +320,41 @@ export default function DayPage() {
             </Button>
           </div>
 
-          {/* Desktop: Action buttons */}
-          <div className="hidden md:flex items-center gap-2">
+          {/* Action buttons (unified for mobile and desktop) */}
+          <div className="flex items-center gap-0.5 md:gap-2">
             <Button
-              variant="outline"
+              variant="ghost"
+              size="icon"
               onClick={handleAutoFit}
               disabled={autoFitLoading || filteredTasks.length === 0}
+              className="md:w-auto md:px-3 md:border md:border-input md:bg-background md:hover:bg-accent"
             >
-              <Wand2 className="h-4 w-4 mr-2" />
-              Auto-fit
+              <Wand2 className="h-5 w-5 md:h-4 md:w-4 md:mr-2" />
+              <span className="hidden md:inline">Auto-fit</span>
             </Button>
 
             {placements.length > 0 && (
               <>
-                <Button
-                  variant="outline"
-                  onClick={() => clearPlacements()}
-                  className="text-destructive hover:text-destructive"
+                <Button 
+                  size="sm" 
+                  onClick={() => setConfirmDialogOpen(true)}
+                  className="h-9 px-2 md:h-10 md:px-4 md:py-2"
                 >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Clear
+                  <Save className="h-4 w-4 md:mr-2" />
+                  <span className="ml-1 md:ml-0">
+                    <span className="hidden md:inline">Save </span>
+                    ({placements.length})
+                  </span>
                 </Button>
 
-                <Button onClick={() => setConfirmDialogOpen(true)}>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save ({placements.length})
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => clearPlacements()}
+                  className="text-destructive hover:text-destructive md:w-auto md:px-3 md:border md:border-input md:bg-background"
+                >
+                  <Trash2 className="h-5 w-5 md:h-4 md:w-4 md:mr-2" />
+                  <span className="hidden md:inline">Clear</span>
                 </Button>
               </>
             )}
@@ -368,7 +369,7 @@ export default function DayPage() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon">
-                  <User className="h-4 w-4" />
+                  <User className="h-5 w-5 md:h-4 md:w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -378,79 +379,6 @@ export default function DayPage() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
-
-          {/* Mobile: Burger menu */}
-          <div className="flex md:hidden items-center gap-2">
-            {placements.length > 0 && (
-              <Button size="sm" onClick={() => setConfirmDialogOpen(true)}>
-                <Save className="h-4 w-4 mr-1" />
-                {placements.length}
-              </Button>
-            )}
-
-            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-72">
-                <SheetHeader>
-                  <SheetTitle>Menu</SheetTitle>
-                </SheetHeader>
-                <div className="flex flex-col gap-2 mt-4 px-4">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      handleAutoFit();
-                      setMobileMenuOpen(false);
-                    }}
-                    disabled={autoFitLoading || filteredTasks.length === 0}
-                    className="justify-start w-full"
-                  >
-                    <Wand2 className="h-4 w-4 mr-2" />
-                    Auto-fit all tasks
-                  </Button>
-
-                  {placements.length > 0 && (
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        clearPlacements();
-                        setMobileMenuOpen(false);
-                      }}
-                      className="justify-start w-full text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Clear placements
-                    </Button>
-                  )}
-
-                  <div className="border-t my-2 -mx-4" />
-
-                  <SettingsPanel
-                    settings={settings}
-                    calendars={calendars}
-                    onSave={updateSettings}
-                    showLabel={true}
-                    onRefetchCalendars={refetchCalendars}
-                  />
-
-                  <Button
-                    variant="ghost"
-                    onClick={() => {
-                      signOut();
-                      setMobileMenuOpen(false);
-                    }}
-                    className="justify-start w-full"
-                  >
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Sign out
-                  </Button>
-                </div>
-              </SheetContent>
-            </Sheet>
           </div>
         </div>
       </header>
