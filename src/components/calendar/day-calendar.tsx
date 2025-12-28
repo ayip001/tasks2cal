@@ -19,6 +19,8 @@ import {
 import { logTimezoneDebug, onTimezoneDebugRefresh } from '@/lib/debug-timezone';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useTranslations } from '@/hooks/use-translations';
+import type { Locale } from '@/i18n/config';
 
 interface DayCalendarProps {
   date: string;
@@ -32,6 +34,7 @@ interface DayCalendarProps {
   selectedTimeZone: string;
   calendarTimeZone?: string;
   onNavigate: (direction: 'prev' | 'next') => void;
+  locale?: Locale;
 }
 
 export function DayCalendar({
@@ -46,8 +49,10 @@ export function DayCalendar({
   selectedTimeZone,
   calendarTimeZone,
   onNavigate,
+  locale = 'en',
 }: DayCalendarProps) {
   const calendarRef = useRef<FullCalendar>(null);
+  const t = useTranslations(locale);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const viewedDay = useMemo(
@@ -221,7 +226,7 @@ export function DayCalendar({
                 }
               }}
               className="flex-shrink-0 p-0.5 rounded hover:bg-black/20 transition-colors"
-              title="Remove placement"
+              title={t('tasks.removePlacement')}
             >
               <X className="h-3 w-3" />
             </button>

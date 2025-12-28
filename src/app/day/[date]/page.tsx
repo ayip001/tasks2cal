@@ -36,6 +36,7 @@ import {
 } from '@/hooks/use-data';
 import { TaskPlacement, TaskFilter, GoogleTask } from '@/types';
 import { TIME_SLOT_INTERVAL } from '@/lib/constants';
+import { useTranslations, getDateLocale } from '@/hooks/use-translations';
 import { normalizeIanaTimeZone, wallTimeOnDateToUtc } from '@/lib/timezone';
 import {
   Calendar,
@@ -61,7 +62,9 @@ export default function DayPage() {
   const [mobileView, setMobileView] = useState<'calendar' | 'tasks'>('calendar');
 
   const { tasks, taskLists, loading: tasksLoading } = useTasks();
-  const { settings, loading: settingsLoading, updateSettings } = useSettings();
+  const { settings, loading: settingsLoading, updateSettings, locale } = useSettings();
+  const t = useTranslations(locale);
+  const dateLocale = getDateLocale(locale);
   const { calendars, refetch: refetchCalendars } = useCalendars();
   const selectedTimeZone = useMemo(() => {
     const tz =
@@ -108,8 +111,8 @@ export default function DayPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Invalid Date</h1>
-          <Button onClick={() => router.push('/dashboard')}>Go Back</Button>
+          <h1 className="text-2xl font-bold mb-4">{t('day.invalidDate')}</h1>
+          <Button onClick={() => router.push('/dashboard')}>{t('day.goBack')}</Button>
         </div>
       </div>
     );
@@ -118,7 +121,7 @@ export default function DayPage() {
   if (status === 'loading' || settingsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
+        <div className="animate-pulse text-muted-foreground">{t('common.loading')}</div>
       </div>
     );
   }
@@ -138,7 +141,7 @@ export default function DayPage() {
     try {
       await updatePlacement(placementId, { startTime: newStartTime });
     } catch {
-      toast.error('Failed to update placement');
+      toast.error(t('day.failedToUpdate'));
     }
   };
 
@@ -154,24 +157,24 @@ export default function DayPage() {
       };
 
       await addPlacement(newPlacement);
-      toast.success(`Added "${taskTitle}" to calendar`);
+      toast.success(t('day.addedToCalendar', { title: taskTitle }));
     } catch {
-      toast.error('Failed to add placement');
+      toast.error(t('day.failedToAdd'));
     }
   };
 
   const handlePlacementClick = async (placementId: string) => {
     try {
       await removePlacement(placementId);
-      toast.success('Placement removed');
+      toast.success(t('day.placementRemoved'));
     } catch {
-      toast.error('Failed to remove placement');
+      toast.error(t('day.failedToRemove'));
     }
   };
 
   const handleAutoFit = async () => {
     if (filteredTasks.length === 0) {
-      toast.error('No tasks to auto-fit. Apply filters first.');
+      toast.error(t('day.noTasksToAutoFit'));
       return;
     }
 
@@ -182,7 +185,7 @@ export default function DayPage() {
       setPlacements(result.allPlacements);
       toast.success(result.message);
     } catch {
-      toast.error('Failed to run auto-fit');
+      toast.error(t('day.failedAutoFit'));
     }
   };
 
@@ -197,7 +200,7 @@ export default function DayPage() {
       if (result.placements.length > 0) {
         // Task was placed in working hours
         setPlacements(result.allPlacements);
-        toast.success(`Added "${task.title}" to calendar`);
+        toast.success(t('day.addedToCalendar', { title: task.title }));
         setMobileView('calendar'); // Switch to calendar view to show result
       } else {
         // No working hours slot available, try to find any available slot
@@ -268,14 +271,14 @@ export default function DayPage() {
           };
 
           await addPlacement(newPlacement);
-          toast.success(`Added "${task.title}" to calendar`);
+          toast.success(t('day.addedToCalendar', { title: task.title }));
           setMobileView('calendar');
         } else {
-          toast.error('No available time slots on this day');
+          toast.error(t('day.noAvailableSlots'));
         }
       }
     } catch {
-      toast.error('Failed to add task');
+      toast.error(t('day.failedToAdd'));
     }
   };
 
@@ -302,13 +305,13 @@ export default function DayPage() {
       await refetchEvents();
 
       setConfirmDialogOpen(false);
-      toast.success(`Successfully saved ${result.savedCount} event(s) to calendar`);
+      toast.success(t('day.savedEvents', { count: result.savedCount }));
 
       if (result.errors.length > 0) {
-        toast.error(`${result.errors.length} event(s) failed to save`);
+        toast.error(t('day.eventsFailed', { count: result.errors.length }));
       }
     } catch {
-      toast.error('Failed to save events to calendar');
+      toast.error(t('day.failedToSave'));
     } finally {
       setSaving(false);
     }
@@ -325,7 +328,7 @@ export default function DayPage() {
             </Button>
             <Button variant="ghost" onClick={() => router.push('/dashboard')} className="gap-2 hidden md:flex">
               <Calendar className="h-5 w-5" />
-              <span className="text-sm">Back to Calendar</span>
+              <span className="text-sm">{t('common.backToCalendar')}</span>
             </Button>
           </div>
 
@@ -339,7 +342,7 @@ export default function DayPage() {
               className="md:w-auto md:px-3 md:border md:border-input md:bg-background md:hover:bg-accent"
             >
               <Wand2 className="h-5 w-5 md:h-4 md:w-4 md:mr-2" />
-              <span className="hidden md:inline">Auto-fit</span>
+              <span className="hidden md:inline">{t('day.autoFit')}</span>
             </Button>
 
             {placements.length > 0 && (
@@ -363,7 +366,7 @@ export default function DayPage() {
                   className="text-destructive hover:text-destructive md:w-auto md:px-3 md:border md:border-input md:bg-background"
                 >
                   <Trash2 className="h-5 w-5 md:h-4 md:w-4 md:mr-2" />
-                  <span className="hidden md:inline">Clear</span>
+                  <span className="hidden md:inline">{t('common.clear')}</span>
                 </Button>
               </>
             )}
@@ -375,6 +378,7 @@ export default function DayPage() {
               onRefetchCalendars={refetchCalendars}
               triggerVariant="ghost"
               triggerClassName="md:border md:border-input md:bg-background md:hover:bg-accent"
+              locale={locale}
             />
 
             <DropdownMenu>
@@ -386,7 +390,7 @@ export default function DayPage() {
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => signOut()}>
                   <LogOut className="mr-2 h-4 w-4" />
-                  Sign out
+                  {t('common.signOut')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -405,7 +409,7 @@ export default function DayPage() {
           }`}
         >
           <CalendarDays className="h-4 w-4" />
-          Calendar
+          {t('day.calendar')}
         </button>
         <button
           onClick={() => setMobileView('tasks')}
@@ -416,7 +420,7 @@ export default function DayPage() {
           }`}
         >
           <ListTodo className="h-4 w-4" />
-          Tasks
+          {t('day.tasks')}
         </button>
       </div>
 
@@ -430,11 +434,12 @@ export default function DayPage() {
             onPlacementDrop={handlePlacementDrop}
             onExternalDrop={handleExternalDrop}
             onPlacementClick={handlePlacementClick}
-            onPastTimeDrop={() => toast.error('Cannot place tasks in the past')}
+            onPastTimeDrop={() => toast.error(t('day.cannotPlacePast'))}
             onNavigate={navigateDay}
             settings={settings}
             selectedTimeZone={settings.timezone ?? calendars.find((c) => c.id === settings.selectedCalendarId)?.timeZone ?? 'UTC'}
             calendarTimeZone={calendars.find((c) => c.id === settings.selectedCalendarId)?.timeZone}
+            locale={locale}
           />
         </div>
 
@@ -446,6 +451,7 @@ export default function DayPage() {
             filter={filter}
             onFilterChange={setFilter}
             filteredTasks={filteredTasks}
+            locale={locale}
           />
         </div>
       </main>
@@ -461,11 +467,12 @@ export default function DayPage() {
               onPlacementDrop={handlePlacementDrop}
               onExternalDrop={handleExternalDrop}
               onPlacementClick={handlePlacementClick}
-              onPastTimeDrop={() => toast.error('Cannot place tasks in the past')}
+              onPastTimeDrop={() => toast.error(t('day.cannotPlacePast'))}
               onNavigate={navigateDay}
               settings={settings}
               selectedTimeZone={settings.timezone ?? calendars.find((c) => c.id === settings.selectedCalendarId)?.timeZone ?? 'UTC'}
               calendarTimeZone={calendars.find((c) => c.id === settings.selectedCalendarId)?.timeZone}
+              locale={locale}
             />
           </div>
         ) : (
@@ -479,6 +486,7 @@ export default function DayPage() {
               filteredTasks={filteredTasks}
               onAddTask={handleAddTask}
               isMobile={true}
+              locale={locale}
             />
           </div>
         )}
@@ -491,19 +499,20 @@ export default function DayPage() {
         onConfirm={handleSaveToCalendar}
         saving={saving}
         taskColor={settings.taskColor}
+        locale={locale}
       />
 
       <Dialog open={clearConfirmOpen} onOpenChange={setClearConfirmOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Clear all placements?</DialogTitle>
+            <DialogTitle>{t('day.clearConfirmTitle')}</DialogTitle>
             <DialogDescription>
-              This will remove all scheduled tasks from the current day. This action cannot be undone.
+              {t('day.clearConfirmDescription')}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setClearConfirmOpen(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               variant="destructive"
@@ -512,7 +521,7 @@ export default function DayPage() {
                 setClearConfirmOpen(false);
               }}
             >
-              Clear all
+              {t('common.clearAll')}
             </Button>
           </DialogFooter>
         </DialogContent>

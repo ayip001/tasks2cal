@@ -25,6 +25,8 @@ import { Settings, Plus, X, AlertTriangle, RefreshCw, LocateFixed } from 'lucide
 import { TimezonePicker } from '@/components/settings/timezone-picker';
 import { Input } from '@/components/ui/input';
 import { requestTimezoneDebugRefresh } from '@/lib/debug-timezone';
+import { useTranslations } from '@/hooks/use-translations';
+import type { Locale } from '@/i18n/config';
 
 interface SettingsPanelProps {
   settings: UserSettings;
@@ -34,6 +36,7 @@ interface SettingsPanelProps {
   onRefetchCalendars?: () => Promise<void>;
   triggerClassName?: string;
   triggerVariant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+  locale?: Locale;
 }
 
 // Convert HH:MM to minutes since midnight
@@ -53,19 +56,21 @@ function formatTime(time: string, format: '12h' | '24h'): string {
   return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
 }
 
-export function SettingsPanel({ 
-  settings, 
-  calendars, 
-  onSave, 
-  showLabel = false, 
+export function SettingsPanel({
+  settings,
+  calendars,
+  onSave,
+  showLabel = false,
   onRefetchCalendars,
   triggerClassName = "",
-  triggerVariant
+  triggerVariant,
+  locale = 'en'
 }: SettingsPanelProps) {
   const [localSettings, setLocalSettings] = useState<UserSettings>(settings);
   const [saving, setSaving] = useState(false);
   const [open, setOpen] = useState(false);
   const [refreshingCalendars, setRefreshingCalendars] = useState(false);
+  const t = useTranslations(locale);
 
   const handleSave = async () => {
     setSaving(true);
@@ -127,17 +132,17 @@ export function SettingsPanel({
   };
 
   const colorOptions = [
-    { value: '#4285f4', label: 'Blue (Default)' },
-    { value: '#a4bdfc', label: 'Lavender' },
-    { value: '#7ae7bf', label: 'Sage' },
-    { value: '#dbadff', label: 'Grape' },
-    { value: '#ff887c', label: 'Flamingo' },
-    { value: '#fbd75b', label: 'Banana' },
-    { value: '#ffb878', label: 'Tangerine' },
-    { value: '#46d6db', label: 'Peacock' },
-    { value: '#5484ed', label: 'Blueberry' },
-    { value: '#51b749', label: 'Basil' },
-    { value: '#dc2127', label: 'Tomato' },
+    { value: '#4285f4', label: t('settings.colorBlue') },
+    { value: '#a4bdfc', label: t('settings.colorLavender') },
+    { value: '#7ae7bf', label: t('settings.colorSage') },
+    { value: '#dbadff', label: t('settings.colorGrape') },
+    { value: '#ff887c', label: t('settings.colorFlamingo') },
+    { value: '#fbd75b', label: t('settings.colorBanana') },
+    { value: '#ffb878', label: t('settings.colorTangerine') },
+    { value: '#46d6db', label: t('settings.colorPeacock') },
+    { value: '#5484ed', label: t('settings.colorBlueberry') },
+    { value: '#51b749', label: t('settings.colorBasil') },
+    { value: '#dc2127', label: t('settings.colorTomato') },
   ];
 
   // Generate hour options for calendar range "from" dropdown
@@ -238,24 +243,24 @@ export function SettingsPanel({
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button 
-          variant={triggerVariant || (showLabel ? "ghost" : "outline")} 
-          size={showLabel ? "default" : "icon"} 
+        <Button
+          variant={triggerVariant || (showLabel ? "ghost" : "outline")}
+          size={showLabel ? "default" : "icon"}
           className={triggerClassName || (showLabel ? "justify-start w-full" : "")}
         >
           <Settings className="h-4 w-4" />
-          {showLabel && <span className="ml-2">Settings</span>}
+          {showLabel && <span className="ml-2">{t('settings.title')}</span>}
         </Button>
       </SheetTrigger>
       <SheetContent className="overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>Settings</SheetTitle>
-          <SheetDescription>Configure your task scheduling preferences</SheetDescription>
+          <SheetTitle>{t('settings.title')}</SheetTitle>
+          <SheetDescription>{t('settings.description')}</SheetDescription>
         </SheetHeader>
 
         <div className="space-y-6 py-6 px-6">
           <div className="space-y-2">
-            <Label>Default Task Duration: {localSettings.defaultTaskDuration} minutes</Label>
+            <Label>{t('settings.defaultTaskDuration', { minutes: localSettings.defaultTaskDuration })}</Label>
             <Slider
               value={[localSettings.defaultTaskDuration]}
               onValueChange={([value]) =>
@@ -268,7 +273,7 @@ export function SettingsPanel({
           </div>
 
           <div className="space-y-2">
-            <Label>Minimum Gap Between Tasks: {localSettings.minTimeBetweenTasks} minutes</Label>
+            <Label>{t('settings.minGapBetweenTasks', { minutes: localSettings.minTimeBetweenTasks })}</Label>
             <Slider
               value={[localSettings.minTimeBetweenTasks]}
               onValueChange={([value]) =>
@@ -281,7 +286,7 @@ export function SettingsPanel({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="timeFormat">Time Format</Label>
+            <Label htmlFor="timeFormat">{t('settings.timeFormat')}</Label>
             <Select
               value={localSettings.timeFormat}
               onValueChange={(value: '12h' | '24h') =>
@@ -292,14 +297,14 @@ export function SettingsPanel({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="12h">12-hour (AM/PM)</SelectItem>
-                <SelectItem value="24h">24-hour</SelectItem>
+                <SelectItem value="12h">{t('settings.timeFormat12h')}</SelectItem>
+                <SelectItem value="24h">{t('settings.timeFormat24h')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="taskColor">Task Color</Label>
+            <Label htmlFor="taskColor">{t('settings.taskColor')}</Label>
             <Select
               value={localSettings.taskColor}
               onValueChange={(value) => setLocalSettings({ ...localSettings, taskColor: value })}
@@ -313,7 +318,7 @@ export function SettingsPanel({
                     />
                     <span>
                       {colorOptions.find((c) => c.value === localSettings.taskColor)?.label ||
-                        'Custom'}
+                        t('settings.colorCustom')}
                     </span>
                   </div>
                 </SelectValue>
@@ -335,7 +340,7 @@ export function SettingsPanel({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="calendar">Calendar for Events</Label>
+            <Label htmlFor="calendar">{t('settings.calendarForEvents')}</Label>
             <Select
               value={localSettings.selectedCalendarId}
               onValueChange={(value) =>
@@ -343,12 +348,12 @@ export function SettingsPanel({
               }
             >
               <SelectTrigger id="calendar">
-                <SelectValue placeholder="Select a calendar" />
+                <SelectValue placeholder={t('settings.selectCalendar')} />
               </SelectTrigger>
               <SelectContent>
                 {calendars.map((calendar) => (
                   <SelectItem key={calendar.id} value={calendar.id}>
-                    {calendar.summary} {calendar.primary && '(Primary)'}
+                    {calendar.summary} {calendar.primary && t('settings.primary')}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -356,31 +361,31 @@ export function SettingsPanel({
           </div>
 
           <div className="space-y-2">
-            <Label>Calendar Timezone</Label>
+            <Label>{t('settings.calendarTimezone')}</Label>
             <div className="flex items-center gap-2">
               <Input
                 value={selectedCalendarTimezone}
                 disabled
                 className="flex-1 text-muted-foreground"
-                placeholder="Select a calendar above"
+                placeholder={t('settings.selectCalendar')}
               />
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={handleRefreshCalendarTimezone}
                 disabled={refreshingCalendars || !onRefetchCalendars}
-                title="Refresh calendar timezone"
+                title={t('settings.refreshTimezone')}
               >
                 <RefreshCw className={`h-4 w-4 ${refreshingCalendars ? 'animate-spin' : ''}`} />
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Timezone configured in Google Calendar
+              {t('settings.calendarTimezoneDesc')}
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label>Your Timezone</Label>
+            <Label>{t('settings.yourTimezone')}</Label>
             <div className="flex items-center gap-2">
               <div className="flex-1">
                 <TimezonePicker
@@ -401,18 +406,18 @@ export function SettingsPanel({
                     // Ignore detection errors
                   }
                 }}
-                title="Auto-detect timezone"
+                title={t('settings.autoDetect')}
               >
                 <LocateFixed className="h-4 w-4" />
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Your local timezone for display purposes
+              {t('settings.yourTimezoneDesc')}
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label>Calendar Day Range</Label>
+            <Label>{t('settings.calendarDayRange')}</Label>
             <div className="flex items-center gap-2">
               <Select
                 value={localSettings.slotMinTime || '06:00'}
@@ -431,7 +436,7 @@ export function SettingsPanel({
                   ))}
                 </SelectContent>
               </Select>
-              <span>to</span>
+              <span>{t('common.to')}</span>
               <Select
                 value={localSettings.slotMaxTime || '22:00'}
                 onValueChange={(value) =>
@@ -451,13 +456,13 @@ export function SettingsPanel({
               </Select>
             </div>
             <p className="text-xs text-muted-foreground">
-              Visible time range on the calendar (minimum 1 hour)
+              {t('settings.calendarDayRangeDesc')}
             </p>
             {workingHoursWarnings.length > 0 && (
               <div className="flex items-start gap-2 text-xs text-amber-600 mt-2">
                 <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-medium">Working hours outside calendar range:</p>
+                  <p className="font-medium">{t('settings.workingHoursWarning')}</p>
                   <ul className="list-disc list-inside">
                     {workingHoursWarnings.map((warning, i) => (
                       <li key={i}>{warning}</li>
@@ -471,14 +476,14 @@ export function SettingsPanel({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <Label>Working Hours</Label>
+                <Label>{t('settings.workingHours')}</Label>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Auto-fit tasks will only fill in working hours.
+                  {t('settings.workingHoursDesc')}
                 </p>
               </div>
               <Button variant="ghost" size="sm" onClick={addWorkingHoursRange}>
                 <Plus className="h-4 w-4 mr-1" />
-                Add Range
+                {t('settings.addRange')}
               </Button>
             </div>
             {localSettings.workingHours.map((hours, index) => (
@@ -498,7 +503,7 @@ export function SettingsPanel({
                     ))}
                   </SelectContent>
                 </Select>
-                <span>to</span>
+                <span>{t('common.to')}</span>
                 <Select
                   value={hours.end}
                   onValueChange={(value) => updateWorkingHours(index, 'end', value)}
@@ -536,12 +541,12 @@ export function SettingsPanel({
               }
             />
             <Label htmlFor="ignoreContainer" className="cursor-pointer">
-              Ignore container tasks in auto-fit
+              {t('settings.ignoreContainerTasks')}
             </Label>
           </div>
 
           <Button onClick={handleSave} disabled={saving} className="w-full">
-            {saving ? 'Saving...' : 'Save Settings'}
+            {saving ? t('settings.saving') : t('settings.saveSettings')}
           </Button>
         </div>
       </SheetContent>
