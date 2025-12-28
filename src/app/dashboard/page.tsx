@@ -38,7 +38,7 @@ export default function DashboardPage() {
   const [displayedMonth, setDisplayedMonth] = useState<Date>(new Date());
   const [monthEvents, setMonthEvents] = useState<GoogleCalendarEvent[]>([]);
   const [loadingMonth, setLoadingMonth] = useState(false);
-  const { settings } = useSettings();
+  const { settings, locale } = useSettings();
   const fetchingRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -274,7 +274,7 @@ export default function DashboardPage() {
         </div>
       </main>
 
-      <Footer />
+      <Footer locale={locale} />
     </div>
   );
 }

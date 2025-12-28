@@ -1,6 +1,19 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Footer } from '@/components/ui/footer';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Privacy Policy - Tasks2Cal',
+  description: 'Tasks2Cal Privacy Policy - Learn how we collect, use, and protect your information.',
+  alternates: {
+    canonical: 'https://tasks2cal.com/privacy',
+    languages: {
+      en: 'https://tasks2cal.com/privacy',
+      'zh-HK': 'https://tasks2cal.com/zh-hk/privacy',
+    },
+  },
+};
 
 export default function PrivacyPage() {
   return (

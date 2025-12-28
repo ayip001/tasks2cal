@@ -15,6 +15,7 @@ export interface UserSettings {
   timeFormat: '12h' | '24h';
   timezone?: string; // User's selected IANA timezone string
   calendarTimezones?: Record<string, string>; // Map of calendarId -> timezone
+  locale?: 'en' | 'zh-hk'; // User's preferred language
 }
 
 export interface TaskPlacement {

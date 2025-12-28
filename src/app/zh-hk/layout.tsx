@@ -1,23 +1,23 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import './globals.css';
+import '../globals.css';
 import { SessionProvider } from '@/components/session-provider';
 import { Toaster } from '@/components/ui/sonner';
 
-const inter = Inter({ 
+const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
 });
 
 export const metadata: Metadata = {
-  title: 'Tasks2Cal - Timebox Google Tasks',
-  description: 'The no-nonsense utility for Google Task timeboxing. Drag tasks onto your Google Calendar and fill your day in seconds.',
+  title: 'Tasks2Cal - 在 Google 日曆上進行時間盒管理',
+  description: '完全免費的時間盒工具。將 Google Tasks 直接拖放到日曆上，數秒內安排好整天的工作。',
   icons: {
     icon: '/tasks2cal-favicon.png',
     apple: '/tasks2cal-webclip.png',
   },
   alternates: {
-    canonical: 'https://tasks2cal.com',
+    canonical: 'https://tasks2cal.com/zh-hk',
     languages: {
       en: 'https://tasks2cal.com',
       'zh-HK': 'https://tasks2cal.com/zh-hk',
@@ -25,13 +25,13 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default function ZhHkLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="zh-HK" className={inter.variable}>
       <body className={`${inter.className} antialiased`}>
         <SessionProvider>
           {children}

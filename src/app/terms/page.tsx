@@ -1,6 +1,19 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Footer } from '@/components/ui/footer';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Terms of Service - Tasks2Cal',
+  description: 'Tasks2Cal Terms of Service - Terms and conditions for using the application.',
+  alternates: {
+    canonical: 'https://tasks2cal.com/terms',
+    languages: {
+      en: 'https://tasks2cal.com/terms',
+      'zh-HK': 'https://tasks2cal.com/zh-hk/terms',
+    },
+  },
+};
 
 export default function TermsPage() {
   return (

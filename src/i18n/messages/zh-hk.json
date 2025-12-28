@@ -1,0 +1,44 @@
+{
+  "common": {
+    "loading": "載入中...",
+    "signOut": "登出",
+    "backToCalendar": "返回日曆",
+    "save": "儲存",
+    "cancel": "取消",
+    "clear": "清除",
+    "clearAll": "全部清除"
+  },
+  "dashboard": {
+    "selectDay": "選擇日期",
+    "selectDayDescription": "點擊日期以查看和安排任務",
+    "loadingEvents": "載入事件中...",
+    "noEvents": "暫無活動安排",
+    "andMore": "還有 {count} 項..."
+  },
+  "day": {
+    "autoFit": "自動排程",
+    "invalidDate": "日期無效",
+    "goBack": "返回",
+    "calendar": "日曆",
+    "tasks": "任務",
+    "cannotPlacePast": "無法在過去的時間安排任務",
+    "noAvailableSlots": "今日沒有可用的時段",
+    "addedToCalendar": "已將「{title}」加入日曆",
+    "failedToAdd": "新增任務失敗",
+    "failedToUpdate": "更新排程失敗",
+    "placementRemoved": "已移除排程",
+    "failedToRemove": "移除排程失敗",
+    "noTasksToAutoFit": "沒有可排程的任務，請先套用篩選條件。",
+    "failedAutoFit": "自動排程失敗",
+    "savedEvents": "已成功儲存 {count} 個事件到日曆",
+    "failedToSave": "儲存事件到日曆失敗",
+    "eventsFailed": "{count} 個事件儲存失敗",
+    "clearConfirmTitle": "清除所有排程？",
+    "clearConfirmDescription": "這將移除當天所有已排程的任務。此操作無法復原。"
+  },
+  "footer": {
+    "privacyPolicy": "私隱政策",
+    "termsOfService": "服務條款",
+    "language": "語言"
+  }
+}
