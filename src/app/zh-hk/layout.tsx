@@ -1,13 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
-import '../globals.css';
-import { SessionProvider } from '@/components/session-provider';
-import { Toaster } from '@/components/ui/sonner';
-
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
-});
+import { LangWrapper } from '@/components/lang-wrapper';
 
 export const metadata: Metadata = {
   title: 'Tasks2Cal - 在 Google 日曆上進行時間盒管理',
@@ -30,14 +22,5 @@ export default function ZhHkLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
-    <html lang="zh-HK" className={inter.variable}>
-      <body className={`${inter.className} antialiased`}>
-        <SessionProvider>
-          {children}
-          <Toaster />
-        </SessionProvider>
-      </body>
-    </html>
-  );
+  return <LangWrapper lang="zh-HK">{children}</LangWrapper>;
 }
