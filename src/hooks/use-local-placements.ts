@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useSyncExternalStore } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { TaskPlacement } from '@/types';
 
 const STORAGE_PREFIX = 'placements:';
@@ -57,7 +57,7 @@ function saveToStorage(date: string, placements: TaskPlacement[]): void {
     } else {
       localStorage.setItem(key, JSON.stringify(placements));
     }
-    // Dispatch a storage event so other hooks can react
+    // Dispatch a storage event so other tabs can react
     window.dispatchEvent(new StorageEvent('storage', { key }));
   } catch {
     // Silently fail - localStorage might be full or disabled
@@ -83,20 +83,15 @@ export function useLocalPlacements(date: string) {
   }
 
   // Subscribe to storage events for cross-tab sync
-  useSyncExternalStore(
-    useCallback((callback) => {
-      const handleStorage = (e: StorageEvent) => {
-        if (e.key === getStorageKey(date) || e.key === null) {
-          setLocalPlacements(loadFromStorage(date));
-          callback();
-        }
-      };
-      window.addEventListener('storage', handleStorage);
-      return () => window.removeEventListener('storage', handleStorage);
-    }, [date]),
-    () => loadFromStorage(date),
-    () => [] as TaskPlacement[]
-  );
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === getStorageKey(date) || e.key === null) {
+        setLocalPlacements(loadFromStorage(date));
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, [date]);
 
   const setPlacements = useCallback(
     (newPlacements: TaskPlacement[]) => {
