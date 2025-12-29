@@ -303,7 +303,7 @@ export function DayCalendar({
 
     const slotUtc = wallTimeOnDateToUtc(date, hhmm, effectiveSelectedTimeZone);
     const primary = DateTime.fromJSDate(slotUtc).setZone(effectiveSelectedTimeZone);
-    const primaryLabel = formatTimeForDisplay(primary, settings.timeFormat);
+    const primaryLabel = formatTimeForDisplay(primary, settings.timeFormat, locale);
 
     const effectiveCalendarTimeZone = normalizeIanaTimeZone(calendarTimeZone);
     const secondary = DateTime.fromJSDate(slotUtc).setZone(effectiveCalendarTimeZone);
@@ -317,7 +317,7 @@ export function DayCalendar({
       return <span>{primaryLabel}</span>;
     }
 
-    const secondaryLabel = formatTimeForDisplay(secondary, settings.timeFormat);
+    const secondaryLabel = formatTimeForDisplay(secondary, settings.timeFormat, locale);
 
     const primaryDate = primary.toISODate();
     const secondaryDate = secondary.toISODate();
