@@ -156,19 +156,19 @@ export function TaskPanel({
                   </div>
                   {taskLists.map((list) => {
                     const isSelected = filter.listIds === undefined || selectedListIds.includes(list.id);
+                    const handleClick = () => handleListToggle(list.id);
                     return (
                       <div
                         key={list.id}
                         className="flex items-center space-x-2 p-2 rounded-sm hover:bg-accent cursor-pointer"
-                        onClick={() => handleListToggle(list.id)}
+                        onClick={handleClick}
                       >
                         <Checkbox
                           id={`list-${list.id}`}
                           checked={isSelected}
-                          onCheckedChange={() => handleListToggle(list.id)}
+                          onCheckedChange={handleClick}
                         />
                         <Label
-                          htmlFor={`list-${list.id}`}
                           className="text-sm cursor-pointer flex-1"
                         >
                           {list.title}

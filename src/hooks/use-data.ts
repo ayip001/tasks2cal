@@ -354,13 +354,15 @@ export function filterTasks(tasks: GoogleTask[], filter: TaskFilter): GoogleTask
           const negativeTerm = term.substring(1);
           const titleMatch = task.title.toLowerCase().includes(negativeTerm);
           const notesMatch = task.notes?.toLowerCase().includes(negativeTerm) || false;
-          if (titleMatch || notesMatch) {
+          const listTitleMatch = task.listTitle.toLowerCase().includes(negativeTerm);
+          if (titleMatch || notesMatch || listTitleMatch) {
             return false;
           }
         } else {
           const titleMatch = task.title.toLowerCase().includes(term);
           const notesMatch = task.notes?.toLowerCase().includes(term) || false;
-          if (!titleMatch && !notesMatch) {
+          const listTitleMatch = task.listTitle.toLowerCase().includes(term);
+          if (!titleMatch && !notesMatch && !listTitleMatch) {
             return false;
           }
         }
