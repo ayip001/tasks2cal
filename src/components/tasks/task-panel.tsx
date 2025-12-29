@@ -10,13 +10,18 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search, Calendar, GripVertical, Check, Plus } from 'lucide-react';
+import { Search, Calendar, GripVertical, Check, Plus, ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { useTranslations } from '@/hooks/use-translations';
 import type { Locale } from '@/i18n/config';
@@ -49,6 +54,43 @@ export function TaskPanel({
   const t = useTranslations(locale);
 
   const setFilter = onFilterChange;
+
+  const selectedListIds = filter.listIds ?? [];
+  const allListIds = taskLists.map((list) => list.id);
+  const allListsSelected = filter.listIds === undefined || (allListIds.length > 0 && selectedListIds.length === allListIds.length);
+  const noListsSelected = selectedListIds.length === 0 && filter.listIds !== undefined;
+
+  const handleAllListsToggle = () => {
+    if (allListsSelected) {
+      setFilter({ ...filter, listIds: [] });
+    } else {
+      setFilter({ ...filter, listIds: allListIds.length > 0 ? allListIds : undefined });
+    }
+  };
+
+  const handleListToggle = (listId: string) => {
+    const currentListIds = filter.listIds ?? [];
+    if (currentListIds.includes(listId)) {
+      const newListIds = currentListIds.filter((id) => id !== listId);
+      setFilter({ ...filter, listIds: newListIds.length > 0 ? newListIds : [] });
+    } else {
+      setFilter({ ...filter, listIds: [...currentListIds, listId] });
+    }
+  };
+
+  const getListFilterDisplayText = () => {
+    if (filter.listIds === undefined || allListsSelected) {
+      return t('tasks.allLists');
+    }
+    if (noListsSelected) {
+      return t('tasks.noListSelected');
+    }
+    if (selectedListIds.length === 1) {
+      const selectedList = taskLists.find((list) => list.id === selectedListIds[0]);
+      return selectedList?.title || t('tasks.allLists');
+    }
+    return t('tasks.listsSelected', { count: selectedListIds.length });
+  };
 
   // Initialize FullCalendar Draggable for external drag and drop (desktop only)
   useEffect(() => {
@@ -85,22 +127,58 @@ export function TaskPanel({
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="list-filter">{t('tasks.list')}</Label>
-            <Select
-              value={filter.listId || 'all'}
-              onValueChange={(value) => setFilter({ ...filter, listId: value === 'all' ? undefined : value })}
-            >
-              <SelectTrigger id="list-filter">
-                <SelectValue placeholder={t('tasks.allLists')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('tasks.allLists')}</SelectItem>
-                {taskLists.map((list) => (
-                  <SelectItem key={list.id} value={list.id}>
-                    {list.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  id="list-filter"
+                  variant="outline"
+                  role="combobox"
+                  className="w-full justify-between"
+                >
+                  <span className="truncate">{getListFilterDisplayText()}</span>
+                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[200px] p-0" align="start">
+                <div className="p-2 space-y-1">
+                  <div className="flex items-center space-x-2 p-2 rounded-sm hover:bg-accent cursor-pointer">
+                    <Checkbox
+                      id="all-lists"
+                      checked={allListsSelected}
+                      onCheckedChange={handleAllListsToggle}
+                    />
+                    <Label
+                      htmlFor="all-lists"
+                      className="text-sm font-medium cursor-pointer flex-1"
+                    >
+                      {t('tasks.allLists')}
+                    </Label>
+                  </div>
+                  {taskLists.map((list) => {
+                    const isSelected = filter.listIds === undefined || selectedListIds.includes(list.id);
+                    return (
+                      <div
+                        key={list.id}
+                        className="flex items-center space-x-2 p-2 rounded-sm hover:bg-accent cursor-pointer"
+                        onClick={() => handleListToggle(list.id)}
+                      >
+                        <Checkbox
+                          id={`list-${list.id}`}
+                          checked={isSelected}
+                          onCheckedChange={() => handleListToggle(list.id)}
+                        />
+                        <Label
+                          htmlFor={`list-${list.id}`}
+                          className="text-sm cursor-pointer flex-1"
+                        >
+                          {list.title}
+                        </Label>
+                      </div>
+                    );
+                  })}
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
 
           <div className="space-y-2">

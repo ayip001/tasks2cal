@@ -78,7 +78,7 @@ export interface TimeSlot {
 }
 
 export interface TaskFilter {
-  listId?: string;
+  listIds?: string[];
   hasDueDate?: boolean;
   searchText?: string;
   hideContainerTasks?: boolean;

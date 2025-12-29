@@ -44,6 +44,8 @@
     "searchPlaceholder": "Search tasks...",
     "list": "List",
     "allLists": "All lists",
+    "noListSelected": "No list selected",
+    "listsSelected": "{count} lists",
     "dueDate": "Due date",
     "all": "All",
     "hasDueDate": "Has due date",

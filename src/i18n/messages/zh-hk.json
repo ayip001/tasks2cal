@@ -44,6 +44,8 @@
     "searchPlaceholder": "搜尋代辦事項...",
     "list": "列表",
     "allLists": "所有列表",
+    "noListSelected": "未選擇列表",
+    "listsSelected": "已選擇{count}個列表",
     "dueDate": "到期日",
     "all": "全部",
     "hasDueDate": "有到期日",

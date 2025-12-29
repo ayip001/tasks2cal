@@ -93,6 +93,14 @@ export default function DayPage() {
     setFilter((prev) => ({ ...prev, hideContainerTasks: settings.ignoreContainerTasks }));
   }, [settings.ignoreContainerTasks]);
 
+  // Initialize listIds with all lists when taskLists are loaded
+  useEffect(() => {
+    if (taskLists.length > 0 && filter.listIds === undefined) {
+      const allListIds = taskLists.map((list) => list.id);
+      setFilter((prev) => ({ ...prev, listIds: allListIds }));
+    }
+  }, [taskLists, filter.listIds]);
+
   // Compute filtered tasks from filter state
   const filteredTasks = useMemo(() => filterTasks(tasks, filter), [tasks, filter]);
 

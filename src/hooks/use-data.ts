@@ -326,8 +326,13 @@ export function useAutoFit() {
 
 export function filterTasks(tasks: GoogleTask[], filter: TaskFilter): GoogleTask[] {
   return tasks.filter((task) => {
-    if (filter.listId && task.listId !== filter.listId) {
-      return false;
+    if (filter.listIds !== undefined) {
+      if (filter.listIds.length === 0) {
+        return false;
+      }
+      if (!filter.listIds.includes(task.listId)) {
+        return false;
+      }
     }
 
     if (filter.hasDueDate !== undefined) {
