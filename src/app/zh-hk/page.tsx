@@ -63,19 +63,21 @@ function HeroSection() {
           <div className="space-y-8 animate-fade-in">
             {/* Headline */}
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-gray-900 leading-[1.1]">
-              在{' '}
-              <span className="bg-gradient-to-r from-[#4285f4] to-[#34a853] bg-clip-text text-transparent">
-                Google 日曆
-              </span>
-              {' '}上更快進行時間盒管理，配合{' '}
+              更快地使用{' '}
               <span className="bg-gradient-to-r from-[#4285f4] via-[#ea4335] to-[#fbbc05] bg-clip-text text-transparent">
                 Google Tasks
               </span>
+              {' '}在{' '}
+              <span className="bg-gradient-to-r from-[#4285f4] to-[#34a853] bg-clip-text text-transparent">
+                Google 行事曆
+              </span>
+              {' '}上進行時間箱管理{' '}
+              
             </h1>
 
             {/* Sub-headline */}
             <p className="text-xl text-gray-600 max-w-lg leading-relaxed">
-              簡單實用、完全免費的時間盒工具。將任務直接拖放到日曆上，數秒內安排好整天的工作。
+              簡單實用、完全免費的時間箱（Timeboxing）工具。將代辦事項直接拖放到行事曆上，數秒內安排好整天的工作。
             </p>
 
             {/* CTA */}
@@ -117,7 +119,7 @@ function BeforeAfterSection() {
           {/* Section header */}
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              一個你不知道自己需要的簡單工作流程升級
+              更方便地進行時間箱管理
             </h2>
           </div>
 
@@ -160,7 +162,7 @@ function BeforeAfterSection() {
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 text-gray-400 text-sm flex items-center justify-center font-medium">6</span>
-                  <span>重複步驟 2-5 <em>n</em> 次直到安排好整天</span>
+                  <span>重複步驟 2-5 <em>n</em> 次直到安排好一天的代辦事項</span>
                 </li>
               </ol>
             </div>
@@ -195,7 +197,7 @@ function BeforeAfterSection() {
               </ol>
               <div className="mt-6 pt-4 border-t border-emerald-100">
                 <p className="text-sm text-emerald-600 font-medium">
-                  👍 聰明工作，而非努力工作
+                  👍 一鍵將代辦事項填入你的工作時間，自動避開現有會議。
                 </p>
               </div>
             </div>
@@ -212,28 +214,28 @@ function FeatureGridSection() {
       icon: Zap,
       emoji: '⚡',
       title: '拖放操作',
-      description: '將任務拖放到 Google 日曆上的 15 分鐘時段。',
+      description: '將 Google Tasks 的代辦事項拖放到 Google 行事曆上。',
       color: 'from-amber-400 to-orange-500',
     },
     {
       icon: Bot,
       emoji: '🤖',
       title: '智能自動排程',
-      description: '一鍵將任務填入你的工作時間，自動避開現有會議。',
+      description: '一鍵將代辦事項填入你的工作時間，自動避開現有會議。',
       color: 'from-purple-400 to-indigo-500',
     },
     {
       icon: Save,
       emoji: '💾',
-      title: '批量提交',
-      description: '在本地規劃整天行程，然後一次過儲存到 Google。',
+      title: '批量儲存',
+      description: '在 Tasks2Cal 規劃整天行程，然後一次過儲存到 Google 行事曆。',
       color: 'from-blue-400 to-cyan-500',
     },
     {
       icon: Clock,
       emoji: '⚙️',
       title: '尊重你的時間',
-      description: '自訂工作時間，讓機器人不會在凌晨 3 點安排深度工作（除非你想要）。',
+      description: '自訂工作時間，並讓自動排程避開行事曆上已安排的會議。',
       color: 'from-emerald-400 to-teal-500',
     },
   ];
@@ -287,10 +289,10 @@ function DevTransparencySection() {
             {/* Left: Copy */}
             <div className="md:col-span-3 space-y-6">
               <h2 className="text-3xl md:text-4xl font-bold leading-tight">
-                為何要做這個？
+                為何要做這個小工具？
               </h2>
               <p className="text-gray-400 text-lg leading-relaxed">
-                我開發這個是因為厭倦了手動為每日任務建立日曆事件。作為典型的軟體開發者，我花了整個週末來自動化一個每天只需 3 分鐘的流程（然後又花了好幾天把它打磨到可以公開使用）。
+                開發此工具是因為我厭倦了手動為每日為每一項代辦事項建立行事曆事件。既然可以自動化，我便花了整個週末來自動化一個只需 3 分鐘的流程（然後又花了好幾天把它打磨到可以公開使用）🤦‍♀️。
               </p>
             </div>
 
@@ -312,7 +314,7 @@ function DevTransparencySection() {
                 rel="noopener noreferrer"
                 className="block mt-3 text-gray-500 text-sm hover:text-gray-300 transition-colors text-center"
               >
-                相關 XKCD →
+                Relevant XKCD →
               </a>
             </div>
           </div>
@@ -343,7 +345,7 @@ function TechnicalProofSection() {
                 <h3 className="text-xl font-bold text-gray-900">私隱優先</h3>
               </div>
               <p className="text-gray-600 leading-relaxed">
-                我們不會儲存你的任務。我們使用 Redis 進行短期會話緩存，其他所有資料都保留在你的 Google 帳戶中。
+                我們不會儲存你的任何資料。我們使用 Redis 進行短期會話緩存，其他所有資料都保留在你的 Google 帳戶中。
               </p>
             </div>
 
@@ -380,32 +382,32 @@ function FAQSection() {
     {
       question: '這有什麼用？',
       answer:
-        '時間盒管理需要大量工作，我認為不應該這麼複雜。Tasks2Cal 是一個工具，讓你可以將 Google Tasks 直接拖放到 Google 日曆的時段中，為深度工作預留時間。只要你設定好工作時間，並且已經在使用 Google 日曆和 Tasks，它就能在幾秒內將冗長的待辦清單變成切實可行的時間表。',
+        '使用 Google 的工具進行時間箱/時間盒管理（Timeboxing）需要花點時間，而我認為過程不應該這麼複雜。Tasks2Cal 是一個工具，讓你可以將 Google Tasks 直接拖放到 Google 行事曆的時段中，為深度工作預留時間。只要你設定好工作時間，並且已經在使用 Google 行事曆和 Tasks，它就能在幾秒內將冗長的待辦清單變成切實可行的時間表。',
     },
     {
       question: '這是免費的嗎？',
       answer:
-        '是的。我開發這個是因為不想為了一個臃腫的 SaaS 工具付月費，只為了在兩個 Google 應用程式之間移動資料。這是一個免費、開源的生產力工具，專為效率而設計，而非推銷升級。',
+        '是的。我開發這個是不想因為只為了在兩個 Google 應用程式之間移動資料而付費。這是一個免費、開源的生產力工具，專為效率而設計，而非推銷升級。',
     },
     {
       question: '你們會儲存我的資料嗎？',
       answer:
-        '不，我不想要你的資料。這個應用程式使用臨時緩存（Redis）來讓拖放排程介面更流暢，但你的任務和日曆事件嚴格保留在你的 Google 帳戶中。我們只是協助資料傳遞，不會保留檔案。',
+        '不會。這個應用程式使用臨時緩存（Redis）來讓拖放排程介面更流暢，但你的任務和行事曆事件嚴格保留在你的 Google 帳戶中。此工具只是協助資料傳遞，不會保留檔案。',
     },
     {
       question: '「自動排程」是如何運作的？是 AI 嗎？',
       answer:
-        '這是一個 AI 驅動的排程最佳化器，幫你找出最佳的時間盒安排方式——如果你對 AI 的定義是一堆 if 語句，它會讀取你現有的 Google 日曆會議，並將任務填入你設定的工作時間。有截止時間的任務會優先處理。Google 日曆 API 不會公開星號標記的任務，否則星號任務也會被優先處理。',
+        '如果你認為一個能把代辦任務自動填入 Google 行事曆的小工具是 AI 的話，那就太好了。它只是讀取你的工作時間和行事曆上已安排的會議，並將代辦事項填入你的工作時間，避開現有會議。',
     },
     {
-      question: '為什麼不直接在 Google 日曆上用 X/Y 方法來進行時間盒管理？',
+      question: '為什麼不直接在 Google 行事曆上用 X/Y 方法來進行時間箱管理？',
       answer:
-        '在 Google 日曆上有很多時間盒管理的方法，但 Google 提供的工具無法快速將 Google Tasks 上的項目移到 Google 日曆。',
+        '在 Google 行事曆上有很多時間箱管理的方法，但 Google 提供的工具無法快速將 Google Tasks 的代辦事項直接拖放到 Google 行事曆。',
     },
     {
       question: '我有功能建議 / 發現了 bug / 想要貢獻。',
       answer:
-        '太好了！這是一個開源專案。請在 GitHub 上提交 issue 或 pull request。歡迎任何貢獻，無論是修復 bug 還是新增你認為缺少的功能。',
+        '這是一個開源專案，所以請在 GitHub 上提交 issue 或 pull request。歡迎任何貢獻，無論是修復 bug 還是新增你認為缺少的功能。',
     },
   ];
 
@@ -450,10 +452,10 @@ function CTASection() {
 
       <div className="container mx-auto px-6 relative z-10 text-center">
         <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-          準備好更快地進行時間盒管理了嗎？
+          準備好更快地使用 Google 工具進行時間箱管理了嗎？
         </h2>
         <p className="text-blue-100 text-lg mb-8 max-w-xl mx-auto">
-          加入已經節省了排程時間（和理智）的開發者和生產力愛好者。
+          加入其他生產力愛好者，解鎖（稍微）更高效的時間箱排程吧。
         </p>
         <Button
           onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
