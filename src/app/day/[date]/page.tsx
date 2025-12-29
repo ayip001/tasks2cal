@@ -31,13 +31,13 @@ import {
   useCalendarEvents,
   useCalendars,
   useSettings,
-  usePlacements,
-  useAutoFit,
   filterTasks,
 } from '@/hooks/use-data';
+import { useLocalPlacements } from '@/hooks/use-local-placements';
+import { autoFitTasks } from '@/lib/autofit';
 import { TaskPlacement, TaskFilter, GoogleTask } from '@/types';
 import { TIME_SLOT_INTERVAL } from '@/lib/constants';
-import { useTranslations, getDateLocale } from '@/hooks/use-translations';
+import { useTranslations } from '@/hooks/use-translations';
 import { normalizeIanaTimeZone, wallTimeOnDateToUtc } from '@/lib/timezone';
 import {
   Calendar,
@@ -65,7 +65,6 @@ export default function DayPage() {
   const { tasks, taskLists, loading: tasksLoading } = useTasks();
   const { settings, loading: settingsLoading, updateSettings, locale } = useSettings();
   const t = useTranslations(locale);
-  const dateLocale = getDateLocale(locale);
   const { calendars, refetch: refetchCalendars } = useCalendars();
   const selectedTimeZone = useMemo(() => {
     const tz =
@@ -85,8 +84,8 @@ export default function DayPage() {
     removePlacement,
     clearPlacements,
     setPlacements,
-  } = usePlacements(dateParam);
-  const { runAutoFit, loading: autoFitLoading } = useAutoFit();
+  } = useLocalPlacements(dateParam);
+  const [autoFitLoading, setAutoFitLoading] = useState(false);
 
   // Sync hideContainerTasks with settings
   useEffect(() => {
@@ -146,70 +145,73 @@ export default function DayPage() {
     }
   };
 
-  const handlePlacementDrop = async (placementId: string, newStartTime: string) => {
-    try {
-      await updatePlacement(placementId, { startTime: newStartTime });
-    } catch {
-      toast.error(t('day.failedToUpdate'));
-    }
+  const handlePlacementDrop = (placementId: string, newStartTime: string) => {
+    updatePlacement(placementId, { startTime: newStartTime });
   };
 
-  const handleExternalDrop = async (taskId: string, taskTitle: string, startTime: string, listId?: string, listTitle?: string) => {
-    try {
-      const newPlacement: TaskPlacement = {
-        id: `${taskId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        taskId,
-        taskTitle,
-        listId,
-        listTitle,
-        startTime,
-        duration: settings.defaultTaskDuration,
-      };
+  const handleExternalDrop = (taskId: string, taskTitle: string, startTime: string, listId?: string, listTitle?: string) => {
+    const newPlacement: TaskPlacement = {
+      id: `${taskId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      taskId,
+      taskTitle,
+      listId,
+      listTitle,
+      startTime,
+      duration: settings.defaultTaskDuration,
+    };
 
-      await addPlacement(newPlacement);
-      toast.success(t('day.addedToCalendar', { title: taskTitle }));
-    } catch {
-      toast.error(t('day.failedToAdd'));
-    }
+    addPlacement(newPlacement);
+    toast.success(t('day.addedToCalendar', { title: taskTitle }));
   };
 
-  const handlePlacementClick = async (placementId: string) => {
-    try {
-      await removePlacement(placementId);
-      toast.success(t('day.placementRemoved'));
-    } catch {
-      toast.error(t('day.failedToRemove'));
-    }
+  const handlePlacementClick = (placementId: string) => {
+    removePlacement(placementId);
+    toast.success(t('day.placementRemoved'));
   };
 
-  const handleAutoFit = async () => {
+  const handleAutoFit = () => {
     if (filteredTasks.length === 0) {
       toast.error(t('day.noTasksToAutoFit'));
       return;
     }
 
+    setAutoFitLoading(true);
     try {
-      const calendarTimeZone = calendars.find((c) => c.id === settings.selectedCalendarId)?.timeZone;
-
-      const result = await runAutoFit(dateParam, filteredTasks, selectedTimeZone, calendarTimeZone);
-      setPlacements(result.allPlacements);
+      const result = autoFitTasks(
+        filteredTasks,
+        events,
+        placements,
+        settings,
+        dateParam,
+        selectedTimeZone
+      );
+      const allPlacements = [...placements, ...result.placements];
+      setPlacements(allPlacements);
       toast.success(result.message);
     } catch {
       toast.error(t('day.failedAutoFit'));
+    } finally {
+      setAutoFitLoading(false);
     }
   };
 
   // Handle adding a single task via + button (mobile)
-  const handleAddTask = async (task: GoogleTask) => {
+  const handleAddTask = (task: GoogleTask) => {
     try {
       // Try to auto-fit this single task
-      const calendarTimeZone = calendars.find((c) => c.id === settings.selectedCalendarId)?.timeZone;
-
-      const result = await runAutoFit(dateParam, [task], selectedTimeZone, calendarTimeZone);
+      const result = autoFitTasks(
+        [task],
+        events,
+        placements,
+        settings,
+        dateParam,
+        selectedTimeZone
+      );
 
       if (result.placements.length > 0) {
         // Task was placed in working hours
-        setPlacements(result.allPlacements);
+        const allPlacements = [...placements, ...result.placements];
+        setPlacements(allPlacements);
         toast.success(t('day.addedToCalendar', { title: task.title }));
         setMobileView('calendar'); // Switch to calendar view to show result
       } else {
@@ -281,7 +283,7 @@ export default function DayPage() {
             duration: settings.defaultTaskDuration,
           };
 
-          await addPlacement(newPlacement);
+          addPlacement(newPlacement);
           toast.success(t('day.addedToCalendar', { title: task.title }));
           setMobileView('calendar');
         } else {
@@ -313,7 +315,7 @@ export default function DayPage() {
 
       const result = await response.json();
 
-      await clearPlacements();
+      clearPlacements();
       await refetchEvents();
 
       setConfirmDialogOpen(false);
