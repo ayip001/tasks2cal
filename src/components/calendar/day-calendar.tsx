@@ -19,7 +19,7 @@ import {
 import { logTimezoneDebug, onTimezoneDebugRefresh } from '@/lib/debug-timezone';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useTranslations } from '@/hooks/use-translations';
+import { useTranslations, getFullCalendarLocale } from '@/hooks/use-translations';
 import type { Locale } from '@/i18n/config';
 
 interface DayCalendarProps {
@@ -53,6 +53,7 @@ export function DayCalendar({
 }: DayCalendarProps) {
   const calendarRef = useRef<FullCalendar>(null);
   const t = useTranslations(locale);
+  const fullCalendarLocale = getFullCalendarLocale(locale);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const viewedDay = useMemo(
@@ -349,8 +350,8 @@ export function DayCalendar({
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <h2 className="text-sm md:text-lg font-semibold min-w-[120px] md:min-w-[240px] text-center">
-          <span className="md:hidden">{viewedDay.toFormat('MMM d')}</span>
-          <span className="hidden md:inline">{viewedDay.toFormat('EEEE, MMMM d, yyyy')}</span>
+          <span className="md:hidden">{viewedDay.setLocale(fullCalendarLocale).toFormat('MMM d')}</span>
+          <span className="hidden md:inline">{viewedDay.setLocale(fullCalendarLocale).toFormat('EEEE, MMMM d, yyyy')}</span>
         </h2>
         <Button variant="ghost" size="icon" onClick={() => onNavigate('next')}>
           <ChevronRight className="h-4 w-4" />
@@ -365,6 +366,7 @@ export function DayCalendar({
           initialDate={date}
           headerToolbar={false}
           allDaySlot={false}
+          locale={fullCalendarLocale}
           timeZone={normalizeIanaTimeZone(selectedTimeZone)}
           slotDuration={`00:${TIME_SLOT_INTERVAL}:00`}
           slotMinTime={`${slotMinTime}:00`}

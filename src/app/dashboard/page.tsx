@@ -17,7 +17,7 @@ import { Footer } from '@/components/ui/footer';
 import Image from 'next/image';
 import { GoogleCalendarEvent } from '@/types';
 import { useSettings } from '@/hooks/use-data';
-import { useTranslations, getDateLocale } from '@/hooks/use-translations';
+import { useTranslations, getDateLocale, getDateFnsLocale } from '@/hooks/use-translations';
 import { isUtilityCreatedEvent } from '@/lib/constants';
 import { normalizeIanaTimeZone } from '@/lib/timezone';
 
@@ -42,6 +42,7 @@ export default function DashboardPage() {
   const { settings, locale } = useSettings();
   const t = useTranslations(locale);
   const dateLocale = getDateLocale(locale);
+  const dateFnsLocale = getDateFnsLocale(locale);
   const fetchingRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -222,6 +223,7 @@ export default function DashboardPage() {
           onDayMouseEnter={(date) => setHoveredDate(date)}
           onDayMouseLeave={() => setHoveredDate(null)}
           getDayEvents={getEventsForDate}
+          locale={dateFnsLocale}
           className="rounded-lg border [--cell-size:--spacing(11)] md:[--cell-size:--spacing(12)]"
         />
 

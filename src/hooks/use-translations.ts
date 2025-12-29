@@ -4,6 +4,8 @@ import { useMemo } from 'react';
 import type { Locale } from '@/i18n/config';
 import enMessages from '@/i18n/messages/en.json';
 import zhHkMessages from '@/i18n/messages/zh-hk.json';
+import { enUS, zhTW } from 'date-fns/locale';
+import type { Locale as DateFnsLocale } from 'date-fns';
 
 type Messages = typeof enMessages;
 type NestedKeyOf<T> = T extends object
@@ -62,7 +64,7 @@ export function useTranslations(locale: Locale) {
 }
 
 /**
- * Get the date locale string for date-fns or other libraries
+ * Get the date locale string for Intl APIs
  */
 export function getDateLocale(locale: Locale): string {
   switch (locale) {
@@ -70,5 +72,29 @@ export function getDateLocale(locale: Locale): string {
       return 'zh-HK';
     default:
       return 'en-US';
+  }
+}
+
+/**
+ * Get the date-fns locale object for react-day-picker
+ */
+export function getDateFnsLocale(locale: Locale): DateFnsLocale {
+  switch (locale) {
+    case 'zh-hk':
+      return zhTW; // Use Traditional Chinese (Taiwan) as closest to HK
+    default:
+      return enUS;
+  }
+}
+
+/**
+ * Get the FullCalendar locale code
+ */
+export function getFullCalendarLocale(locale: Locale): string {
+  switch (locale) {
+    case 'zh-hk':
+      return 'zh-tw'; // Traditional Chinese
+    default:
+      return 'en';
   }
 }
