@@ -201,16 +201,6 @@
 .fc-event-mirror {
   opacity: 0.5 !important;
   border-radius: 4px;
-}
-
-/* External drag from task panel - use dynamic --task-color */
-.fc-event-mirror:not(.temp-placement) {
-  background-color: var(--task-color, #4285f4) !important;
-  border: 2px dashed var(--task-color, #4285f4) !important;
-}
-
-/* Existing placements being dragged - use dashed border with the event's existing color */
-.fc-event-mirror.temp-placement {
   border-style: dashed !important;
   border-width: 2px !important;
 }

@@ -110,9 +110,12 @@ export function TaskPanel({
       const draggable = new Draggable(containerRef.current, {
         itemSelector: '[data-task-id]',
         eventData: (eventEl) => {
+          const color = eventEl.dataset.taskColor || taskColor;
           return {
             title: eventEl.dataset.taskTitle || 'Task',
             duration: '00:30', // Default duration, actual duration set by settings on drop
+            backgroundColor: color,
+            borderColor: color,
           };
         },
       });
@@ -121,7 +124,7 @@ export function TaskPanel({
         draggable.destroy();
       };
     }
-  }, [isMobile]);
+  }, [isMobile, taskColor]);
 
   return (
     <div className="h-full flex flex-col">

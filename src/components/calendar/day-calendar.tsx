@@ -68,32 +68,11 @@ export function DayCalendar({
     }
   }, [date]);
 
-  // Set CSS variable on document root for drag ghost color
-  // Updates dynamically when dragging starts based on the task's list color
+  // Set CSS variable on document root (used for misc styling)
   useEffect(() => {
     document.documentElement.style.setProperty('--task-color', settings.taskColor);
-
-    // Listen for drag start events to update color dynamically
-    const handleDragStart = (e: DragEvent) => {
-      const target = e.target as HTMLElement;
-      const taskElement = target.closest('[data-task-color]') as HTMLElement;
-      if (taskElement?.dataset.taskColor) {
-        document.documentElement.style.setProperty('--task-color', taskElement.dataset.taskColor);
-      }
-    };
-
-    // Reset color when drag ends
-    const handleDragEnd = () => {
-      document.documentElement.style.setProperty('--task-color', settings.taskColor);
-    };
-
-    document.addEventListener('dragstart', handleDragStart);
-    document.addEventListener('dragend', handleDragEnd);
-
     return () => {
       document.documentElement.style.removeProperty('--task-color');
-      document.removeEventListener('dragstart', handleDragStart);
-      document.removeEventListener('dragend', handleDragEnd);
     };
   }, [settings.taskColor]);
 
