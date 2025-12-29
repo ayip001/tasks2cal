@@ -350,8 +350,16 @@ export function DayCalendar({
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <h2 className="text-sm md:text-lg font-semibold min-w-[120px] md:min-w-[240px] text-center">
-          <span className="md:hidden">{viewedDay.setLocale(fullCalendarLocale).toFormat('MMM d')}</span>
-          <span className="hidden md:inline">{viewedDay.setLocale(fullCalendarLocale).toFormat('EEEE, MMMM d, yyyy')}</span>
+          <span className="md:hidden">
+            {locale === 'zh-hk'
+              ? viewedDay.setLocale(fullCalendarLocale).toFormat('M月d日')
+              : viewedDay.setLocale(fullCalendarLocale).toFormat('MMM d')}
+          </span>
+          <span className="hidden md:inline">
+            {locale === 'zh-hk'
+              ? viewedDay.setLocale(fullCalendarLocale).toFormat("yyyy'年'M'月'd'日（'EEEE'）'")
+              : viewedDay.setLocale(fullCalendarLocale).toFormat('EEEE, MMMM d, yyyy')}
+          </span>
         </h2>
         <Button variant="ghost" size="icon" onClick={() => onNavigate('next')}>
           <ChevronRight className="h-4 w-4" />
