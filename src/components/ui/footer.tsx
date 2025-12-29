@@ -67,9 +67,20 @@ export function Footer({ locale = 'en' }: FooterProps) {
     }
   };
 
-  const handleLanguageChange = (targetLocale: Locale) => {
-    // Set the cookie for next-intl to pick up
+  const handleLanguageChange = async (targetLocale: Locale) => {
+    // Set the cookie first for immediate effect
     setLocaleCookie(targetLocale);
+
+    // Update Redis settings so useSettings doesn't override the cookie
+    try {
+      await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ locale: targetLocale }),
+      });
+    } catch {
+      // Continue anyway - cookie is set
+    }
 
     // Navigate to the appropriate page
     const newPath = getLocalizedPath(targetLocale);
