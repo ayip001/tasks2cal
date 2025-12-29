@@ -18,7 +18,6 @@ export function isUtilityCreatedEvent(summary: string): boolean {
 export const DEFAULT_TASK_COLOR = '#4285F4';
 export const DEFAULT_MIN_TIME_BETWEEN_TASKS = 15;
 export const TIME_SLOT_INTERVAL = 15;
-export const PLACEMENT_TTL_SECONDS = 24 * 60 * 60;
 
 export const DEFAULT_WORKING_HOURS = [
   { start: '11:00', end: '12:15' },
@@ -53,7 +52,6 @@ export const GOOGLE_CALENDAR_COLORS: Record<string, string> = {
 
 export const KV_KEYS = {
   settings: (userId: string) => `settings:${userId}`,
-  placements: (userId: string, date: string) => `temp:${userId}:${date}`,
 };
 
 export const GOOGLE_SCOPES = [
