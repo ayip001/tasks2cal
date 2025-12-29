@@ -13,6 +13,8 @@ import {
 } from '@/types';
 import { DEFAULT_SETTINGS } from '@/lib/constants';
 import { normalizeIanaTimeZone } from '@/lib/timezone';
+import { getLocaleFromCookieClient, setLocaleCookie } from '@/lib/locale';
+import type { Locale } from '@/i18n/config';
 
 export function useTasks() {
   const [tasks, setTasks] = useState<GoogleTask[]>([]);
@@ -115,6 +117,7 @@ export function useCalendars() {
 export function useSettings() {
   const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
+  const [locale, setLocale] = useState<Locale>('en');
 
   const fetchSettings = useCallback(async () => {
     try {
@@ -122,6 +125,27 @@ export function useSettings() {
       if (res.ok) {
         const data = await res.json();
         setSettings(data);
+
+        // Handle locale sync between cookie and Redis
+        const cookieLocale = getLocaleFromCookieClient();
+        const redisLocale = data.locale as Locale | undefined;
+
+        if (!redisLocale) {
+          // New or legacy user - cookie determines preference
+          // Save cookie locale to Redis
+          setLocale(cookieLocale);
+          await fetch('/api/settings', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ locale: cookieLocale }),
+          });
+        } else if (redisLocale !== cookieLocale) {
+          // Redis is source of truth - sync cookie
+          setLocaleCookie(redisLocale);
+          setLocale(redisLocale);
+        } else {
+          setLocale(redisLocale);
+        }
       }
     } finally {
       setLoading(false);
@@ -142,13 +166,20 @@ export function useSettings() {
     if (res.ok) {
       const data = await res.json();
       setSettings(data);
+
+      // If locale was updated, sync to cookie
+      if (updates.locale) {
+        setLocaleCookie(updates.locale);
+        setLocale(updates.locale);
+      }
+
       return data;
     }
 
     throw new Error('Failed to update settings');
   };
 
-  return { settings, loading, updateSettings, refetch: fetchSettings };
+  return { settings, loading, updateSettings, refetch: fetchSettings, locale };
 }
 
 export function usePlacements(date: string) {

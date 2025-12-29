@@ -18,6 +18,8 @@ import {
 } from '@/components/ui/select';
 import { Search, Calendar, GripVertical, Check, Plus } from 'lucide-react';
 import { format } from 'date-fns';
+import { useTranslations } from '@/hooks/use-translations';
+import type { Locale } from '@/i18n/config';
 
 interface TaskPanelProps {
   taskLists: GoogleTaskList[];
@@ -28,6 +30,7 @@ interface TaskPanelProps {
   filteredTasks: GoogleTask[];
   onAddTask?: (task: GoogleTask) => void;
   isMobile?: boolean;
+  locale?: Locale;
 }
 
 export function TaskPanel({
@@ -39,9 +42,11 @@ export function TaskPanel({
   filteredTasks,
   onAddTask,
   isMobile = false,
+  locale = 'en',
 }: TaskPanelProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const placedTaskIds = new Set(placements.map((p) => p.taskId));
+  const t = useTranslations(locale);
 
   const setFilter = onFilterChange;
 
@@ -70,7 +75,7 @@ export function TaskPanel({
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search tasks..."
+            placeholder={t('tasks.searchPlaceholder')}
             className="pl-9"
             value={filter.searchText || ''}
             onChange={(e) => setFilter({ ...filter, searchText: e.target.value })}
@@ -79,16 +84,16 @@ export function TaskPanel({
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="list-filter">List</Label>
+            <Label htmlFor="list-filter">{t('tasks.list')}</Label>
             <Select
               value={filter.listId || 'all'}
               onValueChange={(value) => setFilter({ ...filter, listId: value === 'all' ? undefined : value })}
             >
               <SelectTrigger id="list-filter">
-                <SelectValue placeholder="All lists" />
+                <SelectValue placeholder={t('tasks.allLists')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All lists</SelectItem>
+                <SelectItem value="all">{t('tasks.allLists')}</SelectItem>
                 {taskLists.map((list) => (
                   <SelectItem key={list.id} value={list.id}>
                     {list.title}
@@ -99,7 +104,7 @@ export function TaskPanel({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="due-filter">Due date</Label>
+            <Label htmlFor="due-filter">{t('tasks.dueDate')}</Label>
             <Select
               value={filter.hasDueDate === undefined ? 'all' : filter.hasDueDate ? 'has' : 'none'}
               onValueChange={(value) =>
@@ -110,12 +115,12 @@ export function TaskPanel({
               }
             >
               <SelectTrigger id="due-filter">
-                <SelectValue placeholder="All" />
+                <SelectValue placeholder={t('tasks.all')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="has">Has due date</SelectItem>
-                <SelectItem value="none">No due date</SelectItem>
+                <SelectItem value="all">{t('tasks.all')}</SelectItem>
+                <SelectItem value="has">{t('tasks.hasDueDate')}</SelectItem>
+                <SelectItem value="none">{t('tasks.noDueDate')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -130,7 +135,7 @@ export function TaskPanel({
             }
           />
           <Label htmlFor="hideContainer" className="text-sm cursor-pointer">
-            Hide containers
+            {t('tasks.hideContainers')}
           </Label>
         </div>
       </div>
@@ -138,9 +143,9 @@ export function TaskPanel({
       <ScrollArea className="flex-1">
         <div ref={containerRef} className="p-4 space-y-2">
           {loading ? (
-            <div className="text-center text-muted-foreground py-8">Loading tasks...</div>
+            <div className="text-center text-muted-foreground py-8">{t('tasks.loadingTasks')}</div>
           ) : filteredTasks.length === 0 ? (
-            <div className="text-center text-muted-foreground py-8">No tasks found</div>
+            <div className="text-center text-muted-foreground py-8">{t('tasks.noTasksFound')}</div>
           ) : (
             filteredTasks.map((task) => (
               <TaskItem
@@ -149,6 +154,7 @@ export function TaskPanel({
                 isPlaced={placedTaskIds.has(task.id)}
                 onAddTask={onAddTask}
                 isMobile={isMobile}
+                locale={locale}
               />
             ))
           )}
@@ -163,9 +169,11 @@ interface TaskItemProps {
   isPlaced: boolean;
   onAddTask?: (task: GoogleTask) => void;
   isMobile?: boolean;
+  locale?: Locale;
 }
 
-function TaskItem({ task, isPlaced, onAddTask, isMobile = false }: TaskItemProps) {
+function TaskItem({ task, isPlaced, onAddTask, isMobile = false, locale = 'en' }: TaskItemProps) {
+  const t = useTranslations(locale);
   return (
     <div
       data-task-id={task.id}
@@ -183,7 +191,7 @@ function TaskItem({ task, isPlaced, onAddTask, isMobile = false }: TaskItemProps
           {isPlaced && (
             <Badge variant="secondary" className="flex-shrink-0">
               <Check className="h-3 w-3 mr-1" />
-              Placed
+              {t('tasks.placed')}
             </Badge>
           )}
         </div>
@@ -202,7 +210,7 @@ function TaskItem({ task, isPlaced, onAddTask, isMobile = false }: TaskItemProps
           {task.hasSubtasks && (
             <>
               <span>•</span>
-              <span>Has subtasks</span>
+              <span>{t('tasks.hasSubtasks')}</span>
             </>
           )}
         </div>

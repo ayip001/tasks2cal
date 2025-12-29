@@ -2,6 +2,11 @@ import { UserSettings } from '@/types';
 
 export const DEFAULT_TASK_DURATION = 30;
 
+// i18n constants
+export const DEFAULT_LOCALE = 'en' as const;
+export const SUPPORTED_LOCALES = ['en', 'zh-hk'] as const;
+export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
+
 // Zero-Width Space (U+200B) used to mark events created by this utility
 // This is invisible in the UI but can be detected programmatically
 export const UTILITY_MARKER = '\u200B';

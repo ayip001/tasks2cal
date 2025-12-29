@@ -17,6 +17,7 @@ import { Footer } from '@/components/ui/footer';
 import Image from 'next/image';
 import { GoogleCalendarEvent } from '@/types';
 import { useSettings } from '@/hooks/use-data';
+import { useTranslations, getDateLocale, getDateFnsLocale } from '@/hooks/use-translations';
 import { isUtilityCreatedEvent } from '@/lib/constants';
 import { normalizeIanaTimeZone } from '@/lib/timezone';
 
@@ -38,7 +39,10 @@ export default function DashboardPage() {
   const [displayedMonth, setDisplayedMonth] = useState<Date>(new Date());
   const [monthEvents, setMonthEvents] = useState<GoogleCalendarEvent[]>([]);
   const [loadingMonth, setLoadingMonth] = useState(false);
-  const { settings } = useSettings();
+  const { settings, locale } = useSettings();
+  const t = useTranslations(locale);
+  const dateLocale = getDateLocale(locale);
+  const dateFnsLocale = getDateFnsLocale(locale);
   const fetchingRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -129,7 +133,7 @@ export default function DashboardPage() {
   if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
+        <div className="animate-pulse text-muted-foreground">{t('common.loading')}</div>
       </div>
     );
   }
@@ -194,7 +198,7 @@ export default function DashboardPage() {
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => signOut()}>
                 <LogOut className="mr-2 h-4 w-4" />
-                Sign out
+                {t('common.signOut')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -203,9 +207,9 @@ export default function DashboardPage() {
 
       <main className="container mx-auto px-4 py-8 flex flex-col items-center flex-1">
         <div className="text-center mb-6">
-          <h2 className="text-2xl font-semibold">Select a Day</h2>
+          <h2 className="text-2xl font-semibold">{t('dashboard.selectDay')}</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Click on a day to view and schedule tasks
+            {t('dashboard.selectDayDescription')}
           </p>
         </div>
 
@@ -219,17 +223,18 @@ export default function DashboardPage() {
           onDayMouseEnter={(date) => setHoveredDate(date)}
           onDayMouseLeave={() => setHoveredDate(null)}
           getDayEvents={getEventsForDate}
+          locale={dateFnsLocale}
           className="rounded-lg border [--cell-size:--spacing(11)] md:[--cell-size:--spacing(12)]"
         />
 
         {/* Event preview section */}
         <div className="mt-6 w-full max-w-sm min-h-[120px]">
           {loadingMonth && !monthEvents.length ? (
-            <div className="text-sm text-muted-foreground text-center">Loading events...</div>
+            <div className="text-sm text-muted-foreground text-center">{t('dashboard.loadingEvents')}</div>
           ) : hoveredDate ? (
             <div className="flex flex-col gap-3">
               <div className="text-sm font-medium text-center">
-                {hoveredDate.toLocaleDateString('en-US', {
+                {hoveredDate.toLocaleDateString(dateLocale, {
                   weekday: 'long',
                   day: 'numeric',
                   month: 'long',
@@ -260,13 +265,13 @@ export default function DashboardPage() {
                   ))}
                   {hasMoreEvents && (
                     <div className="text-xs text-muted-foreground text-center">
-                      and {hoveredEvents.length - 3} more...
+                      {t('dashboard.andMore', { count: hoveredEvents.length - 3 })}
                     </div>
                   )}
                 </div>
               ) : (
                 <div className="text-sm text-muted-foreground text-center">
-                  No events scheduled
+                  {t('dashboard.noEvents')}
                 </div>
               )}
             </div>
@@ -274,7 +279,7 @@ export default function DashboardPage() {
         </div>
       </main>
 
-      <Footer />
+      <Footer locale={locale} />
     </div>
   );
 }

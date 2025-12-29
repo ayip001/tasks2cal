@@ -12,6 +12,8 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
+import { useTranslations } from '@/hooks/use-translations';
+import type { Locale } from '@/i18n/config';
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -20,6 +22,7 @@ interface ConfirmDialogProps {
   onConfirm: () => void;
   saving: boolean;
   taskColor: string;
+  locale?: Locale;
 }
 
 export function ConfirmDialog({
@@ -29,14 +32,16 @@ export function ConfirmDialog({
   onConfirm,
   saving,
   taskColor,
+  locale = 'en',
 }: ConfirmDialogProps) {
+  const t = useTranslations(locale);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Save to Calendar</DialogTitle>
+          <DialogTitle>{t('day.saveToCalendar')}</DialogTitle>
           <DialogDescription>
-            The following {placements.length} task(s) will be added to your Google Calendar:
+            {t('day.saveToCalendarDescription', { count: placements.length })}
           </DialogDescription>
         </DialogHeader>
 
@@ -61,10 +66,10 @@ export function ConfirmDialog({
 
         <DialogFooter className="mt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button onClick={onConfirm} disabled={saving}>
-            {saving ? 'Saving...' : 'Confirm & Save'}
+            {saving ? t('settings.saving') : t('day.confirmAndSave')}
           </Button>
         </DialogFooter>
       </DialogContent>

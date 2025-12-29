@@ -10,11 +10,18 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Tasks2Cal',
-  description: 'The no-nonsense utility for Google Task timeboxing',
+  title: 'Tasks2Cal - Timebox Google Tasks',
+  description: 'The no-nonsense utility for Google Task timeboxing. Drag tasks onto your Google Calendar and fill your day in seconds.',
   icons: {
     icon: '/tasks2cal-favicon.png',
     apple: '/tasks2cal-webclip.png',
+  },
+  alternates: {
+    canonical: 'https://tasks2cal.com',
+    languages: {
+      en: 'https://tasks2cal.com',
+      'zh-HK': 'https://tasks2cal.com/zh-hk',
+    },
   },
 };
 

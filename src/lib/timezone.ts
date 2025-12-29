@@ -14,6 +14,21 @@ export function parseTimeLabelToHHMM(label: string, timeFormat: TimeFormatPrefer
   const raw = label.trim();
   if (!raw) return null;
 
+  // Handle Chinese time formats from FullCalendar zh-tw locale:
+  // "上午10時" (10:00 AM), "上午10:30" (10:30 AM), "下午3時" (3:00 PM), "下午3:30" (3:30 PM)
+  const chineseMatch = /^(上午|下午)(\d{1,2})(?:時|:(\d{2}))?$/.exec(raw);
+  if (chineseMatch) {
+    const period = chineseMatch[1]; // '上午' (AM) or '下午' (PM)
+    const rawHours = Number(chineseMatch[2]);
+    const minutes = Number(chineseMatch[3] ?? '00');
+    if (!Number.isFinite(rawHours) || !Number.isFinite(minutes)) return null;
+    if (rawHours < 1 || rawHours > 12 || minutes < 0 || minutes > 59) return null;
+
+    let hours = rawHours % 12;
+    if (period === '下午') hours += 12;
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+  }
+
   // FullCalendar commonly renders: "12am", "12:30am", "12 AM", "12:30 AM", sometimes with NBSP.
   // Normalize whitespace/punctuation but keep the digits/colon.
   const text = raw
@@ -75,8 +90,21 @@ export function utcISOStringFromInstant(date: Date): string {
   return DateTime.fromJSDate(date, { zone: UTC_ZONE }).toUTC().toISO({ suppressMilliseconds: true })!;
 }
 
-export function formatTimeForDisplay(dt: DateTime, format: TimeFormatPreference): string {
-  return format === '24h' ? dt.toFormat('HH:mm') : dt.toFormat('h:mm a');
+export function formatTimeForDisplay(dt: DateTime, format: TimeFormatPreference, locale?: string): string {
+  if (format === '24h') {
+    return dt.toFormat('HH:mm');
+  }
+
+  // For Chinese locales, use Chinese AM/PM format: "上午10:00" or "下午3:30"
+  if (locale === 'zh-hk' || locale === 'zh-tw') {
+    const hour = dt.hour;
+    const minute = dt.minute;
+    const period = hour < 12 ? '上午' : '下午';
+    const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+    return `${period}${displayHour}:${String(minute).padStart(2, '0')}`;
+  }
+
+  return dt.toFormat('h:mm a');
 }
 
 export function getUtcOffsetMinutes(zone: string, atInstant: Date = new Date()): number {

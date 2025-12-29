@@ -19,6 +19,8 @@ import {
 import { logTimezoneDebug, onTimezoneDebugRefresh } from '@/lib/debug-timezone';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useTranslations, getFullCalendarLocale } from '@/hooks/use-translations';
+import type { Locale } from '@/i18n/config';
 
 interface DayCalendarProps {
   date: string;
@@ -32,6 +34,7 @@ interface DayCalendarProps {
   selectedTimeZone: string;
   calendarTimeZone?: string;
   onNavigate: (direction: 'prev' | 'next') => void;
+  locale?: Locale;
 }
 
 export function DayCalendar({
@@ -46,8 +49,11 @@ export function DayCalendar({
   selectedTimeZone,
   calendarTimeZone,
   onNavigate,
+  locale = 'en',
 }: DayCalendarProps) {
   const calendarRef = useRef<FullCalendar>(null);
+  const t = useTranslations(locale);
+  const fullCalendarLocale = getFullCalendarLocale(locale);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const viewedDay = useMemo(
@@ -221,7 +227,7 @@ export function DayCalendar({
                 }
               }}
               className="flex-shrink-0 p-0.5 rounded hover:bg-black/20 transition-colors"
-              title="Remove placement"
+              title={t('tasks.removePlacement')}
             >
               <X className="h-3 w-3" />
             </button>
@@ -297,7 +303,7 @@ export function DayCalendar({
 
     const slotUtc = wallTimeOnDateToUtc(date, hhmm, effectiveSelectedTimeZone);
     const primary = DateTime.fromJSDate(slotUtc).setZone(effectiveSelectedTimeZone);
-    const primaryLabel = formatTimeForDisplay(primary, settings.timeFormat);
+    const primaryLabel = formatTimeForDisplay(primary, settings.timeFormat, locale);
 
     const effectiveCalendarTimeZone = normalizeIanaTimeZone(calendarTimeZone);
     const secondary = DateTime.fromJSDate(slotUtc).setZone(effectiveCalendarTimeZone);
@@ -311,7 +317,7 @@ export function DayCalendar({
       return <span>{primaryLabel}</span>;
     }
 
-    const secondaryLabel = formatTimeForDisplay(secondary, settings.timeFormat);
+    const secondaryLabel = formatTimeForDisplay(secondary, settings.timeFormat, locale);
 
     const primaryDate = primary.toISODate();
     const secondaryDate = secondary.toISODate();
@@ -344,8 +350,16 @@ export function DayCalendar({
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <h2 className="text-sm md:text-lg font-semibold min-w-[120px] md:min-w-[240px] text-center">
-          <span className="md:hidden">{viewedDay.toFormat('MMM d')}</span>
-          <span className="hidden md:inline">{viewedDay.toFormat('EEEE, MMMM d, yyyy')}</span>
+          <span className="md:hidden">
+            {locale === 'zh-hk'
+              ? viewedDay.setLocale(fullCalendarLocale).toFormat('M月d日')
+              : viewedDay.setLocale(fullCalendarLocale).toFormat('MMM d')}
+          </span>
+          <span className="hidden md:inline">
+            {locale === 'zh-hk'
+              ? viewedDay.setLocale(fullCalendarLocale).toFormat("yyyy'年'M'月'd'日（'EEEE'）'")
+              : viewedDay.setLocale(fullCalendarLocale).toFormat('EEEE, MMMM d, yyyy')}
+          </span>
         </h2>
         <Button variant="ghost" size="icon" onClick={() => onNavigate('next')}>
           <ChevronRight className="h-4 w-4" />
@@ -360,6 +374,7 @@ export function DayCalendar({
           initialDate={date}
           headerToolbar={false}
           allDaySlot={false}
+          locale={fullCalendarLocale}
           timeZone={normalizeIanaTimeZone(selectedTimeZone)}
           slotDuration={`00:${TIME_SLOT_INTERVAL}:00`}
           slotMinTime={`${slotMinTime}:00`}

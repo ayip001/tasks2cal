@@ -45,7 +45,7 @@ function SignInButton({ size = 'lg', className = '' }: { size?: 'default' | 'lg'
       className={`bg-[#1a73e8] hover:bg-[#1557b0] text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 ${className}`}
     >
       <GoogleIcon className="mr-2 h-5 w-5" />
-      Sign in with Google
+      使用 Google 帳戶登入
     </Button>
   );
 }
@@ -56,45 +56,45 @@ function HeroSection() {
       {/* Background pattern */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(66,133,244,0.08)_0%,transparent_50%),radial-gradient(circle_at_70%_80%,rgba(52,168,83,0.06)_0%,transparent_40%)]" />
       <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:64px_64px]" />
-      
+
       <div className="container mx-auto px-6 py-16 relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left: Copy */}
           <div className="space-y-8 animate-fade-in">
-            
             {/* Headline */}
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-gray-900 leading-[1.1]">
-              Timebox quicker on{' '}
-              <span className="bg-gradient-to-r from-[#4285f4] to-[#34a853] bg-clip-text text-transparent">
-                Google Calendar
-              </span>
-              {' '}with{' '}
+              更快地使用{' '}
               <span className="bg-gradient-to-r from-[#4285f4] via-[#ea4335] to-[#fbbc05] bg-clip-text text-transparent">
                 Google Tasks
               </span>
-
+              {' '}在{' '}
+              <span className="bg-gradient-to-r from-[#4285f4] to-[#34a853] bg-clip-text text-transparent">
+                Google 行事曆
+              </span>
+              {' '}上進行時間箱管理{' '}
+              
             </h1>
-            
+
             {/* Sub-headline */}
             <p className="text-xl text-gray-600 max-w-lg leading-relaxed">
-              A no-nonsense, completely free timeboxing utility. Drag tasks directly onto your calendar and fill your day in seconds.
+              簡單實用、完全免費的時間箱（Timeboxing）工具。將代辦事項直接拖放到行事曆上，數秒內安排好整天的工作。
             </p>
-            
+
             {/* CTA */}
             <div className="flex flex-col sm:flex-row gap-4 items-start">
               <SignInButton className="text-base px-8 py-6 h-auto" />
               <p className="text-sm text-gray-500 self-center">
-                Free forever. No credit card required.
+                永久免費，無需信用卡。
               </p>
             </div>
           </div>
-          
+
           {/* Right: Hero Image */}
           <div className="relative animate-fade-in-delayed">
             <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 bg-white">
               <Image
                 src="/tasks2cal-hero.avif"
-                alt="On the left, a 'Tasks' sidebar lists development items like 'Fix auth.ts bug' and 'Update dependencies.' A cursor drags one of these tasks across to the 'Calendar' view on the right, hovering over an open time slot that highlights in green with the text 'Drop to timebox,' visually representing the drag-and-drop scheduling feature."
+                alt="左側的「任務」側邊欄列出開發項目，如「修復 auth.ts 錯誤」和「更新依賴項」。游標將其中一個任務拖曳到右側的「日曆」視圖，懸停在以綠色標示的空閒時段上，顯示「放下以安排時間」，直觀地展示拖放排程功能。"
                 width={800}
                 height={600}
                 className="w-full h-auto"
@@ -119,17 +119,17 @@ function BeforeAfterSection() {
           {/* Section header */}
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              A simple workflow upgrade you didn&apos;t know you needed
+              更方便地進行時間箱管理
             </h2>
           </div>
-          
+
           {/* Drake meme grid */}
           <div className="grid md:grid-cols-2 gap-0 rounded-2xl overflow-hidden shadow-xl border border-gray-200">
             {/* Before: Top row */}
             <div className="bg-white p-0">
               <Image
                 src="/drake-top.avif"
-                alt="Drake disapproving"
+                alt="Drake 表示不贊同"
                 width={400}
                 height={400}
                 className="w-full h-auto"
@@ -137,41 +137,41 @@ function BeforeAfterSection() {
             </div>
             <div className="bg-white p-8 flex flex-col justify-center border-l border-gray-100">
               <h3 className="text-xl font-bold text-gray-400 mb-4 flex items-center gap-2">
-                <span className="text-2xl">😤</span> The O(n) way
+                <span className="text-2xl">😤</span> O(n) 的方式
               </h3>
               <ol className="space-y-2 text-gray-500">
                 <li className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 text-gray-400 text-sm flex items-center justify-center font-medium">1</span>
-                  <span>Open Google Calendar</span>
+                  <span>開啟 Google 日曆</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 text-gray-400 text-sm flex items-center justify-center font-medium">2</span>
-                  <span>Create an event</span>
+                  <span>建立活動</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 text-gray-400 text-sm flex items-center justify-center font-medium">3</span>
-                  <span>Name the event</span>
+                  <span>為活動命名</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 text-gray-400 text-sm flex items-center justify-center font-medium">4</span>
-                  <span>Add start and end time</span>
+                  <span>設定開始和結束時間</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 text-gray-400 text-sm flex items-center justify-center font-medium">5</span>
-                  <span>Save the event</span>
+                  <span>儲存活動</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 text-gray-400 text-sm flex items-center justify-center font-medium">6</span>
-                  <span>Repeat 2-5 <em>n</em> times until your day is filled</span>
+                  <span>重複步驟 2-5 <em>n</em> 次直到安排好一天的代辦事項</span>
                 </li>
               </ol>
             </div>
-            
+
             {/* After: Bottom row */}
             <div className="bg-white p-0 border-t border-gray-100">
               <Image
                 src="/drake-bottom.avif"
-                alt="Drake approving"
+                alt="Drake 表示贊同"
                 width={400}
                 height={400}
                 className="w-full h-auto"
@@ -179,25 +179,25 @@ function BeforeAfterSection() {
             </div>
             <div className="bg-gradient-to-br from-emerald-50 to-white p-8 flex flex-col justify-center border-l border-t border-gray-100">
               <h3 className="text-xl font-bold text-emerald-700 mb-4 flex items-center gap-2">
-                <span className="text-2xl">😎</span> The O(1) way
+                <span className="text-2xl">😎</span> O(1) 的方式
               </h3>
               <ol className="space-y-2 text-gray-700">
                 <li className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 text-sm flex items-center justify-center font-medium">1</span>
-                  <span className="font-medium">Open Tasks2Cal</span>
+                  <span className="font-medium">開啟 Tasks2Cal</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 text-sm flex items-center justify-center font-medium">2</span>
-                  <span className="font-medium">Press Auto-fit</span>
+                  <span className="font-medium">按下自動排程</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 text-sm flex items-center justify-center font-medium">3</span>
-                  <span className="font-medium">Press Save</span>
+                  <span className="font-medium">按下儲存</span>
                 </li>
               </ol>
               <div className="mt-6 pt-4 border-t border-emerald-100">
                 <p className="text-sm text-emerald-600 font-medium">
-                  👍 Work smarter, not harder
+                  👍 一鍵將代辦事項填入你的工作時間，自動避開現有會議。
                 </p>
               </div>
             </div>
@@ -213,29 +213,29 @@ function FeatureGridSection() {
     {
       icon: Zap,
       emoji: '⚡',
-      title: 'Drag & Drop',
-      description: 'Move tasks onto 15-minute slots on your actual Google Calendar.',
+      title: '拖放操作',
+      description: '將 Google Tasks 的代辦事項拖放到 Google 行事曆上。',
       color: 'from-amber-400 to-orange-500',
     },
     {
       icon: Bot,
       emoji: '🤖',
-      title: 'Smart Auto-Fit',
-      description: 'One click fills your working hours around existing meetings.',
+      title: '智能自動排程',
+      description: '一鍵將代辦事項填入你的工作時間，自動避開現有會議。',
       color: 'from-purple-400 to-indigo-500',
     },
     {
       icon: Save,
       emoji: '💾',
-      title: 'Bulk Commit',
-      description: 'Plan your entire day locally, then save to Google in one batch.',
+      title: '批量儲存',
+      description: '在 Tasks2Cal 規劃整天行程，然後一次過儲存到 Google 行事曆。',
       color: 'from-blue-400 to-cyan-500',
     },
     {
       icon: Clock,
       emoji: '⚙️',
-      title: 'Respects Your Time',
-      description: "Define your own working hours so the bot doesn't schedule deep work at 3 AM (unless you want it to).",
+      title: '尊重你的時間',
+      description: '自訂工作時間，並讓自動排程避開行事曆上已安排的會議。',
       color: 'from-emerald-400 to-teal-500',
     },
   ];
@@ -244,14 +244,14 @@ function FeatureGridSection() {
     <section className="py-24 relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(66,133,244,0.03)_0%,transparent_70%)]" />
-      
+
       <div className="container mx-auto px-6 relative z-10">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Features that should've been there from the start
+            早該內建的功能
           </h2>
         </div>
-        
+
         <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
           {features.map((feature, index) => (
             <div
@@ -261,7 +261,7 @@ function FeatureGridSection() {
             >
               {/* Gradient accent on hover */}
               <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-[0.03] rounded-2xl transition-opacity duration-300`} />
-              
+
               <div className="relative z-10">
                 <div className="text-4xl mb-4">{feature.emoji}</div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">{feature.title}</h3>
@@ -282,26 +282,26 @@ function DevTransparencySection() {
       <div className="absolute inset-0 opacity-[0.03]">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[size:24px_24px]" />
       </div>
-      
+
       <div className="container mx-auto px-6 relative z-10">
         <div className="max-w-4xl mx-auto">
           <div className="grid md:grid-cols-5 gap-12 items-center">
             {/* Left: Copy */}
             <div className="md:col-span-3 space-y-6">
               <h2 className="text-3xl md:text-4xl font-bold leading-tight">
-                Why are we here?
+                為何要做這個小工具？
               </h2>
               <p className="text-gray-400 text-lg leading-relaxed">
-                I built this because I was tired of manually creating calendar events for my daily tasks. In classic software developer fashion, I spent an entire weekend automating a process that takes about 3 minutes a day (and several more days to polish it for public use).
+                開發此工具是因為我厭倦了手動為每日為每一項代辦事項建立行事曆事件。既然可以自動化，我便花了整個週末來自動化一個只需 3 分鐘的流程（然後又花了好幾天把它打磨到可以公開使用）🤦‍♀️。
               </p>
             </div>
-            
+
             {/* Right: XKCD */}
             <div className="md:col-span-2">
               <div className="bg-white rounded-lg p-4 shadow-xl">
                 <Image
                   src="https://imgs.xkcd.com/comics/automation.png"
-                  alt="XKCD: Automation comic showing the irony of spending time automating tasks"
+                  alt="XKCD：自動化漫畫，展示花時間自動化任務的諷刺"
                   width={400}
                   height={300}
                   className="w-full h-auto"
@@ -331,10 +331,10 @@ function TechnicalProofSection() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Privacy First. Open Source. Free Forever.
+              私隱優先。開源。永久免費。
             </h2>
           </div>
-          
+
           <div className="grid md:grid-cols-2 gap-8">
             {/* Privacy First */}
             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-8 border border-blue-100">
@@ -342,23 +342,23 @@ function TechnicalProofSection() {
                 <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
                   <Lock className="w-6 h-6 text-blue-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">Privacy First</h3>
+                <h3 className="text-xl font-bold text-gray-900">私隱優先</h3>
               </div>
               <p className="text-gray-600 leading-relaxed">
-                We don&apos;t store your tasks. We use Redis for short-term session caching and everything else stays in your Google account.
+                我們不會儲存你的任何資料。我們使用 Redis 進行短期會話緩存，其他所有資料都保留在你的 Google 帳戶中。
               </p>
             </div>
-            
+
             {/* Open Source */}
             <div className="bg-gradient-to-br from-gray-50 to-slate-50 rounded-2xl p-8 border border-gray-200">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 rounded-xl bg-gray-900 flex items-center justify-center">
                   <Github className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">Open Source</h3>
+                <h3 className="text-xl font-bold text-gray-900">開源</h3>
               </div>
               <p className="text-gray-600 leading-relaxed">
-                Licensed under GPL-3.0. Read the code, fork it, or host it yourself.
+                採用 GPL-3.0 授權。閱讀原始碼、分叉或自行架設。
               </p>
               <a
                 href="https://github.com/ayip001/tasks2cal"
@@ -366,7 +366,7 @@ function TechnicalProofSection() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 mt-4 text-sm font-medium text-gray-900 hover:text-gray-600 transition-colors"
               >
-                View on GitHub
+                在 GitHub 上查看
                 <span aria-hidden="true">→</span>
               </a>
             </div>
@@ -380,34 +380,34 @@ function TechnicalProofSection() {
 function FAQSection() {
   const faqs = [
     {
-      question: 'What is the point of this?',
+      question: '這有什麼用？',
       answer:
-        "Timeboxing is a lot of work and I thought it doesn't have to be. Tasks2Cal is a utility that lets you drag Google Tasks directly into Google Calendar slots to block out time for deep work. It turns a long to-do list into a realistic, executable schedule in seconds (as long as you define your working hours and already use Google Calendar and Tasks).",
+        '使用 Google 的工具進行時間箱/時間盒管理（Timeboxing）需要花點時間，而我認為過程不應該這麼複雜。Tasks2Cal 是一個工具，讓你可以將 Google Tasks 直接拖放到 Google 行事曆的時段中，為深度工作預留時間。只要你設定好工作時間，並且已經在使用 Google 行事曆和 Tasks，它就能在幾秒內將冗長的待辦清單變成切實可行的時間表。',
     },
     {
-      question: 'Is this free?',
+      question: '這是免費的嗎？',
       answer:
-        "Yes. I built this because I didn't want to pay a monthly subscription for a bloated SaaS tool just to move data between two Google apps. It is a free, open-source productivity tool designed for efficiency, not upselling.",
+        '是的。我開發這個是不想因為只為了在兩個 Google 應用程式之間移動資料而付費。這是一個免費、開源的生產力工具，專為效率而設計，而非推銷升級。',
     },
     {
-      question: 'Do you store my data?',
+      question: '你們會儲存我的資料嗎？',
       answer:
-        "No, I don't want your data. The app uses a temporary cache (Redis) to make the drag-and-drop scheduling interface snappy, but your tasks and calendar events stay strictly in your Google account. We facilitate the handshake, we don't keep the files.",
+        '不會。這個應用程式使用臨時緩存（Redis）來讓拖放排程介面更流暢，但你的任務和行事曆事件嚴格保留在你的 Google 帳戶中。此工具只是協助資料傳遞，不會保留檔案。',
     },
     {
-      question: 'How does "Auto-fit" work? Is it AI?',
+      question: '「自動排程」是如何運作的？是 AI 嗎？',
       answer:
-        "It's AI-powered schedule optimizer that figures out the best way to timebox for you, as long as your definition of AI is just a bunch of if-statements that just takes your existing Google Calendar meetings, and fits them into your definted working hours. Timed tasks take priority. The Google Calendar API doesn't expose favorited tasks, otherwise favorited tasks would've been prioritized too.",
+        '如果你認為一個能把代辦任務自動填入 Google 行事曆的小工具是 AI 的話，那就太好了。它只是讀取你的工作時間和行事曆上已安排的會議，並將代辦事項填入你的工作時間，避開現有會議。',
     },
     {
-      question: 'Why not just do X/Y on Google Calendar to timebox?',
+      question: '為什麼不直接在 Google 行事曆上用 X/Y 方法來進行時間箱管理？',
       answer:
-        'There are many ways to timebox on Google Calendar, but the available tools on Google does not give you a quick way to move stuff on Google Tasks to Google Calendar.',
+        '在 Google 行事曆上有很多時間箱管理的方法，但 Google 提供的工具無法快速將 Google Tasks 的代辦事項直接拖放到 Google 行事曆。',
     },
     {
-      question: 'I have a feature request / found a bug / want to contribute.',
+      question: '我有功能建議 / 發現了 bug / 想要貢獻。',
       answer:
-        "Great! This is an open-source project. Please submit an issue or open a pull request on GitHub. Contributions are welcome, whether it's fixing a bug or adding that feature you think this is missing.",
+        '這是一個開源專案，所以請在 GitHub 上提交 issue 或 pull request。歡迎任何貢獻，無論是修復 bug 還是新增你認為缺少的功能。',
     },
   ];
 
@@ -417,10 +417,10 @@ function FAQSection() {
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Frequently Asked Questions
+              常見問題
             </h2>
           </div>
-          
+
           <Accordion type="single" collapsible className="space-y-4">
             {faqs.map((faq, index) => (
               <AccordionItem
@@ -449,13 +449,13 @@ function CTASection() {
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.1)_0%,transparent_50%)]" />
-      
+
       <div className="container mx-auto px-6 relative z-10 text-center">
         <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-          Ready to timebox marginally quicker?
+          準備好更快地使用 Google 工具進行時間箱管理了嗎？
         </h2>
         <p className="text-blue-100 text-lg mb-8 max-w-xl mx-auto">
-          Join developers and productivity enthusiasts who&apos;ve reclaimed minutes of their scheduling time (and sanity).
+          加入其他生產力愛好者，解鎖（稍微）更高效的時間箱排程吧。
         </p>
         <Button
           onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
@@ -463,7 +463,7 @@ function CTASection() {
           className="bg-white text-blue-700 hover:bg-blue-50 font-semibold text-base px-8 py-6 h-auto shadow-lg hover:shadow-xl transition-all duration-300"
         >
           <GoogleIcon className="mr-2 h-5 w-5" />
-          Get Started Free
+          免費開始使用
         </Button>
       </div>
     </section>
@@ -479,7 +479,7 @@ function LandingContent() {
   useEffect(() => {
     const errorParam = searchParams.get('error');
     if (errorParam) {
-      setError('An error occurred during sign in. Please try again.');
+      setError('登入時發生錯誤，請重試。');
     }
   }, [searchParams]);
 
@@ -492,7 +492,7 @@ function LandingContent() {
   if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
+        <div className="animate-pulse text-muted-foreground">載入中...</div>
       </div>
     );
   }
@@ -519,7 +519,7 @@ function LandingContent() {
           <SignInButton size="default" />
         </div>
       </nav>
-      
+
       {/* Error banner */}
       {error && (
         <div className="fixed top-16 left-0 right-0 z-40 bg-red-50 border-b border-red-200">
@@ -529,7 +529,7 @@ function LandingContent() {
           </div>
         </div>
       )}
-      
+
       {/* Main content with padding for fixed nav */}
       <main className="flex-1 pt-16">
         <HeroSection />
@@ -541,7 +541,7 @@ function LandingContent() {
         <CTASection />
       </main>
 
-      <Footer locale="en" />
+      <Footer locale="zh-hk" />
     </div>
   );
 }
@@ -551,7 +551,7 @@ export default function LandingPage() {
     <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center">
-          <div className="animate-pulse text-muted-foreground">Loading...</div>
+          <div className="animate-pulse text-muted-foreground">載入中...</div>
         </div>
       }
     >
