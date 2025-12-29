@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { UserSettings, GoogleCalendar } from '@/types';
+import { UserSettings, GoogleCalendar, GoogleTaskList } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Settings, Plus, X, AlertTriangle, RefreshCw, LocateFixed } from 'lucide-react';
+import { Settings, Plus, X, AlertTriangle, RefreshCw, LocateFixed, RotateCcw } from 'lucide-react';
 import { TimezonePicker } from '@/components/settings/timezone-picker';
 import { Input } from '@/components/ui/input';
 import { requestTimezoneDebugRefresh } from '@/lib/debug-timezone';
@@ -31,6 +31,7 @@ import type { Locale } from '@/i18n/config';
 interface SettingsPanelProps {
   settings: UserSettings;
   calendars: GoogleCalendar[];
+  taskLists?: GoogleTaskList[];
   onSave: (updates: Partial<UserSettings>) => Promise<void>;
   showLabel?: boolean;
   onRefetchCalendars?: () => Promise<void>;
@@ -59,6 +60,7 @@ function formatTime(time: string, format: '12h' | '24h'): string {
 export function SettingsPanel({
   settings,
   calendars,
+  taskLists = [],
   onSave,
   showLabel = false,
   onRefetchCalendars,
@@ -70,6 +72,7 @@ export function SettingsPanel({
   const [saving, setSaving] = useState(false);
   const [open, setOpen] = useState(false);
   const [refreshingCalendars, setRefreshingCalendars] = useState(false);
+  const [showListColors, setShowListColors] = useState(false);
   const t = useTranslations(locale);
 
   const handleSave = async () => {
@@ -305,39 +308,145 @@ export function SettingsPanel({
 
           <div className="space-y-2">
             <Label htmlFor="taskColor">{t('settings.taskColor')}</Label>
-            <Select
-              value={localSettings.taskColor}
-              onValueChange={(value) => setLocalSettings({ ...localSettings, taskColor: value })}
-            >
-              <SelectTrigger id="taskColor">
-                <SelectValue>
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-4 h-4 rounded-full"
-                      style={{ backgroundColor: localSettings.taskColor }}
-                    />
-                    <span>
-                      {colorOptions.find((c) => c.value === localSettings.taskColor)?.label ||
-                        t('settings.colorCustom')}
-                    </span>
-                  </div>
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {colorOptions.map((color) => (
-                  <SelectItem key={color.value} value={color.value}>
+            <div className="flex items-center gap-2">
+              <Select
+                value={localSettings.taskColor}
+                onValueChange={(value) => setLocalSettings({ ...localSettings, taskColor: value })}
+              >
+                <SelectTrigger id="taskColor" className="flex-1">
+                  <SelectValue>
                     <div className="flex items-center gap-2">
                       <div
                         className="w-4 h-4 rounded-full"
-                        style={{ backgroundColor: color.value }}
+                        style={{ backgroundColor: localSettings.taskColor }}
                       />
-                      <span>{color.label}</span>
+                      <span>
+                        {colorOptions.find((c) => c.value === localSettings.taskColor)?.label ||
+                          t('settings.colorCustom')}
+                      </span>
                     </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {colorOptions.map((color) => (
+                    <SelectItem key={color.value} value={color.value}>
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-4 h-4 rounded-full"
+                          style={{ backgroundColor: color.value }}
+                        />
+                        <span>{color.label}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
+
+          {taskLists.length > 0 && !showListColors && (
+            <Button variant="ghost" size="sm" onClick={() => setShowListColors(true)}>
+              <Plus className="h-4 w-4 mr-1" />
+              {t('settings.listColors')}
+            </Button>
+          )}
+
+          {showListColors && taskLists.length > 0 && (
+            <div className="space-y-3 p-3 bg-muted/50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">{t('settings.listColors')}</Label>
+                <div className="flex items-center gap-1">
+                  {Object.keys(localSettings.listColors || {}).length > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setLocalSettings({ ...localSettings, listColors: {} })}
+                      className="h-7 text-xs"
+                    >
+                      <RotateCcw className="h-3 w-3 mr-1" />
+                      {t('settings.resetToDefault')}
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowListColors(false)}
+                    className="h-7 w-7"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {t('settings.listColorsDesc')}
+              </p>
+              <div className="space-y-2">
+                {taskLists.map((list) => {
+                  const listColor = localSettings.listColors?.[list.id];
+                  const displayColor = listColor || localSettings.taskColor;
+                  const isCustom = !!listColor;
+
+                  return (
+                    <div key={list.id} className="flex items-center gap-2">
+                      <span className="text-sm flex-1 truncate" title={list.title}>
+                        {list.title}
+                      </span>
+                      <Select
+                        value={listColor || '__default__'}
+                        onValueChange={(value) => {
+                          const newListColors = { ...(localSettings.listColors || {}) };
+                          if (value === '__default__') {
+                            delete newListColors[list.id];
+                          } else {
+                            newListColors[list.id] = value;
+                          }
+                          setLocalSettings({ ...localSettings, listColors: newListColors });
+                        }}
+                      >
+                        <SelectTrigger className="w-[140px]">
+                          <SelectValue>
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="w-3 h-3 rounded-full"
+                                style={{ backgroundColor: displayColor }}
+                              />
+                              <span className="text-xs truncate">
+                                {isCustom
+                                  ? colorOptions.find((c) => c.value === listColor)?.label || t('settings.colorCustom')
+                                  : t('settings.useDefault')}
+                              </span>
+                            </div>
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__default__">
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="w-3 h-3 rounded-full"
+                                style={{ backgroundColor: localSettings.taskColor }}
+                              />
+                              <span className="text-xs">{t('settings.useDefault')}</span>
+                            </div>
+                          </SelectItem>
+                          {colorOptions.map((color) => (
+                            <SelectItem key={color.value} value={color.value}>
+                              <div className="flex items-center gap-2">
+                                <div
+                                  className="w-3 h-3 rounded-full"
+                                  style={{ backgroundColor: color.value }}
+                                />
+                                <span className="text-xs">{color.label}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="calendar">{t('settings.calendarForEvents')}</Label>

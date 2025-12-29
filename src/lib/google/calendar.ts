@@ -109,12 +109,16 @@ export async function createCalendarEvent(
   accessToken: string,
   calendarId: string,
   placement: TaskPlacement,
-  taskColor: string
+  taskColor: string,
+  listColors?: Record<string, string>
 ): Promise<GoogleCalendarEvent> {
   const calendar = createCalendarClient(accessToken);
 
   const startTime = new Date(placement.startTime);
   const endTime = new Date(startTime.getTime() + placement.duration * 60 * 1000);
+
+  // Use list-specific color if available, otherwise use default taskColor
+  const effectiveColor = (placement.listId && listColors?.[placement.listId]) || taskColor;
 
   const response = await calendar.events.insert({
     calendarId,
@@ -127,7 +131,7 @@ export async function createCalendarEvent(
       end: {
         dateTime: endTime.toISOString(),
       },
-      colorId: getGoogleColorId(taskColor),
+      colorId: getGoogleColorId(effectiveColor),
     },
   });
 
@@ -151,14 +155,15 @@ export async function createCalendarEvents(
   accessToken: string,
   calendarId: string,
   placements: TaskPlacement[],
-  taskColor: string
+  taskColor: string,
+  listColors?: Record<string, string>
 ): Promise<{ success: GoogleCalendarEvent[]; errors: string[] }> {
   const results: GoogleCalendarEvent[] = [];
   const errors: string[] = [];
 
   for (const placement of placements) {
     try {
-      const event = await createCalendarEvent(accessToken, calendarId, placement, taskColor);
+      const event = await createCalendarEvent(accessToken, calendarId, placement, taskColor, listColors);
       results.push(event);
     } catch (error) {
       errors.push(`Failed to create event for "${placement.taskTitle}": ${error}`);

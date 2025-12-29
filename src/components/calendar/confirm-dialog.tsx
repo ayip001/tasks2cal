@@ -22,6 +22,7 @@ interface ConfirmDialogProps {
   onConfirm: () => void;
   saving: boolean;
   taskColor: string;
+  listColors?: Record<string, string>;
   locale?: Locale;
 }
 
@@ -32,9 +33,19 @@ export function ConfirmDialog({
   onConfirm,
   saving,
   taskColor,
+  listColors,
   locale = 'en',
 }: ConfirmDialogProps) {
   const t = useTranslations(locale);
+
+  // Get the color for a placement based on listId or default
+  const getPlacementColor = (listId?: string) => {
+    if (listId && listColors?.[listId]) {
+      return listColors[listId];
+    }
+    return taskColor;
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -51,7 +62,7 @@ export function ConfirmDialog({
               <li key={placement.id} className="flex items-center gap-3 p-2 rounded-lg bg-muted">
                 <div
                   className="w-3 h-3 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: taskColor }}
+                  style={{ backgroundColor: getPlacementColor(placement.listId) }}
                 />
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{placement.taskTitle}</p>

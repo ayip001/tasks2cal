@@ -40,6 +40,8 @@ export function autoFitTasks(
         id: `${task.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         taskId: task.id,
         taskTitle: task.title,
+        listId: task.listId,
+        listTitle: task.listTitle,
         startTime: slot.start.toISOString(),
         duration: settings.defaultTaskDuration,
       };

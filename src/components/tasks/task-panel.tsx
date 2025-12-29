@@ -36,6 +36,8 @@ interface TaskPanelProps {
   onAddTask?: (task: GoogleTask) => void;
   isMobile?: boolean;
   locale?: Locale;
+  taskColor?: string;
+  listColors?: Record<string, string>;
 }
 
 export function TaskPanel({
@@ -48,10 +50,20 @@ export function TaskPanel({
   onAddTask,
   isMobile = false,
   locale = 'en',
+  taskColor = '#4285f4',
+  listColors,
 }: TaskPanelProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const placedTaskIds = new Set(placements.map((p) => p.taskId));
   const t = useTranslations(locale);
+
+  // Get the color for a task based on its listId
+  const getTaskColor = (listId: string) => {
+    if (listColors?.[listId]) {
+      return listColors[listId];
+    }
+    return taskColor;
+  };
 
   const setFilter = onFilterChange;
 
@@ -233,6 +245,7 @@ export function TaskPanel({
                 onAddTask={onAddTask}
                 isMobile={isMobile}
                 locale={locale}
+                color={getTaskColor(task.listId)}
               />
             ))
           )}
@@ -248,15 +261,18 @@ interface TaskItemProps {
   onAddTask?: (task: GoogleTask) => void;
   isMobile?: boolean;
   locale?: Locale;
+  color?: string;
 }
 
-function TaskItem({ task, isPlaced, onAddTask, isMobile = false, locale = 'en' }: TaskItemProps) {
+function TaskItem({ task, isPlaced, onAddTask, isMobile = false, locale = 'en', color = '#4285f4' }: TaskItemProps) {
   const t = useTranslations(locale);
   return (
     <div
       data-task-id={task.id}
       data-task-title={task.title}
+      data-task-list-id={task.listId}
       data-task-list-title={task.listTitle}
+      data-task-color={color}
       className={`flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors fc-event ${
         isMobile ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'
       }`}

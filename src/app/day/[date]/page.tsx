@@ -154,12 +154,13 @@ export default function DayPage() {
     }
   };
 
-  const handleExternalDrop = async (taskId: string, taskTitle: string, startTime: string, listTitle?: string) => {
+  const handleExternalDrop = async (taskId: string, taskTitle: string, startTime: string, listId?: string, listTitle?: string) => {
     try {
       const newPlacement: TaskPlacement = {
         id: `${taskId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         taskId,
         taskTitle,
+        listId,
         listTitle,
         startTime,
         duration: settings.defaultTaskDuration,
@@ -274,6 +275,7 @@ export default function DayPage() {
             id: `${task.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             taskId: task.id,
             taskTitle: task.title,
+            listId: task.listId,
             listTitle: task.listTitle,
             startTime: foundSlot.toISOString(),
             duration: settings.defaultTaskDuration,
@@ -301,6 +303,7 @@ export default function DayPage() {
           calendarId: settings.selectedCalendarId,
           placements,
           taskColor: settings.taskColor,
+          listColors: settings.listColors,
         }),
       });
 
@@ -383,6 +386,7 @@ export default function DayPage() {
             <SettingsPanel
               settings={settings}
               calendars={calendars}
+              taskLists={taskLists}
               onSave={updateSettings}
               onRefetchCalendars={refetchCalendars}
               triggerVariant="ghost"
@@ -461,6 +465,8 @@ export default function DayPage() {
             onFilterChange={setFilter}
             filteredTasks={filteredTasks}
             locale={locale}
+            taskColor={settings.taskColor}
+            listColors={settings.listColors}
           />
         </div>
       </main>
@@ -496,6 +502,8 @@ export default function DayPage() {
               onAddTask={handleAddTask}
               isMobile={true}
               locale={locale}
+              taskColor={settings.taskColor}
+              listColors={settings.listColors}
             />
           </div>
         )}
@@ -508,6 +516,7 @@ export default function DayPage() {
         onConfirm={handleSaveToCalendar}
         saving={saving}
         taskColor={settings.taskColor}
+        listColors={settings.listColors}
         locale={locale}
       />
 

@@ -16,12 +16,14 @@ export interface UserSettings {
   timezone?: string; // User's selected IANA timezone string
   calendarTimezones?: Record<string, string>; // Map of calendarId -> timezone
   locale?: 'en' | 'zh-hk'; // User's preferred language
+  listColors?: Record<string, string>; // Map of task listId -> color for per-list color customization
 }
 
 export interface TaskPlacement {
   id: string;
   taskId: string;
   taskTitle: string;
+  listId?: string;
   listTitle?: string;
   startTime: string;
   duration: number;

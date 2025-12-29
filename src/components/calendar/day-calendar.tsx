@@ -27,7 +27,7 @@ interface DayCalendarProps {
   events: GoogleCalendarEvent[];
   placements: TaskPlacement[];
   onPlacementDrop: (placementId: string, newStartTime: string) => void;
-  onExternalDrop: (taskId: string, taskTitle: string, startTime: string, taskListTitle?: string) => void;
+  onExternalDrop: (taskId: string, taskTitle: string, startTime: string, taskListId?: string, taskListTitle?: string) => void;
   onPlacementClick: (placementId: string) => void;
   onPastTimeDrop?: () => void;
   settings: UserSettings;
@@ -69,10 +69,31 @@ export function DayCalendar({
   }, [date]);
 
   // Set CSS variable on document root for drag ghost color
+  // Updates dynamically when dragging starts based on the task's list color
   useEffect(() => {
     document.documentElement.style.setProperty('--task-color', settings.taskColor);
+
+    // Listen for drag start events to update color dynamically
+    const handleDragStart = (e: DragEvent) => {
+      const target = e.target as HTMLElement;
+      const taskElement = target.closest('[data-task-color]') as HTMLElement;
+      if (taskElement?.dataset.taskColor) {
+        document.documentElement.style.setProperty('--task-color', taskElement.dataset.taskColor);
+      }
+    };
+
+    // Reset color when drag ends
+    const handleDragEnd = () => {
+      document.documentElement.style.setProperty('--task-color', settings.taskColor);
+    };
+
+    document.addEventListener('dragstart', handleDragStart);
+    document.addEventListener('dragend', handleDragEnd);
+
     return () => {
       document.documentElement.style.removeProperty('--task-color');
+      document.removeEventListener('dragstart', handleDragStart);
+      document.removeEventListener('dragend', handleDragEnd);
     };
   }, [settings.taskColor]);
 
@@ -174,6 +195,14 @@ export function DayCalendar({
     };
   }, [nowIndicatorPosition]);
 
+  // Get the color for a placement based on listId or default
+  const getPlacementColor = (listId?: string) => {
+    if (listId && settings.listColors?.[listId]) {
+      return settings.listColors[listId];
+    }
+    return settings.taskColor;
+  };
+
   const calendarEvents: EventInput[] = [
     ...events.map((event) => ({
       id: `event-${event.id}`,
@@ -187,21 +216,24 @@ export function DayCalendar({
         type: 'google-event',
       },
     })),
-    ...placements.map((placement) => ({
-      id: `placement-${placement.id}`,
-      title: placement.taskTitle,
-      start: placement.startTime,
-      end: new Date(Date.parse(placement.startTime) + placement.duration * 60 * 1000).toISOString(),
-      backgroundColor: settings.taskColor,
-      borderColor: settings.taskColor,
-      editable: true,
-      classNames: ['temp-placement'],
-      extendedProps: {
-        type: 'placement',
-        placementId: placement.id,
-        listTitle: placement.listTitle,
-      },
-    })),
+    ...placements.map((placement) => {
+      const color = getPlacementColor(placement.listId);
+      return {
+        id: `placement-${placement.id}`,
+        title: placement.taskTitle,
+        start: placement.startTime,
+        end: new Date(Date.parse(placement.startTime) + placement.duration * 60 * 1000).toISOString(),
+        backgroundColor: color,
+        borderColor: color,
+        editable: true,
+        classNames: ['temp-placement'],
+        extendedProps: {
+          type: 'placement',
+          placementId: placement.id,
+          listTitle: placement.listTitle,
+        },
+      };
+    }),
   ];
 
   const renderEventContent = (eventInfo: EventContentArg) => {
@@ -266,6 +298,7 @@ export function DayCalendar({
   const handleEventReceive = (info: { event: { start: Date | null; remove: () => void }; draggedEl: HTMLElement }) => {
     const taskId = info.draggedEl.dataset.taskId;
     const taskTitle = info.draggedEl.dataset.taskTitle;
+    const taskListId = info.draggedEl.dataset.taskListId;
     const taskListTitle = info.draggedEl.dataset.taskListTitle;
 
     if (taskId && taskTitle && info.event.start) {
@@ -278,7 +311,7 @@ export function DayCalendar({
       // Remove the temporary event that FullCalendar created
       info.event.remove();
       // Create our own placement through the callback
-      onExternalDrop(taskId, taskTitle, utcISOStringFromInstant(info.event.start), taskListTitle);
+      onExternalDrop(taskId, taskTitle, utcISOStringFromInstant(info.event.start), taskListId, taskListTitle);
     }
   };
 
