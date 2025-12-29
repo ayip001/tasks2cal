@@ -11,6 +11,7 @@ import { TaskPanel } from '@/components/tasks/task-panel';
 import { SettingsPanel } from '@/components/settings/settings-panel';
 import { ConfirmDialog } from '@/components/calendar/confirm-dialog';
 import { Button } from '@/components/ui/button';
+import { Footer } from '@/components/ui/footer';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -526,6 +527,8 @@ export default function DayPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Footer locale={locale} />
     </div>
   );
 }
