@@ -57,8 +57,8 @@ function saveToStorage(date: string, placements: TaskPlacement[]): void {
     } else {
       localStorage.setItem(key, JSON.stringify(placements));
     }
-    // Dispatch a storage event so other tabs can react
-    window.dispatchEvent(new StorageEvent('storage', { key }));
+    // Note: The native 'storage' event automatically fires on OTHER tabs
+    // when localStorage changes. We don't need to dispatch it manually.
   } catch {
     // Silently fail - localStorage might be full or disabled
   }
@@ -82,6 +82,11 @@ export function useLocalPlacements(date: string) {
     setLocalPlacements(loadFromStorage(date));
   }
 
+  // Persist to localStorage whenever placements change
+  useEffect(() => {
+    saveToStorage(date, localPlacements);
+  }, [date, localPlacements]);
+
   // Subscribe to storage events for cross-tab sync
   useEffect(() => {
     const handleStorage = (e: StorageEvent) => {
@@ -93,53 +98,30 @@ export function useLocalPlacements(date: string) {
     return () => window.removeEventListener('storage', handleStorage);
   }, [date]);
 
-  const setPlacements = useCallback(
-    (newPlacements: TaskPlacement[]) => {
-      setLocalPlacements(newPlacements);
-      saveToStorage(date, newPlacements);
-    },
-    [date]
-  );
+  const setPlacements = useCallback((newPlacements: TaskPlacement[]) => {
+    setLocalPlacements(newPlacements);
+  }, []);
 
-  const addPlacement = useCallback(
-    (placement: TaskPlacement) => {
-      setLocalPlacements((prev) => {
-        const updated = [...prev, placement];
-        saveToStorage(date, updated);
-        return updated;
-      });
-    },
-    [date]
-  );
+  const addPlacement = useCallback((placement: TaskPlacement) => {
+    setLocalPlacements((prev) => [...prev, placement]);
+  }, []);
 
   const updatePlacement = useCallback(
     (placementId: string, updates: Partial<TaskPlacement>) => {
-      setLocalPlacements((prev) => {
-        const updated = prev.map((p) =>
-          p.id === placementId ? { ...p, ...updates } : p
-        );
-        saveToStorage(date, updated);
-        return updated;
-      });
+      setLocalPlacements((prev) =>
+        prev.map((p) => (p.id === placementId ? { ...p, ...updates } : p))
+      );
     },
-    [date]
+    []
   );
 
-  const removePlacement = useCallback(
-    (placementId: string) => {
-      setLocalPlacements((prev) => {
-        const updated = prev.filter((p) => p.id !== placementId);
-        saveToStorage(date, updated);
-        return updated;
-      });
-    },
-    [date]
-  );
+  const removePlacement = useCallback((placementId: string) => {
+    setLocalPlacements((prev) => prev.filter((p) => p.id !== placementId));
+  }, []);
 
   const clearPlacements = useCallback(() => {
     setLocalPlacements([]);
-    saveToStorage(date, []);
-  }, [date]);
+  }, []);
 
   return {
     placements: localPlacements,
