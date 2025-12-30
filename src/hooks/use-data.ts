@@ -12,7 +12,7 @@ import {
 } from '@/types';
 import { DEFAULT_SETTINGS, CACHE_KEYS } from '@/lib/constants';
 import { normalizeIanaTimeZone } from '@/lib/timezone';
-import { getLocaleFromCookieClient, setLocaleCookie } from '@/lib/locale';
+import { getLocaleFromCookieClient, getLocaleFromStorage, setLocaleCookie, setLocaleStorage } from '@/lib/locale';
 import { getFromCache, setInCache } from '@/lib/cache';
 import type { Locale } from '@/i18n/config';
 
@@ -195,7 +195,9 @@ export function useCalendars(forceRefresh = false) {
 export function useSettings() {
   const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
-  const [locale, setLocale] = useState<Locale>('en');
+  // Initialize locale from localStorage for instant access (avoids flash of wrong language)
+  // localStorage is synchronous and available immediately on client
+  const [locale, setLocale] = useState<Locale>(() => getLocaleFromStorage());
 
   const fetchSettings = useCallback(async () => {
     try {
@@ -204,24 +206,27 @@ export function useSettings() {
         const data = await res.json();
         setSettings(data);
 
-        // Handle locale sync between cookie and Redis
+        // Handle locale sync between cookie/localStorage and Redis
         const cookieLocale = getLocaleFromCookieClient();
         const redisLocale = data.locale as Locale | undefined;
 
         if (!redisLocale) {
           // New or legacy user - cookie determines preference
-          // Save cookie locale to Redis
+          // Save cookie locale to Redis and localStorage
           setLocale(cookieLocale);
+          setLocaleStorage(cookieLocale);
           await fetch('/api/settings', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ locale: cookieLocale }),
           });
         } else if (redisLocale !== cookieLocale) {
-          // Redis is source of truth - sync cookie
-          setLocaleCookie(redisLocale);
+          // Redis is source of truth - sync cookie and localStorage
+          setLocaleCookie(redisLocale); // This also updates localStorage
           setLocale(redisLocale);
         } else {
+          // Ensure localStorage is in sync
+          setLocaleStorage(redisLocale);
           setLocale(redisLocale);
         }
       }
