@@ -104,7 +104,12 @@
     "refreshData": "Refresh Data",
     "refreshDataDesc": "Fetch latest tasks and calendar data from Google",
     "refreshing": "Refreshing...",
-    "refreshDisabled": "Already refreshed this session"
+    "refreshDisabled": "Already refreshed this session",
+    "lastRefreshed": "Last refreshed: {time}",
+    "secondsAgo": "{count} seconds ago",
+    "minutesAgo": "{count} minutes ago",
+    "hoursAgo": "{count} hours ago",
+    "daysAgo": "{count} days ago"
   },
   "errors": {
     "rateLimited": "Too many requests. Please wait and try again."

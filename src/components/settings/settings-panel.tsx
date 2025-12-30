@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { UserSettings, GoogleCalendar, GoogleTaskList } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -77,7 +77,18 @@ export function SettingsPanel({
   const [showListColors, setShowListColors] = useState(false);
   const [hasRefreshed, setHasRefreshed] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null);
+  const [, setForceUpdate] = useState(0);
   const t = useTranslations(locale);
+
+  // Update relative time display every 30 seconds
+  useEffect(() => {
+    if (!lastRefreshTime) return;
+    const interval = setInterval(() => {
+      setForceUpdate((n) => n + 1);
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [lastRefreshTime]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -106,8 +117,29 @@ export function SettingsPanel({
     try {
       await onRefreshData();
       setHasRefreshed(true);
+      setLastRefreshTime(new Date());
     } finally {
       setRefreshing(false);
+    }
+  };
+
+  // Format relative time (e.g., "5 seconds ago", "2 minutes ago")
+  const formatRelativeTime = (date: Date): string => {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffSeconds = Math.floor(diffMs / 1000);
+    const diffMinutes = Math.floor(diffSeconds / 60);
+    const diffHours = Math.floor(diffMinutes / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffSeconds < 60) {
+      return t('settings.secondsAgo', { count: diffSeconds });
+    } else if (diffMinutes < 60) {
+      return t('settings.minutesAgo', { count: diffMinutes });
+    } else if (diffHours < 24) {
+      return t('settings.hoursAgo', { count: diffHours });
+    } else {
+      return t('settings.daysAgo', { count: diffDays });
     }
   };
 
@@ -688,6 +720,11 @@ export function SettingsPanel({
                   ? t('settings.refreshDisabled')
                   : t('settings.refreshData')}
               </Button>
+              {lastRefreshTime && (
+                <p className="text-xs text-muted-foreground text-center">
+                  {t('settings.lastRefreshed', { time: formatRelativeTime(lastRefreshTime) })}
+                </p>
+              )}
             </div>
           )}
 
