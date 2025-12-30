@@ -102,7 +102,7 @@
     "saving": "儲存中...",
     "saveSettings": "儲存設定",
     "refreshData": "重新整理資料",
-    "refreshDataDesc": "從 Google 取得最新的代辦事項和日曆資料",
+    "refreshDataDesc": "從 Google 取得最新的代辦事項和日曆資料。",
     "refreshing": "重新整理中...",
     "refreshDisabled": "本次工作階段已重新整理",
     "lastRefreshed": "上次重新整理：{time}",

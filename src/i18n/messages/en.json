@@ -102,7 +102,7 @@
     "saving": "Saving...",
     "saveSettings": "Save Settings",
     "refreshData": "Refresh Data",
-    "refreshDataDesc": "Fetch latest tasks and calendar data from Google",
+    "refreshDataDesc": "Fetch latest tasks and calendar data from Google.",
     "refreshing": "Refreshing...",
     "refreshDisabled": "Already refreshed this session",
     "lastRefreshed": "Last refreshed: {time}",

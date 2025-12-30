@@ -81,6 +81,14 @@ export function SettingsPanel({
   const [, setForceUpdate] = useState(0);
   const t = useTranslations(locale);
 
+  // Load last refresh time from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem('lastDataRefreshTime');
+    if (stored) {
+      setLastRefreshTime(new Date(parseInt(stored, 10)));
+    }
+  }, []);
+
   // Update relative time display every 30 seconds
   useEffect(() => {
     if (!lastRefreshTime) return;
@@ -117,7 +125,9 @@ export function SettingsPanel({
     try {
       await onRefreshData();
       setHasRefreshed(true);
-      setLastRefreshTime(new Date());
+      const now = new Date();
+      setLastRefreshTime(now);
+      localStorage.setItem('lastDataRefreshTime', now.getTime().toString());
     } finally {
       setRefreshing(false);
     }
@@ -706,6 +716,7 @@ export function SettingsPanel({
               <Label>{t('settings.refreshData')}</Label>
               <p className="text-xs text-muted-foreground">
                 {t('settings.refreshDataDesc')}
+                {lastRefreshTime && ` ${t('settings.lastRefreshed', { time: formatRelativeTime(lastRefreshTime) })}`}
               </p>
               <Button
                 variant="outline"
@@ -720,11 +731,6 @@ export function SettingsPanel({
                   ? t('settings.refreshDisabled')
                   : t('settings.refreshData')}
               </Button>
-              {lastRefreshTime && (
-                <p className="text-xs text-muted-foreground text-center">
-                  {t('settings.lastRefreshed', { time: formatRelativeTime(lastRefreshTime) })}
-                </p>
-              )}
             </div>
           )}
 
