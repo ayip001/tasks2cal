@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search, Calendar, GripVertical, Check, Plus, ChevronDown } from 'lucide-react';
+import { Search, Calendar, GripVertical, Check, Plus, ChevronDown, Star } from 'lucide-react';
 import { format } from 'date-fns';
 import { useTranslations } from '@/hooks/use-translations';
 import type { Locale } from '@/i18n/config';
@@ -34,6 +34,7 @@ interface TaskPanelProps {
   onFilterChange: Dispatch<SetStateAction<TaskFilter>>;
   filteredTasks: GoogleTask[];
   onAddTask?: (task: GoogleTask) => void;
+  onToggleStar?: (taskId: string) => void;
   isMobile?: boolean;
   locale?: Locale;
   taskColor?: string;
@@ -48,6 +49,7 @@ export function TaskPanel({
   onFilterChange,
   filteredTasks,
   onAddTask,
+  onToggleStar,
   isMobile = false,
   locale = 'en',
   taskColor = '#4285f4',
@@ -231,6 +233,19 @@ export function TaskPanel({
             {t('tasks.hideContainers')}
           </Label>
         </div>
+
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="starredOnly"
+            checked={filter.starredOnly || false}
+            onCheckedChange={(checked) =>
+              setFilter({ ...filter, starredOnly: checked ? true : undefined })
+            }
+          />
+          <Label htmlFor="starredOnly" className="text-sm cursor-pointer">
+            {t('tasks.favoritesOnly')}
+          </Label>
+        </div>
       </div>
 
       <ScrollArea className="flex-1">
@@ -246,6 +261,7 @@ export function TaskPanel({
                 task={task}
                 isPlaced={placedTaskIds.has(task.id)}
                 onAddTask={onAddTask}
+                onToggleStar={onToggleStar}
                 isMobile={isMobile}
                 locale={locale}
                 color={getTaskColor(task.listId)}
@@ -262,12 +278,13 @@ interface TaskItemProps {
   task: GoogleTask;
   isPlaced: boolean;
   onAddTask?: (task: GoogleTask) => void;
+  onToggleStar?: (taskId: string) => void;
   isMobile?: boolean;
   locale?: Locale;
   color?: string;
 }
 
-function TaskItem({ task, isPlaced, onAddTask, isMobile = false, locale = 'en', color = '#4285f4' }: TaskItemProps) {
+function TaskItem({ task, isPlaced, onAddTask, onToggleStar, isMobile = false, locale = 'en', color = '#4285f4' }: TaskItemProps) {
   const t = useTranslations(locale);
   return (
     <div
@@ -281,6 +298,21 @@ function TaskItem({ task, isPlaced, onAddTask, isMobile = false, locale = 'en', 
       }`}
     >
       {!isMobile && <GripVertical className="h-4 w-4 text-muted-foreground flex-shrink-0" />}
+
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleStar?.(task.id);
+        }}
+        className="flex-shrink-0"
+        title={task.isStarred ? t('tasks.unstar') : t('tasks.star')}
+      >
+        {task.isStarred ? (
+          <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+        ) : (
+          <Star className="h-4 w-4 text-muted-foreground hover:text-yellow-500" />
+        )}
+      </button>
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">

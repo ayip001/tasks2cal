@@ -55,7 +55,10 @@
     "noTasksFound": "找不到代辦事項",
     "placed": "已排程",
     "hasSubtasks": "有子代辦事項",
-    "removePlacement": "移除排程"
+    "removePlacement": "移除排程",
+    "favoritesOnly": "僅顯示收藏",
+    "star": "收藏代辦事項",
+    "unstar": "取消收藏"
   },
   "settings": {
     "title": "設定",

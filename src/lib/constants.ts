@@ -52,7 +52,13 @@ export const GOOGLE_CALENDAR_COLORS: Record<string, string> = {
 
 export const KV_KEYS = {
   settings: (userId: string) => `settings:${userId}`,
+  starred: (userId: string) => `starred:${userId}`,
 };
+
+// Starred tasks configuration
+export const STARRED_SYNC_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes
+export const STARRED_STORAGE_KEY = (userId: string) => `starred:${userId}`;
+export const MAX_STARRED_TASKS = 500;
 
 export const GOOGLE_SCOPES = [
   'https://www.googleapis.com/auth/calendar.events',

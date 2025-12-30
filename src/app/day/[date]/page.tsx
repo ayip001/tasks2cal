@@ -34,6 +34,7 @@ import {
   filterTasks,
   invalidateUserCache,
 } from '@/hooks/use-data';
+import { useStarredTasks } from '@/hooks/use-starred-tasks';
 import { useLocalPlacements } from '@/hooks/use-local-placements';
 import { autoFitTasks } from '@/lib/autofit';
 import { TaskPlacement, TaskFilter, GoogleTask } from '@/types';
@@ -65,6 +66,12 @@ export default function DayPage() {
 
   const { tasks, taskLists, loading: tasksLoading, refetch: refetchTasks } = useTasks();
   const { settings, loading: settingsLoading, updateSettings, locale } = useSettings();
+  const {
+    isStarred,
+    toggleStar,
+    cleanupDeletedTasks,
+    syncWithRedis,
+  } = useStarredTasks(session?.user?.email ?? undefined);
   const t = useTranslations(locale);
   const { calendars, refetch: refetchCalendars } = useCalendars();
   const selectedTimeZone = useMemo(() => {
@@ -101,8 +108,25 @@ export default function DayPage() {
     }
   }, [taskLists, filter.listIds]);
 
+  // Enrich tasks with isStarred property
+  const enrichedTasks = useMemo(() =>
+    tasks.map((task) => ({
+      ...task,
+      isStarred: isStarred(task.id),
+    })),
+    [tasks, isStarred]
+  );
+
+  // Cleanup deleted tasks from starred list
+  useEffect(() => {
+    if (tasks.length > 0) {
+      const taskIds = tasks.map((t) => t.id);
+      cleanupDeletedTasks(taskIds);
+    }
+  }, [tasks, cleanupDeletedTasks]);
+
   // Compute filtered tasks from filter state
-  const filteredTasks = useMemo(() => filterTasks(tasks, filter), [tasks, filter]);
+  const filteredTasks = useMemo(() => filterTasks(enrichedTasks, filter), [enrichedTasks, filter]);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -338,11 +362,12 @@ export default function DayPage() {
       invalidateUserCache(session.user.email);
     }
 
-    // Refetch all data
+    // Refetch all data and sync starred tasks with Redis
     await Promise.all([
       refetchTasks(),
       refetchCalendars(),
       refetchEvents(),
+      syncWithRedis(),
     ]);
   };
 
@@ -482,6 +507,7 @@ export default function DayPage() {
             filter={filter}
             onFilterChange={setFilter}
             filteredTasks={filteredTasks}
+            onToggleStar={toggleStar}
             locale={locale}
             taskColor={settings.taskColor}
             listColors={settings.listColors}
@@ -518,6 +544,7 @@ export default function DayPage() {
               onFilterChange={setFilter}
               filteredTasks={filteredTasks}
               onAddTask={handleAddTask}
+              onToggleStar={toggleStar}
               isMobile={true}
               locale={locale}
               taskColor={settings.taskColor}
