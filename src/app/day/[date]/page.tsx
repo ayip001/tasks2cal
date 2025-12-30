@@ -154,10 +154,6 @@ export default function DayPage() {
     }
   }, [dateParam, selectedTimeZone, isValidDate, status, settingsLoading, router]);
 
-  // Only show full skeleton on initial page load (no session data yet)
-  // During date navigation, session remains authenticated so we skip the skeleton
-  const isInitialLoad = status === 'loading' && !session;
-
   if (status === 'unauthenticated') {
     return null;
   }
@@ -173,7 +169,7 @@ export default function DayPage() {
     );
   }
 
-  if (isInitialLoad || (settingsLoading && !settings.selectedCalendarId)) {
+  if (status === 'loading' || settingsLoading) {
     return <DayPageLoadingSkeleton />;
   }
 
