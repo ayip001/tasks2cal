@@ -16,6 +16,13 @@ import { getLocaleFromCookieClient, setLocaleCookie } from '@/lib/locale';
 import { getFromCache, setInCache } from '@/lib/cache';
 import type { Locale } from '@/i18n/config';
 
+// Update the last data refresh timestamp in localStorage
+function updateLastRefreshTime(): void {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('lastDataRefreshTime', Date.now().toString());
+  }
+}
+
 export function useTasks(forceRefresh = false) {
   const { data: session } = useSession();
   const [tasks, setTasks] = useState<GoogleTask[]>([]);
@@ -57,11 +64,12 @@ export function useTasks(forceRefresh = false) {
       setTasks(tasksData);
       setTaskLists(listsData);
 
-      // Cache the results
+      // Cache the results and update refresh timestamp
       if (userId) {
         setInCache(CACHE_KEYS.tasks(userId), tasksData);
         setInCache(CACHE_KEYS.taskLists(userId), listsData);
       }
+      updateLastRefreshTime();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
@@ -118,10 +126,11 @@ export function useCalendarEvents(date: string, calendarId: string = 'primary', 
       const data = await res.json();
       setEvents(data);
 
-      // Cache the results
+      // Cache the results and update refresh timestamp
       if (userId) {
         setInCache(CACHE_KEYS.events(userId, date, calendarId), data);
       }
+      updateLastRefreshTime();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
@@ -163,10 +172,11 @@ export function useCalendars(forceRefresh = false) {
         const data = await res.json();
         setCalendars(data);
 
-        // Cache the results
+        // Cache the results and update refresh timestamp
         if (userId) {
           setInCache(CACHE_KEYS.calendars(userId), data);
         }
+        updateLastRefreshTime();
       }
     } finally {
       setLoading(false);

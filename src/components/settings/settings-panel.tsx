@@ -125,9 +125,11 @@ export function SettingsPanel({
     try {
       await onRefreshData();
       setHasRefreshed(true);
-      const now = new Date();
-      setLastRefreshTime(now);
-      localStorage.setItem('lastDataRefreshTime', now.getTime().toString());
+      // Reload timestamp from localStorage (hooks update it when fetching)
+      const stored = localStorage.getItem('lastDataRefreshTime');
+      if (stored) {
+        setLastRefreshTime(new Date(parseInt(stored, 10)));
+      }
     } finally {
       setRefreshing(false);
     }
