@@ -25,6 +25,7 @@ import { Search, Calendar, GripVertical, Check, Plus, ChevronDown, Star } from '
 import { format } from 'date-fns';
 import { useTranslations } from '@/hooks/use-translations';
 import type { Locale } from '@/i18n/config';
+import { TaskItemSkeleton } from '@/components/ui/loading-skeletons';
 
 interface TaskPanelProps {
   taskLists: GoogleTaskList[];
@@ -253,7 +254,11 @@ export function TaskPanel({
       <ScrollArea className="flex-1">
         <div ref={containerRef} className="p-4 space-y-2">
           {loading ? (
-            <div className="text-center text-muted-foreground py-8">{t('tasks.loadingTasks')}</div>
+            <>
+              {Array.from({ length: 6 }).map((_, i) => (
+                <TaskItemSkeleton key={i} />
+              ))}
+            </>
           ) : filteredTasks.length === 0 ? (
             <div className="text-center text-muted-foreground py-8">{t('tasks.noTasksFound')}</div>
           ) : (

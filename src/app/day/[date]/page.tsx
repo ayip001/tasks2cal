@@ -51,6 +51,7 @@ import {
   CalendarDays,
   ListTodo,
 } from 'lucide-react';
+import { DayPageLoadingSkeleton } from '@/components/ui/loading-skeletons';
 
 export default function DayPage() {
   const params = useParams();
@@ -169,11 +170,7 @@ export default function DayPage() {
   }
 
   if (status === 'loading' || settingsLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">{t('common.loading')}</div>
-      </div>
-    );
+    return <DayPageLoadingSkeleton />;
   }
 
   if (!session) {
