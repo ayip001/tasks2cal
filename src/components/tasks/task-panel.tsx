@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search, Calendar, GripVertical, Check, Plus, ChevronDown } from 'lucide-react';
+import { Search, Calendar, GripVertical, Check, Plus, ChevronDown, Star } from 'lucide-react';
 import { format } from 'date-fns';
 import { useTranslations } from '@/hooks/use-translations';
 import type { Locale } from '@/i18n/config';
@@ -34,6 +34,7 @@ interface TaskPanelProps {
   onFilterChange: Dispatch<SetStateAction<TaskFilter>>;
   filteredTasks: GoogleTask[];
   onAddTask?: (task: GoogleTask) => void;
+  onToggleStar?: (taskId: string) => void;
   isMobile?: boolean;
   locale?: Locale;
   taskColor?: string;
@@ -48,6 +49,7 @@ export function TaskPanel({
   onFilterChange,
   filteredTasks,
   onAddTask,
+  onToggleStar,
   isMobile = false,
   locale = 'en',
   taskColor = '#4285f4',
@@ -164,7 +166,7 @@ export function TaskPanel({
                     />
                     <Label
                       htmlFor="all-lists"
-                      className="text-sm font-medium cursor-pointer flex-1"
+                      className="text-sm font-medium cursor-pointer flex-1 break-words"
                     >
                       {t('tasks.allLists')}
                     </Label>
@@ -175,7 +177,7 @@ export function TaskPanel({
                     return (
                       <div
                         key={list.id}
-                        className="flex items-center space-x-2 p-2 rounded-sm hover:bg-accent cursor-pointer"
+                        className="flex items-center space-x-2 p-2 rounded-sm hover:bg-accent cursor-pointer flex-wrap"
                         onClick={handleClick}
                       >
                         <Checkbox
@@ -184,7 +186,7 @@ export function TaskPanel({
                           onCheckedChange={handleClick}
                         />
                         <Label
-                          className="text-sm cursor-pointer flex-1"
+                          className="text-sm cursor-pointer flex-1 break-words"
                         >
                           {list.title}
                         </Label>
@@ -219,17 +221,32 @@ export function TaskPanel({
           </div>
         </div>
 
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="hideContainer"
-            checked={filter.hideContainerTasks || false}
-            onCheckedChange={(checked) =>
-              setFilter({ ...filter, hideContainerTasks: checked ? true : undefined })
-            }
-          />
-          <Label htmlFor="hideContainer" className="text-sm cursor-pointer">
-            {t('tasks.hideContainers')}
-          </Label>
+        <div className="flex flex-wrap gap-4">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="hideContainer"
+              checked={filter.hideContainerTasks || false}
+              onCheckedChange={(checked) =>
+                setFilter({ ...filter, hideContainerTasks: checked ? true : undefined })
+              }
+            />
+            <Label htmlFor="hideContainer" className="text-sm cursor-pointer break-words">
+              {t('tasks.hideContainers')}
+            </Label>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="starredOnly"
+              checked={filter.starredOnly || false}
+              onCheckedChange={(checked) =>
+                setFilter({ ...filter, starredOnly: checked ? true : undefined })
+              }
+            />
+            <Label htmlFor="starredOnly" className="text-sm cursor-pointer break-words">
+              {t('tasks.favoritesOnly')}
+            </Label>
+          </div>
         </div>
       </div>
 
@@ -246,6 +263,7 @@ export function TaskPanel({
                 task={task}
                 isPlaced={placedTaskIds.has(task.id)}
                 onAddTask={onAddTask}
+                onToggleStar={onToggleStar}
                 isMobile={isMobile}
                 locale={locale}
                 color={getTaskColor(task.listId)}
@@ -262,12 +280,13 @@ interface TaskItemProps {
   task: GoogleTask;
   isPlaced: boolean;
   onAddTask?: (task: GoogleTask) => void;
+  onToggleStar?: (taskId: string) => void;
   isMobile?: boolean;
   locale?: Locale;
   color?: string;
 }
 
-function TaskItem({ task, isPlaced, onAddTask, isMobile = false, locale = 'en', color = '#4285f4' }: TaskItemProps) {
+function TaskItem({ task, isPlaced, onAddTask, onToggleStar, isMobile = false, locale = 'en', color = '#4285f4' }: TaskItemProps) {
   const t = useTranslations(locale);
   return (
     <div
@@ -282,9 +301,24 @@ function TaskItem({ task, isPlaced, onAddTask, isMobile = false, locale = 'en', 
     >
       {!isMobile && <GripVertical className="h-4 w-4 text-muted-foreground flex-shrink-0" />}
 
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleStar?.(task.id);
+        }}
+        className="flex-shrink-0"
+        title={task.isStarred ? t('tasks.unstar') : t('tasks.star')}
+      >
+        {task.isStarred ? (
+          <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+        ) : (
+          <Star className="h-4 w-4 text-muted-foreground hover:text-yellow-500" />
+        )}
+      </button>
+
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="font-medium truncate">{task.title}</span>
+        <div className="flex items-start gap-2 flex-wrap">
+          <span className="font-medium break-words">{task.title}</span>
           {isPlaced && (
             <Badge variant="secondary" className="flex-shrink-0">
               <Check className="h-3 w-3 mr-1" />
@@ -293,8 +327,8 @@ function TaskItem({ task, isPlaced, onAddTask, isMobile = false, locale = 'en', 
           )}
         </div>
 
-        <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-          <span>{task.listTitle}</span>
+        <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground flex-wrap">
+          <span className="break-words">{task.listTitle}</span>
           {task.due && (
             <>
               <span>•</span>

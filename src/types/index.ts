@@ -41,6 +41,7 @@ export interface GoogleTask {
   listTitle: string;
   hasSubtasks?: boolean;
   isPlaced?: boolean;
+  isStarred?: boolean;  // Populated at runtime from starred store
 }
 
 export interface GoogleTaskList {
@@ -84,6 +85,13 @@ export interface TaskFilter {
   hasDueDate?: boolean;
   searchText?: string;
   hideContainerTasks?: boolean;
+  starredOnly?: boolean;  // New filter option
+}
+
+// Starred tasks data stored in localStorage and Redis
+export interface StarredTasksData {
+  taskIds: string[];      // Array of starred task IDs
+  lastModified: number;   // Timestamp (Date.now()) of last modification
 }
 
 export interface AutoFitResult {

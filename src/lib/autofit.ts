@@ -212,17 +212,18 @@ function _removeSlotTime(
 
 function _sortTasksByPriority(tasks: GoogleTask[]): GoogleTask[] {
   return [...tasks].sort((a, b) => {
-    const aHasDue = !!a.due;
-    const bHasDue = !!b.due;
+    // Priority score: starred (2) + hasDue (1)
+    const aScore = (a.isStarred ? 2 : 0) + (a.due ? 1 : 0);
+    const bScore = (b.isStarred ? 2 : 0) + (b.due ? 1 : 0);
 
-    // Tasks with due dates come first
-    if (aHasDue !== bHasDue) {
-      return aHasDue ? -1 : 1;
+    // Higher score = higher priority
+    if (aScore !== bScore) {
+      return bScore - aScore;
     }
 
-    // Sort by due date if both have one
-    if (aHasDue && bHasDue) {
-      return new Date(a.due!).getTime() - new Date(b.due!).getTime();
+    // If same score and both have due dates, sort by due date
+    if (a.due && b.due) {
+      return new Date(a.due).getTime() - new Date(b.due).getTime();
     }
 
     return 0;

@@ -1,5 +1,5 @@
 import Redis from 'ioredis';
-import { UserSettings } from '@/types';
+import { UserSettings, StarredTasksData } from '@/types';
 import { DEFAULT_SETTINGS, KV_KEYS } from '../constants';
 
 function _createRedisClient(): Redis {
@@ -38,4 +38,24 @@ export async function setUserSettings(
   const newSettings = { ...currentSettings, ...settings };
   await redis.set(key, JSON.stringify(newSettings));
   return newSettings;
+}
+
+export async function getStarredTasks(userId: string): Promise<StarredTasksData | null> {
+  const key = KV_KEYS.starred(userId);
+  const data = await redis.get(key);
+
+  if (!data) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(data) as StarredTasksData;
+  } catch {
+    return null;
+  }
+}
+
+export async function setStarredTasks(userId: string, data: StarredTasksData): Promise<void> {
+  const key = KV_KEYS.starred(userId);
+  await redis.set(key, JSON.stringify(data));
 }
