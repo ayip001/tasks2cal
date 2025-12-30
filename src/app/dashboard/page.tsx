@@ -131,11 +131,14 @@ export default function DashboardPage() {
 
   const hoveredEvents = hoveredDate ? getEventsForDate(hoveredDate) : [];
 
+  // Only show full skeleton on initial page load (no session data yet)
+  const isInitialLoad = status === 'loading' && !session;
+
   if (status === 'unauthenticated') {
     return null;
   }
 
-  if (status === 'loading') {
+  if (isInitialLoad) {
     return <PageLoadingSkeleton />;
   }
 
