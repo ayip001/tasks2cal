@@ -100,7 +100,19 @@
     "workingHoursWarning": "Working hours outside calendar range:",
     "ignoreContainerTasks": "Ignore container tasks in auto-fit",
     "saving": "Saving...",
-    "saveSettings": "Save Settings"
+    "saveSettings": "Save Settings",
+    "refreshData": "Refresh Data",
+    "refreshDataDesc": "Fetch latest tasks and calendar data from Google.",
+    "refreshing": "Refreshing...",
+    "refreshDisabled": "Already refreshed this session",
+    "lastRefreshed": "Last refreshed: {time}",
+    "secondsAgo": "{count} seconds ago",
+    "minutesAgo": "{count} minutes ago",
+    "hoursAgo": "{count} hours ago",
+    "daysAgo": "{count} days ago"
+  },
+  "errors": {
+    "rateLimited": "Too many requests. Please wait and try again."
   },
   "footer": {
     "privacyPolicy": "Privacy Policy",

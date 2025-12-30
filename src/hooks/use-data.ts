@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useSession } from 'next-auth/react';
 import {
   GoogleTask,
   GoogleTaskList,
@@ -9,18 +10,42 @@ import {
   UserSettings,
   TaskFilter,
 } from '@/types';
-import { DEFAULT_SETTINGS } from '@/lib/constants';
+import { DEFAULT_SETTINGS, CACHE_KEYS } from '@/lib/constants';
 import { normalizeIanaTimeZone } from '@/lib/timezone';
 import { getLocaleFromCookieClient, setLocaleCookie } from '@/lib/locale';
+import { getFromCache, setInCache } from '@/lib/cache';
 import type { Locale } from '@/i18n/config';
 
-export function useTasks() {
+// Update the last data refresh timestamp in localStorage
+function updateLastRefreshTime(): void {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('lastDataRefreshTime', Date.now().toString());
+  }
+}
+
+export function useTasks(forceRefresh = false) {
+  const { data: session } = useSession();
   const [tasks, setTasks] = useState<GoogleTask[]>([]);
   const [taskLists, setTaskLists] = useState<GoogleTaskList[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchTasks = useCallback(async () => {
+  const fetchTasks = useCallback(async (bypassCache = false) => {
+    const userId = session?.user?.email;
+
+    // Try cache first (unless bypassing)
+    if (userId && !bypassCache) {
+      const cachedTasks = getFromCache<GoogleTask[]>(CACHE_KEYS.tasks(userId));
+      const cachedLists = getFromCache<GoogleTaskList[]>(CACHE_KEYS.taskLists(userId));
+
+      if (cachedTasks && cachedLists) {
+        setTasks(cachedTasks);
+        setTaskLists(cachedLists);
+        setLoading(false);
+        return;
+      }
+    }
+
     setLoading(true);
     setError(null);
 
@@ -38,27 +63,52 @@ export function useTasks() {
 
       setTasks(tasksData);
       setTaskLists(listsData);
+
+      // Cache the results and update refresh timestamp
+      if (userId) {
+        setInCache(CACHE_KEYS.tasks(userId), tasksData);
+        setInCache(CACHE_KEYS.taskLists(userId), listsData);
+      }
+      updateLastRefreshTime();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [session?.user?.email]);
 
   useEffect(() => {
-    fetchTasks();
-  }, [fetchTasks]);
+    fetchTasks(forceRefresh);
+  }, [fetchTasks, forceRefresh]);
 
-  return { tasks, taskLists, loading, error, refetch: fetchTasks };
+  const refetch = useCallback(() => fetchTasks(true), [fetchTasks]);
+
+  return { tasks, taskLists, loading, error, refetch };
 }
 
-export function useCalendarEvents(date: string, calendarId: string = 'primary', selectedTimeZone: string = 'UTC') {
+export function useCalendarEvents(date: string, calendarId: string = 'primary', selectedTimeZone: string = 'UTC', forceRefresh = false) {
+  const { data: session } = useSession();
   const [events, setEvents] = useState<GoogleCalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchEvents = useCallback(async () => {
+  const fetchEvents = useCallback(async (bypassCache = false) => {
     if (!date) return;
+
+    const userId = session?.user?.email;
+
+    // Try cache first (unless bypassing)
+    if (userId && !bypassCache) {
+      const cachedEvents = getFromCache<GoogleCalendarEvent[]>(
+        CACHE_KEYS.events(userId, date, calendarId)
+      );
+
+      if (cachedEvents) {
+        setEvents(cachedEvents);
+        setLoading(false);
+        return;
+      }
+    }
 
     setLoading(true);
     setError(null);
@@ -75,41 +125,71 @@ export function useCalendarEvents(date: string, calendarId: string = 'primary', 
 
       const data = await res.json();
       setEvents(data);
+
+      // Cache the results and update refresh timestamp
+      if (userId) {
+        setInCache(CACHE_KEYS.events(userId, date, calendarId), data);
+      }
+      updateLastRefreshTime();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
     }
-  }, [date, calendarId, selectedTimeZone]);
+  }, [date, calendarId, selectedTimeZone, session?.user?.email]);
 
   useEffect(() => {
-    fetchEvents();
-  }, [fetchEvents]);
+    fetchEvents(forceRefresh);
+  }, [fetchEvents, forceRefresh]);
 
-  return { events, loading, error, refetch: fetchEvents };
+  const refetch = useCallback(() => fetchEvents(true), [fetchEvents]);
+
+  return { events, loading, error, refetch };
 }
 
-export function useCalendars() {
+export function useCalendars(forceRefresh = false) {
+  const { data: session } = useSession();
   const [calendars, setCalendars] = useState<GoogleCalendar[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchCalendars = useCallback(async () => {
+  const fetchCalendars = useCallback(async (bypassCache = false) => {
+    const userId = session?.user?.email;
+
+    // Try cache first (unless bypassing)
+    if (userId && !bypassCache) {
+      const cachedCalendars = getFromCache<GoogleCalendar[]>(CACHE_KEYS.calendars(userId));
+
+      if (cachedCalendars) {
+        setCalendars(cachedCalendars);
+        setLoading(false);
+        return;
+      }
+    }
+
     try {
       const res = await fetch('/api/calendar?type=calendars');
       if (res.ok) {
         const data = await res.json();
         setCalendars(data);
+
+        // Cache the results and update refresh timestamp
+        if (userId) {
+          setInCache(CACHE_KEYS.calendars(userId), data);
+        }
+        updateLastRefreshTime();
       }
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [session?.user?.email]);
 
   useEffect(() => {
-    fetchCalendars();
-  }, [fetchCalendars]);
+    fetchCalendars(forceRefresh);
+  }, [fetchCalendars, forceRefresh]);
 
-  return { calendars, loading, refetch: fetchCalendars };
+  const refetch = useCallback(() => fetchCalendars(true), [fetchCalendars]);
+
+  return { calendars, loading, refetch };
 }
 
 export function useSettings() {
@@ -228,3 +308,6 @@ export function filterTasks(tasks: GoogleTask[], filter: TaskFilter): GoogleTask
     return true;
   });
 }
+
+// Re-export cache invalidation for use in components
+export { invalidateUserCache } from '@/lib/cache';

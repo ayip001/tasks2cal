@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { UserSettings, GoogleCalendar, GoogleTaskList } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -35,6 +35,7 @@ interface SettingsPanelProps {
   onSave: (updates: Partial<UserSettings>) => Promise<void>;
   showLabel?: boolean;
   onRefetchCalendars?: () => Promise<void>;
+  onRefreshData?: () => Promise<void>;
   triggerClassName?: string;
   triggerVariant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
   locale?: Locale;
@@ -64,6 +65,7 @@ export function SettingsPanel({
   onSave,
   showLabel = false,
   onRefetchCalendars,
+  onRefreshData,
   triggerClassName = "",
   triggerVariant,
   locale = 'en'
@@ -73,7 +75,28 @@ export function SettingsPanel({
   const [open, setOpen] = useState(false);
   const [refreshingCalendars, setRefreshingCalendars] = useState(false);
   const [showListColors, setShowListColors] = useState(false);
+  const [hasRefreshed, setHasRefreshed] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null);
+  const [, setForceUpdate] = useState(0);
   const t = useTranslations(locale);
+
+  // Load last refresh time from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem('lastDataRefreshTime');
+    if (stored) {
+      setLastRefreshTime(new Date(parseInt(stored, 10)));
+    }
+  }, []);
+
+  // Update relative time display every 30 seconds
+  useEffect(() => {
+    if (!lastRefreshTime) return;
+    const interval = setInterval(() => {
+      setForceUpdate((n) => n + 1);
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [lastRefreshTime]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -93,6 +116,42 @@ export function SettingsPanel({
       await onRefetchCalendars();
     } finally {
       setRefreshingCalendars(false);
+    }
+  };
+
+  const handleRefreshData = async () => {
+    if (!onRefreshData || hasRefreshed) return;
+    setRefreshing(true);
+    try {
+      await onRefreshData();
+      setHasRefreshed(true);
+      // Reload timestamp from localStorage (hooks update it when fetching)
+      const stored = localStorage.getItem('lastDataRefreshTime');
+      if (stored) {
+        setLastRefreshTime(new Date(parseInt(stored, 10)));
+      }
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  // Format relative time (e.g., "5 seconds ago", "2 minutes ago")
+  const formatRelativeTime = (date: Date): string => {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffSeconds = Math.floor(diffMs / 1000);
+    const diffMinutes = Math.floor(diffSeconds / 60);
+    const diffHours = Math.floor(diffMinutes / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffSeconds < 60) {
+      return t('settings.secondsAgo', { count: diffSeconds });
+    } else if (diffMinutes < 60) {
+      return t('settings.minutesAgo', { count: diffMinutes });
+    } else if (diffHours < 24) {
+      return t('settings.hoursAgo', { count: diffHours });
+    } else {
+      return t('settings.daysAgo', { count: diffDays });
     }
   };
 
@@ -653,6 +712,29 @@ export function SettingsPanel({
               {t('settings.ignoreContainerTasks')}
             </Label>
           </div>
+
+          {onRefreshData && (
+            <div className="space-y-2 pt-4 border-t">
+              <Label>{t('settings.refreshData')}</Label>
+              <p className="text-xs text-muted-foreground">
+                {t('settings.refreshDataDesc')}
+                {lastRefreshTime && ` ${t('settings.lastRefreshed', { time: formatRelativeTime(lastRefreshTime) })}`}
+              </p>
+              <Button
+                variant="outline"
+                onClick={handleRefreshData}
+                disabled={refreshing || hasRefreshed}
+                className="w-full"
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                {refreshing
+                  ? t('settings.refreshing')
+                  : hasRefreshed
+                  ? t('settings.refreshDisabled')
+                  : t('settings.refreshData')}
+              </Button>
+            </div>
+          )}
 
           <Button onClick={handleSave} disabled={saving} className="w-full">
             {saving ? t('settings.saving') : t('settings.saveSettings')}

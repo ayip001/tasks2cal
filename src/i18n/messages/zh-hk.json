@@ -100,7 +100,19 @@
     "workingHoursWarning": "工作時間超出日曆範圍：",
     "ignoreContainerTasks": "自動排程時忽略總代辦事項（含子代辦事項）",
     "saving": "儲存中...",
-    "saveSettings": "儲存設定"
+    "saveSettings": "儲存設定",
+    "refreshData": "重新整理資料",
+    "refreshDataDesc": "從 Google 取得最新的代辦事項和日曆資料。",
+    "refreshing": "重新整理中...",
+    "refreshDisabled": "本次工作階段已重新整理",
+    "lastRefreshed": "上次重新整理：{time}",
+    "secondsAgo": "{count} 秒前",
+    "minutesAgo": "{count} 分鐘前",
+    "hoursAgo": "{count} 小時前",
+    "daysAgo": "{count} 天前"
+  },
+  "errors": {
+    "rateLimited": "請求次數過多，請稍後再試。"
   },
   "footer": {
     "privacyPolicy": "私隱政策",
