@@ -61,6 +61,12 @@ export function DayCalendar({
     [date, selectedTimeZone]
   );
 
+  const isToday = useMemo(() => {
+    const effectiveSelectedTimeZone = normalizeIanaTimeZone(selectedTimeZone);
+    const nowInSelectedZone = DateTime.now().setZone(effectiveSelectedTimeZone);
+    return nowInSelectedZone.toISODate() === date;
+  }, [date, selectedTimeZone]);
+
   useEffect(() => {
     if (calendarRef.current) {
       const calendarApi = calendarRef.current.getApi();
@@ -373,7 +379,7 @@ export function DayCalendar({
       style={{ '--task-color': settings.taskColor } as React.CSSProperties}
     >
       <div className="flex items-center justify-center gap-1 md:gap-2 mb-2 md:mb-4">
-        <Button variant="ghost" size="icon" onClick={() => onNavigate('prev')}>
+        <Button variant="ghost" size="icon" onClick={() => onNavigate('prev')} disabled={isToday}>
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <h2 className="text-sm md:text-lg font-semibold min-w-[120px] md:min-w-[240px] text-center">

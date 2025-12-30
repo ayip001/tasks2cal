@@ -47,7 +47,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.push('/');
+      router.replace('/');
     }
   }, [status, router]);
 
@@ -129,6 +129,10 @@ export default function DashboardPage() {
   }, [monthEvents]);
 
   const hoveredEvents = hoveredDate ? getEventsForDate(hoveredDate) : [];
+
+  if (status === 'unauthenticated') {
+    return null;
+  }
 
   if (status === 'loading') {
     return (

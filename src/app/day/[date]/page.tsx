@@ -130,7 +130,7 @@ export default function DayPage() {
 
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.push('/');
+      router.replace('/');
     }
   }, [status, router]);
 
@@ -139,6 +139,23 @@ export default function DayPage() {
     () => DateTime.fromISO(dateParam, { zone: selectedTimeZone }),
     [dateParam, selectedTimeZone]
   );
+
+  // Redirect to today if user attempts to access a date before today
+  useEffect(() => {
+    if (!isValidDate || status === 'loading' || settingsLoading) return;
+
+    const effectiveSelectedTimeZone = normalizeIanaTimeZone(selectedTimeZone);
+    const todayInSelectedZone = DateTime.now().setZone(effectiveSelectedTimeZone);
+    const todayDateStr = todayInSelectedZone.toISODate();
+
+    if (todayDateStr && dateParam < todayDateStr) {
+      router.replace(`/day/${todayDateStr}`);
+    }
+  }, [dateParam, selectedTimeZone, isValidDate, status, settingsLoading, router]);
+
+  if (status === 'unauthenticated') {
+    return null;
+  }
 
   if (!isValidDate) {
     return (
