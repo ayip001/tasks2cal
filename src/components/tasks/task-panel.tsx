@@ -166,7 +166,7 @@ export function TaskPanel({
                     />
                     <Label
                       htmlFor="all-lists"
-                      className="text-sm font-medium cursor-pointer flex-1"
+                      className="text-sm font-medium cursor-pointer flex-1 break-words"
                     >
                       {t('tasks.allLists')}
                     </Label>
@@ -177,7 +177,7 @@ export function TaskPanel({
                     return (
                       <div
                         key={list.id}
-                        className="flex items-center space-x-2 p-2 rounded-sm hover:bg-accent cursor-pointer"
+                        className="flex items-center space-x-2 p-2 rounded-sm hover:bg-accent cursor-pointer flex-wrap"
                         onClick={handleClick}
                       >
                         <Checkbox
@@ -186,7 +186,7 @@ export function TaskPanel({
                           onCheckedChange={handleClick}
                         />
                         <Label
-                          className="text-sm cursor-pointer flex-1"
+                          className="text-sm cursor-pointer flex-1 break-words"
                         >
                           {list.title}
                         </Label>
@@ -221,7 +221,7 @@ export function TaskPanel({
           </div>
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap gap-4">
           <div className="flex items-center space-x-2">
             <Checkbox
               id="hideContainer"
@@ -230,7 +230,7 @@ export function TaskPanel({
                 setFilter({ ...filter, hideContainerTasks: checked ? true : undefined })
               }
             />
-            <Label htmlFor="hideContainer" className="text-sm cursor-pointer">
+            <Label htmlFor="hideContainer" className="text-sm cursor-pointer break-words">
               {t('tasks.hideContainers')}
             </Label>
           </div>
@@ -243,7 +243,7 @@ export function TaskPanel({
                 setFilter({ ...filter, starredOnly: checked ? true : undefined })
               }
             />
-            <Label htmlFor="starredOnly" className="text-sm cursor-pointer">
+            <Label htmlFor="starredOnly" className="text-sm cursor-pointer break-words">
               {t('tasks.favoritesOnly')}
             </Label>
           </div>
@@ -317,8 +317,8 @@ function TaskItem({ task, isPlaced, onAddTask, onToggleStar, isMobile = false, l
       </button>
 
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="font-medium truncate">{task.title}</span>
+        <div className="flex items-start gap-2 flex-wrap">
+          <span className="font-medium break-words">{task.title}</span>
           {isPlaced && (
             <Badge variant="secondary" className="flex-shrink-0">
               <Check className="h-3 w-3 mr-1" />
@@ -327,8 +327,8 @@ function TaskItem({ task, isPlaced, onAddTask, onToggleStar, isMobile = false, l
           )}
         </div>
 
-        <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-          <span>{task.listTitle}</span>
+        <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground flex-wrap">
+          <span className="break-words">{task.listTitle}</span>
           {task.due && (
             <>
               <span>•</span>
