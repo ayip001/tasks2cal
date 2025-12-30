@@ -268,3 +268,18 @@
   margin-top: -6px !important;
   margin-left: -6px !important;
 }
+
+/* Mobile: Prevent FullCalendar header from being sticky */
+@media (max-width: 767px) {
+  .fc .fc-timegrid-header {
+    position: static !important;
+  }
+
+  .fc .fc-scroller {
+    overflow: visible !important;
+  }
+
+  .fc .fc-timegrid-body {
+    overflow: visible !important;
+  }
+}
