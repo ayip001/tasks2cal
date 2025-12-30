@@ -254,6 +254,20 @@
   animation: fade-in-delayed 1.2s ease-out forwards;
 }
 
+/* Slow pulse animation for skeleton loading */
+@keyframes slow-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.animate-slow-pulse {
+  animation: slow-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
 /* Google Calendar style now indicator - red line with dot */
 .fc-timegrid-now-indicator-line {
   border-top: 3px solid #ea4335 !important;

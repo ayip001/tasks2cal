@@ -20,6 +20,7 @@ import { useSettings } from '@/hooks/use-data';
 import { useTranslations, getDateLocale, getDateFnsLocale } from '@/hooks/use-translations';
 import { isUtilityCreatedEvent } from '@/lib/constants';
 import { normalizeIanaTimeZone } from '@/lib/timezone';
+import { PageLoadingSkeleton, EventPreviewLoadingSkeleton } from '@/components/ui/loading-skeletons';
 
 // Cache key for localStorage
 const getMonthCacheKey = (calendarId: string, year: number, month: number) =>
@@ -131,11 +132,7 @@ export default function DashboardPage() {
   const hoveredEvents = hoveredDate ? getEventsForDate(hoveredDate) : [];
 
   if (status === 'loading') {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">{t('common.loading')}</div>
-      </div>
-    );
+    return <PageLoadingSkeleton />;
   }
 
   if (!session) {
@@ -230,7 +227,7 @@ export default function DashboardPage() {
         {/* Event preview section */}
         <div className="mt-6 w-full max-w-sm min-h-[120px]">
           {loadingMonth && !monthEvents.length ? (
-            <div className="text-sm text-muted-foreground text-center">{t('dashboard.loadingEvents')}</div>
+            <EventPreviewLoadingSkeleton />
           ) : hoveredDate ? (
             <div className="flex flex-col gap-3">
               <div className="text-sm font-medium text-center">
