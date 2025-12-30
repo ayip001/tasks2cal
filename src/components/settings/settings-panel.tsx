@@ -35,6 +35,7 @@ interface SettingsPanelProps {
   onSave: (updates: Partial<UserSettings>) => Promise<void>;
   showLabel?: boolean;
   onRefetchCalendars?: () => Promise<void>;
+  onRefreshData?: () => Promise<void>;
   triggerClassName?: string;
   triggerVariant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
   locale?: Locale;
@@ -64,6 +65,7 @@ export function SettingsPanel({
   onSave,
   showLabel = false,
   onRefetchCalendars,
+  onRefreshData,
   triggerClassName = "",
   triggerVariant,
   locale = 'en'
@@ -73,6 +75,8 @@ export function SettingsPanel({
   const [open, setOpen] = useState(false);
   const [refreshingCalendars, setRefreshingCalendars] = useState(false);
   const [showListColors, setShowListColors] = useState(false);
+  const [hasRefreshed, setHasRefreshed] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const t = useTranslations(locale);
 
   const handleSave = async () => {
@@ -93,6 +97,17 @@ export function SettingsPanel({
       await onRefetchCalendars();
     } finally {
       setRefreshingCalendars(false);
+    }
+  };
+
+  const handleRefreshData = async () => {
+    if (!onRefreshData || hasRefreshed) return;
+    setRefreshing(true);
+    try {
+      await onRefreshData();
+      setHasRefreshed(true);
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -653,6 +668,28 @@ export function SettingsPanel({
               {t('settings.ignoreContainerTasks')}
             </Label>
           </div>
+
+          {onRefreshData && (
+            <div className="space-y-2 pt-4 border-t">
+              <Label>{t('settings.refreshData')}</Label>
+              <p className="text-xs text-muted-foreground">
+                {t('settings.refreshDataDesc')}
+              </p>
+              <Button
+                variant="outline"
+                onClick={handleRefreshData}
+                disabled={refreshing || hasRefreshed}
+                className="w-full"
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                {refreshing
+                  ? t('settings.refreshing')
+                  : hasRefreshed
+                  ? t('settings.refreshDisabled')
+                  : t('settings.refreshData')}
+              </Button>
+            </div>
+          )}
 
           <Button onClick={handleSave} disabled={saving} className="w-full">
             {saving ? t('settings.saving') : t('settings.saveSettings')}

@@ -59,3 +59,24 @@ export const GOOGLE_SCOPES = [
   'https://www.googleapis.com/auth/calendar.readonly',
   'https://www.googleapis.com/auth/tasks.readonly',
 ];
+
+// Cache configuration
+export const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
+export const CACHE_VERSION = 1;
+
+export const CACHE_KEYS = {
+  tasks: (userId: string) => `cache:tasks:${userId}`,
+  taskLists: (userId: string) => `cache:taskLists:${userId}`,
+  events: (userId: string, date: string, calendarId: string) =>
+    `cache:events:${userId}:${date}:${calendarId}`,
+  calendars: (userId: string) => `cache:calendars:${userId}`,
+};
+
+// Rate limiting configuration (requests per window)
+export const RATE_LIMITS = {
+  read: { maxRequests: 60, windowSeconds: 60 },   // 60 requests per minute
+  write: { maxRequests: 20, windowSeconds: 60 },  // 20 requests per minute
+  auth: { maxRequests: 10, windowSeconds: 60 },   // 10 requests per minute
+} as const;
+
+export type RateLimitType = keyof typeof RATE_LIMITS;

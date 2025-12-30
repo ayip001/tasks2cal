@@ -32,6 +32,7 @@ import {
   useCalendars,
   useSettings,
   filterTasks,
+  invalidateUserCache,
 } from '@/hooks/use-data';
 import { useLocalPlacements } from '@/hooks/use-local-placements';
 import { autoFitTasks } from '@/lib/autofit';
@@ -62,7 +63,7 @@ export default function DayPage() {
   const [saving, setSaving] = useState(false);
   const [mobileView, setMobileView] = useState<'calendar' | 'tasks'>('calendar');
 
-  const { tasks, taskLists, loading: tasksLoading } = useTasks();
+  const { tasks, taskLists, loading: tasksLoading, refetch: refetchTasks } = useTasks();
   const { settings, loading: settingsLoading, updateSettings, locale } = useSettings();
   const t = useTranslations(locale);
   const { calendars, refetch: refetchCalendars } = useCalendars();
@@ -331,6 +332,20 @@ export default function DayPage() {
     }
   };
 
+  const handleRefreshData = async () => {
+    // Invalidate all caches for the current user
+    if (session?.user?.email) {
+      invalidateUserCache(session.user.email);
+    }
+
+    // Refetch all data
+    await Promise.all([
+      refetchTasks(),
+      refetchCalendars(),
+      refetchEvents(),
+    ]);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <header className="border-b">
@@ -391,6 +406,7 @@ export default function DayPage() {
               taskLists={taskLists}
               onSave={updateSettings}
               onRefetchCalendars={refetchCalendars}
+              onRefreshData={handleRefreshData}
               triggerVariant="ghost"
               triggerClassName="md:border md:border-input md:bg-background md:hover:bg-accent"
               locale={locale}
