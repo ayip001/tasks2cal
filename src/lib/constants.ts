@@ -20,8 +20,8 @@ export const DEFAULT_MIN_TIME_BETWEEN_TASKS = 15;
 export const TIME_SLOT_INTERVAL = 15;
 
 export const DEFAULT_WORKING_HOURS = [
-  { start: '11:00', end: '12:15' },
-  { start: '13:00', end: '18:00' },
+  { id: 'wh-default-1', start: '11:00', end: '12:15' },
+  { id: 'wh-default-2', start: '13:00', end: '18:00' },
 ];
 
 export const DEFAULT_SETTINGS: UserSettings = {
@@ -53,12 +53,17 @@ export const GOOGLE_CALENDAR_COLORS: Record<string, string> = {
 export const KV_KEYS = {
   settings: (userId: string) => `settings:${userId}`,
   starred: (userId: string) => `starred:${userId}`,
+  workingHourFilters: (userId: string) => `workingHourFilters:${userId}`,
 };
 
 // Starred tasks configuration
 export const STARRED_SYNC_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes
 export const STARRED_STORAGE_KEY = (userId: string) => `starred:${userId}`;
 export const MAX_STARRED_TASKS = 500;
+
+// Working hour filters configuration
+export const WORKING_HOUR_FILTERS_SYNC_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes
+export const WORKING_HOUR_FILTERS_STORAGE_KEY = (userId: string) => `workingHourFilters:${userId}`;
 
 export const GOOGLE_SCOPES = [
   'https://www.googleapis.com/auth/calendar.events',

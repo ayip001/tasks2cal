@@ -1,4 +1,5 @@
 export interface WorkingHours {
+  id: string;      // Unique identifier for the working hour period
   start: string;
   end: string;
 }
@@ -104,4 +105,17 @@ export interface SaveResult {
   success: boolean;
   savedCount: number;
   errors: string[];
+}
+
+// Working hour filter types
+export interface WorkingHourFilter {
+  searchText?: string;        // Phrase filter (works for list names too)
+  starredOnly?: boolean;      // Only starred tasks
+  hideContainerTasks?: boolean; // Hide parent tasks
+  hasDueDate?: boolean;       // Only tasks with due dates (true/false/undefined)
+}
+
+export interface WorkingHourFiltersData {
+  filters: Record<string, WorkingHourFilter>;  // Keyed by WorkingHours.id
+  lastModified: number;
 }

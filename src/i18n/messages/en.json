@@ -112,7 +112,10 @@
     "secondsAgo": "{count} seconds ago",
     "minutesAgo": "{count} minutes ago",
     "hoursAgo": "{count} hours ago",
-    "daysAgo": "{count} days ago"
+    "daysAgo": "{count} days ago",
+    "filterFor": "Filter for {time}",
+    "clearFilter": "Clear Filter",
+    "workingHourFilterDesc": "Only tasks matching this filter will be placed during this time period."
   },
   "errors": {
     "rateLimited": "Too many requests. Please wait and try again."
