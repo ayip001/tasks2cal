@@ -221,30 +221,32 @@ export function TaskPanel({
           </div>
         </div>
 
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="hideContainer"
-            checked={filter.hideContainerTasks || false}
-            onCheckedChange={(checked) =>
-              setFilter({ ...filter, hideContainerTasks: checked ? true : undefined })
-            }
-          />
-          <Label htmlFor="hideContainer" className="text-sm cursor-pointer">
-            {t('tasks.hideContainers')}
-          </Label>
-        </div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="hideContainer"
+              checked={filter.hideContainerTasks || false}
+              onCheckedChange={(checked) =>
+                setFilter({ ...filter, hideContainerTasks: checked ? true : undefined })
+              }
+            />
+            <Label htmlFor="hideContainer" className="text-sm cursor-pointer">
+              {t('tasks.hideContainers')}
+            </Label>
+          </div>
 
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="starredOnly"
-            checked={filter.starredOnly || false}
-            onCheckedChange={(checked) =>
-              setFilter({ ...filter, starredOnly: checked ? true : undefined })
-            }
-          />
-          <Label htmlFor="starredOnly" className="text-sm cursor-pointer">
-            {t('tasks.favoritesOnly')}
-          </Label>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="starredOnly"
+              checked={filter.starredOnly || false}
+              onCheckedChange={(checked) =>
+                setFilter({ ...filter, starredOnly: checked ? true : undefined })
+              }
+            />
+            <Label htmlFor="starredOnly" className="text-sm cursor-pointer">
+              {t('tasks.favoritesOnly')}
+            </Label>
+          </div>
         </div>
       </div>
 
