@@ -55,7 +55,10 @@
     "noTasksFound": "No tasks found",
     "placed": "Placed",
     "hasSubtasks": "Has subtasks",
-    "removePlacement": "Remove placement"
+    "removePlacement": "Remove placement",
+    "favoritesOnly": "Favorites only",
+    "star": "Star task",
+    "unstar": "Unstar task"
   },
   "settings": {
     "title": "Settings",

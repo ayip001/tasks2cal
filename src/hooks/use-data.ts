@@ -282,6 +282,11 @@ export function filterTasks(tasks: GoogleTask[], filter: TaskFilter): GoogleTask
       return false;
     }
 
+    // Starred filter
+    if (filter.starredOnly && !task.isStarred) {
+      return false;
+    }
+
     if (filter.searchText) {
       const searchTerms = filter.searchText.toLowerCase().split(/\s+/).filter((t) => t.length > 0);
 

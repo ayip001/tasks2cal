@@ -61,12 +61,33 @@ export function DayCalendar({
     [date, selectedTimeZone]
   );
 
+  const isToday = useMemo(() => {
+    const effectiveSelectedTimeZone = normalizeIanaTimeZone(selectedTimeZone);
+    const nowInSelectedZone = DateTime.now().setZone(effectiveSelectedTimeZone);
+    return nowInSelectedZone.toISODate() === date;
+  }, [date, selectedTimeZone]);
+
   useEffect(() => {
     if (calendarRef.current) {
       const calendarApi = calendarRef.current.getApi();
       calendarApi.gotoDate(date);
     }
   }, [date]);
+
+  // Set calendar height based on screen size: auto on mobile, 100% on desktop
+  useEffect(() => {
+    if (!calendarRef.current) return;
+
+    const calendarApi = calendarRef.current.getApi();
+    const updateHeight = () => {
+      const isMobile = window.innerWidth < 768; // md breakpoint
+      calendarApi.setOption('height', isMobile ? 'auto' : '100%');
+    };
+
+    updateHeight();
+    window.addEventListener('resize', updateHeight);
+    return () => window.removeEventListener('resize', updateHeight);
+  }, []);
 
   // Set CSS variable on document root (used for misc styling)
   useEffect(() => {
@@ -354,11 +375,11 @@ export function DayCalendar({
   return (
     <div
       ref={containerRef}
-      className="h-full flex flex-col day-calendar-container"
+      className="h-auto md:h-full flex flex-col day-calendar-container"
       style={{ '--task-color': settings.taskColor } as React.CSSProperties}
     >
       <div className="flex items-center justify-center gap-1 md:gap-2 mb-2 md:mb-4">
-        <Button variant="ghost" size="icon" onClick={() => onNavigate('prev')}>
+        <Button variant="ghost" size="icon" onClick={() => onNavigate('prev')} disabled={isToday}>
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <h2 className="text-sm md:text-lg font-semibold min-w-[120px] md:min-w-[240px] text-center">
@@ -378,7 +399,7 @@ export function DayCalendar({
         </Button>
       </div>
 
-      <div className="flex-1 min-h-0">
+      <div className="w-full md:flex-1 md:min-h-0">
         <FullCalendar
           ref={calendarRef}
           plugins={[timeGridPlugin, interactionPlugin, luxonPlugin]}
@@ -391,7 +412,7 @@ export function DayCalendar({
           slotDuration={`00:${TIME_SLOT_INTERVAL}:00`}
           slotMinTime={`${slotMinTime}:00`}
           slotMaxTime={`${slotMaxTime}:00`}
-          height="100%"
+          height="auto"
           events={calendarEvents}
           editable={true}
           selectable={false}
