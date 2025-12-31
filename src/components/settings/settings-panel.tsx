@@ -739,10 +739,7 @@ export function SettingsPanel({
                       workingHourId={hours.id}
                       timeRange={`${hours.start}-${hours.end}`}
                       filter={getFilter(hours.id)}
-                      onSave={(filter) => {
-                        setFilter(hours.id, filter);
-                        setExpandedFilterId(null);
-                      }}
+                      onSave={(filter) => setFilter(hours.id, filter)}
                       onClose={() => setExpandedFilterId(null)}
                       timeFormat={localSettings.timeFormat}
                       t={t}

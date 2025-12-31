@@ -52,6 +52,7 @@ export function WorkingHourFilterPanel({
   const handleClearFilter = () => {
     setLocalFilter({});
     onSave(undefined);
+    onClose();
   };
 
   const handleSave = () => {
@@ -61,6 +62,7 @@ export function WorkingHourFilterPanel({
     } else {
       onSave(undefined);
     }
+    onClose();
   };
 
   // Format time range for display
@@ -116,7 +118,6 @@ export function WorkingHourFilterPanel({
           onChange={(e) =>
             setLocalFilter({ ...localFilter, searchText: e.target.value || undefined })
           }
-          onBlur={handleSave}
           className="h-8 text-sm"
         />
       </div>
@@ -133,12 +134,10 @@ export function WorkingHourFilterPanel({
               : 'none'
           }
           onValueChange={(value) => {
-            const newFilter = {
+            setLocalFilter({
               ...localFilter,
               hasDueDate: value === 'all' ? undefined : value === 'has',
-            };
-            setLocalFilter(newFilter);
-            handleSave();
+            });
           }}
         >
           <SelectTrigger className="h-8 text-sm">
@@ -159,12 +158,10 @@ export function WorkingHourFilterPanel({
             id={`starred-${workingHourId}`}
             checked={localFilter.starredOnly || false}
             onCheckedChange={(checked) => {
-              const newFilter = {
+              setLocalFilter({
                 ...localFilter,
                 starredOnly: checked ? true : undefined,
-              };
-              setLocalFilter(newFilter);
-              handleSave();
+              });
             }}
           />
           <Label htmlFor={`starred-${workingHourId}`} className="text-sm cursor-pointer">
@@ -177,18 +174,23 @@ export function WorkingHourFilterPanel({
             id={`hideContainer-${workingHourId}`}
             checked={localFilter.hideContainerTasks || false}
             onCheckedChange={(checked) => {
-              const newFilter = {
+              setLocalFilter({
                 ...localFilter,
                 hideContainerTasks: checked ? true : undefined,
-              };
-              setLocalFilter(newFilter);
-              handleSave();
+              });
             }}
           />
           <Label htmlFor={`hideContainer-${workingHourId}`} className="text-sm cursor-pointer">
             {t('tasks.hideContainers')}
           </Label>
         </div>
+      </div>
+
+      {/* Save button */}
+      <div className="flex justify-end pt-2">
+        <Button onClick={handleSave} size="sm" className="h-8">
+          {t('common.save')}
+        </Button>
       </div>
     </div>
   );
