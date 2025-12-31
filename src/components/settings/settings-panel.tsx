@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Settings, Plus, X, AlertTriangle, RefreshCw, LocateFixed, RotateCcw, Filter } from 'lucide-react';
+import { Settings, Plus, X, AlertTriangle, RefreshCw, LocateFixed, RotateCcw, Filter, Check } from 'lucide-react';
 import { TimezonePicker } from '@/components/settings/timezone-picker';
 import { Input } from '@/components/ui/input';
 import { requestTimezoneDebugRefresh } from '@/lib/debug-timezone';
@@ -84,10 +84,21 @@ export function SettingsPanel({
   const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null);
   const [, setForceUpdate] = useState(0);
   const [expandedFilterId, setExpandedFilterId] = useState<string | null>(null);
+  const [recentlySavedFilterId, setRecentlySavedFilterId] = useState<string | null>(null);
   const t = useTranslations(locale);
 
   // Initialize working hour filters hook
   const { filters, getFilter, setFilter, hasFilter } = useWorkingHourFilters(userId);
+
+  // Handle filter save with visual feedback
+  const handleFilterSave = (workingHourId: string, filter: WorkingHourFilter | undefined) => {
+    setFilter(workingHourId, filter);
+    setRecentlySavedFilterId(workingHourId);
+    // Clear the saved indicator after 1 second
+    setTimeout(() => {
+      setRecentlySavedFilterId(null);
+    }, 1000);
+  };
 
   // Load last refresh time from localStorage on mount
   useEffect(() => {
@@ -670,6 +681,7 @@ export function SettingsPanel({
             {localSettings.workingHours.map((hours, index) => {
               const hasFilterSet = hasFilter(hours.id);
               const isExpanded = expandedFilterId === hours.id;
+              const isRecentlySaved = recentlySavedFilterId === hours.id;
 
               return (
                 <div key={hours.id} className="space-y-2">
@@ -707,16 +719,21 @@ export function SettingsPanel({
                       </SelectContent>
                     </Select>
 
-                    {/* Filter button with blue dot indicator */}
+                    {/* Filter button with visual feedback */}
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => setExpandedFilterId(isExpanded ? null : hours.id)}
                       className="relative"
                     >
-                      <Filter className="h-4 w-4 text-muted-foreground" />
-                      {/* Blue dot indicator when filter is set */}
-                      {hasFilterSet && (
+                      {/* Show checkmark when recently saved, filter icon otherwise */}
+                      {isRecentlySaved ? (
+                        <Check className="h-4 w-4 text-green-600 transition-all duration-300" />
+                      ) : (
+                        <Filter className="h-4 w-4 text-muted-foreground transition-all duration-300" />
+                      )}
+                      {/* Blue dot indicator when filter is set (hide when showing checkmark) */}
+                      {hasFilterSet && !isRecentlySaved && (
                         <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-primary" />
                       )}
                     </Button>
@@ -739,7 +756,7 @@ export function SettingsPanel({
                       workingHourId={hours.id}
                       timeRange={`${hours.start}-${hours.end}`}
                       filter={getFilter(hours.id)}
-                      onSave={(filter) => setFilter(hours.id, filter)}
+                      onSave={(filter) => handleFilterSave(hours.id, filter)}
                       onClose={() => setExpandedFilterId(null)}
                       timeFormat={localSettings.timeFormat}
                       t={t}

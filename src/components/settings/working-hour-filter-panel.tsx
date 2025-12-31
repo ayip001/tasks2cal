@@ -35,11 +35,14 @@ export function WorkingHourFilterPanel({
   timeFormat,
   t,
 }: WorkingHourFilterPanelProps) {
-  const [localFilter, setLocalFilter] = useState<WorkingHourFilter>(filter || {});
+  // Initialize with hideContainerTasks: true by default if no filter exists
+  const [localFilter, setLocalFilter] = useState<WorkingHourFilter>(
+    filter || { hideContainerTasks: true }
+  );
 
   // Update local filter when prop changes
   useEffect(() => {
-    setLocalFilter(filter || {});
+    setLocalFilter(filter || { hideContainerTasks: true });
   }, [filter]);
 
   // Check if any filter values are set
