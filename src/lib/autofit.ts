@@ -283,11 +283,20 @@ function _subtractTimeFromSlots(slots: TimeSlot[], blockStart: Date, blockEnd: D
 function _findFirstAvailableSlot(slots: TimeSlot[], durationMinutes: number): TimeSlot | null {
   const durationMs = durationMinutes * 60 * 1000;
 
+  // Find the slot with the earliest start time that has enough duration
+  let earliestSlot: TimeSlot | null = null;
+
   for (const slot of slots) {
     const slotDuration = slot.end.getTime() - slot.start.getTime();
     if (slotDuration >= durationMs) {
-      return { start: new Date(slot.start), end: new Date(slot.start.getTime() + durationMs) };
+      if (!earliestSlot || slot.start.getTime() < earliestSlot.start.getTime()) {
+        earliestSlot = slot;
+      }
     }
+  }
+
+  if (earliestSlot) {
+    return { start: new Date(earliestSlot.start), end: new Date(earliestSlot.start.getTime() + durationMs) };
   }
 
   return null;
