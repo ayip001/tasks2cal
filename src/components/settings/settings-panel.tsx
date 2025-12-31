@@ -726,15 +726,26 @@ export function SettingsPanel({
                       onClick={() => setExpandedFilterId(isExpanded ? null : hours.id)}
                       className="relative"
                     >
-                      {/* Show checkmark when recently saved, filter icon otherwise */}
-                      {isRecentlySaved ? (
-                        <Check className="h-4 w-4 text-green-600 transition-all duration-300" />
-                      ) : (
-                        <Filter className="h-4 w-4 text-muted-foreground transition-all duration-300" />
-                      )}
+                      {/* Both icons are rendered, opacity transitions between them */}
+                      <div className="relative w-4 h-4">
+                        <Filter
+                          className={`absolute inset-0 h-4 w-4 text-muted-foreground transition-opacity duration-[400ms] ease-out ${
+                            isRecentlySaved ? 'opacity-0' : 'opacity-100'
+                          }`}
+                        />
+                        <Check
+                          className={`absolute inset-0 h-4 w-4 text-green-600 transition-opacity duration-[400ms] ease-out ${
+                            isRecentlySaved ? 'opacity-100' : 'opacity-0'
+                          }`}
+                        />
+                      </div>
                       {/* Blue dot indicator when filter is set (hide when showing checkmark) */}
-                      {hasFilterSet && !isRecentlySaved && (
-                        <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-primary" />
+                      {hasFilterSet && (
+                        <span
+                          className={`absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-primary transition-opacity duration-[400ms] ease-out ${
+                            isRecentlySaved ? 'opacity-0' : 'opacity-100'
+                          }`}
+                        />
                       )}
                     </Button>
 
