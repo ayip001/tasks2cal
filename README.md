@@ -6,6 +6,10 @@
   
   [Tasks2Cal](https://google-task-to-calendar-helper.vercel.app) lets you drag-and-drop tasks onto your calendar or auto-fill your day around existing meetings. Built with a "radical simplicity" aesthetic using shadcn/ui.
 
+  <a href="https://github.com/ayip001/tasks2cal/tree/main">
+    <img src="https://img.shields.io/badge/GitHub-Repo-181717?style=for-the-badge&logo=github" alt="GitHub Repo" />
+  </a>
+  &nbsp;
   <a href="https://buymeacoffee.com/angusflies">
     <img src="https://img.shields.io/badge/Buy_Me_A_Coffee-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black" alt="Buy Me A Coffee" />
   </a>
@@ -34,12 +38,62 @@ This is a utility I made for myself to stop listing and start scheduling. If it 
 
 ---
 
+## How Auto-Fit Works
+
+### Basic Algorithm
+
+Auto-fit fills your calendar by processing working hour periods in the order they appear in settings (not chronologically). For each period:
+
+1. **Filter tasks** based on the period's filter criteria (if any)
+2. **Find available slots** within that period, excluding existing events and placements
+3. **Place tasks** at the earliest available time within those slots
+4. **Mark slots as used** so they're unavailable to subsequent periods
+
+Tasks are prioritized: starred + due date (highest) → starred only → due date only → unstarred.
+
+### Working Hour Filters
+
+Each working hour period can have optional filters to auto-fit specific task subsets:
+
+- **Search text:** Match tasks by title, description, or list name (supports multiple terms and `-negative` exclusions)
+- **Starred only:** Only place starred tasks in this period
+- **Hide containers:** Skip parent tasks with subtasks
+- **Due date:** Filter by presence/absence of due date
+
+**Key behavior:** Filters apply per-period. A task excluded from one period can still be placed in another if it matches that period's filter.
+
+### Examples
+
+#### Case 1: Sequential Processing
+**Settings:**
+- Period 1: `09:00-12:00` with filter `"meetings"`
+- Period 2: `13:00-17:00` with filter `"code"`
+
+**Result:** Meeting tasks fill the morning, and code tasks fill the afternoon.
+
+#### Case 2: Priority Filling (Non-Chronological)
+**Settings:**
+- Period 1: `14:00-17:00` with filter `"urgent"`
+- Period 2: `09:00-17:00` (no filter)
+
+**Result:** "Urgent" tasks are placed first (at 14:00), then other tasks fill the remaining gaps starting from 09:00. This happens because the algorithm processes periods in the order they appear in settings.
+
+---
+
+### Troubleshooting
+
+- **Tasks not appearing?** Check your filters (e.g., "Starred only") and ensure your tasks match. Ensure you have available slots not occupied by existing calendar events.
+- **Wrong time slots?** Auto-fit processes working hour periods in the order they appear in Settings. Reorder them if you want a specific period to be filled first.
+- **Filters not matching?** Search matches title, description, and list names. Use spaces for AND logic (e.g., `task project`) and `-` to exclude (e.g., `-meeting`).
+
+---
+
 ## Screenshots
 
 | Month View | Day View |
 |:---:|:---:|
 | *Calendar picker with event dots* | *Drag tasks onto time slots* |
-| *(Add screenshot here)* | *(Add screenshot here)* |
+| ![](public/tasks2cal-screencap-calendar.avif) | ![](public/tasks2cal-screencap-tasks.avif) |
 
 ---
 

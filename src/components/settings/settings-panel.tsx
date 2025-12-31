@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { UserSettings, GoogleCalendar, GoogleTaskList } from '@/types';
+import { UserSettings, GoogleCalendar, GoogleTaskList, WorkingHourFilter } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -21,11 +21,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Settings, Plus, X, AlertTriangle, RefreshCw, LocateFixed, RotateCcw } from 'lucide-react';
+import { Settings, Plus, X, AlertTriangle, RefreshCw, LocateFixed, RotateCcw, Filter, Check } from 'lucide-react';
 import { TimezonePicker } from '@/components/settings/timezone-picker';
 import { Input } from '@/components/ui/input';
 import { requestTimezoneDebugRefresh } from '@/lib/debug-timezone';
 import { useTranslations } from '@/hooks/use-translations';
+import { useWorkingHourFilters } from '@/hooks/use-working-hour-filters';
+import { WorkingHourFilterPanel } from '@/components/settings/working-hour-filter-panel';
 import type { Locale } from '@/i18n/config';
 
 interface SettingsPanelProps {
@@ -39,6 +41,7 @@ interface SettingsPanelProps {
   triggerClassName?: string;
   triggerVariant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
   locale?: Locale;
+  userId?: string;
 }
 
 // Convert HH:MM to minutes since midnight
@@ -68,7 +71,8 @@ export function SettingsPanel({
   onRefreshData,
   triggerClassName = "",
   triggerVariant,
-  locale = 'en'
+  locale = 'en',
+  userId
 }: SettingsPanelProps) {
   const [localSettings, setLocalSettings] = useState<UserSettings>(settings);
   const [saving, setSaving] = useState(false);
@@ -79,7 +83,22 @@ export function SettingsPanel({
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null);
   const [, setForceUpdate] = useState(0);
+  const [expandedFilterId, setExpandedFilterId] = useState<string | null>(null);
+  const [recentlySavedFilterId, setRecentlySavedFilterId] = useState<string | null>(null);
   const t = useTranslations(locale);
+
+  // Initialize working hour filters hook
+  const { filters, getFilter, setFilter, hasFilter } = useWorkingHourFilters(userId);
+
+  // Handle filter save with visual feedback
+  const handleFilterSave = (workingHourId: string, filter: WorkingHourFilter | undefined) => {
+    setFilter(workingHourId, filter);
+    setRecentlySavedFilterId(workingHourId);
+    // Clear the saved indicator after 1 second
+    setTimeout(() => {
+      setRecentlySavedFilterId(null);
+    }, 1000);
+  };
 
   // Load last refresh time from localStorage on mount
   useEffect(() => {
@@ -182,9 +201,14 @@ export function SettingsPanel({
   };
 
   const addWorkingHoursRange = () => {
+    const newWorkingHour = {
+      id: `wh-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      start: '09:00',
+      end: '17:00',
+    };
     setLocalSettings({
       ...localSettings,
-      workingHours: [...localSettings.workingHours, { start: '09:00', end: '17:00' }],
+      workingHours: [...localSettings.workingHours, newWorkingHour],
     });
   };
 
@@ -654,50 +678,104 @@ export function SettingsPanel({
                 {t('settings.addRange')}
               </Button>
             </div>
-            {localSettings.workingHours.map((hours, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <Select
-                  value={hours.start}
-                  onValueChange={(value) => updateWorkingHours(index, 'start', value)}
-                >
-                  <SelectTrigger className="w-[110px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {timeOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <span>{t('common.to')}</span>
-                <Select
-                  value={hours.end}
-                  onValueChange={(value) => updateWorkingHours(index, 'end', value)}
-                >
-                  <SelectTrigger className="w-[110px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getEndTimeOptions(hours.start).map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {localSettings.workingHours.length > 1 && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeWorkingHoursRange(index)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            ))}
+            {localSettings.workingHours.map((hours, index) => {
+              const hasFilterSet = hasFilter(hours.id);
+              const isExpanded = expandedFilterId === hours.id;
+              const isRecentlySaved = recentlySavedFilterId === hours.id;
+
+              return (
+                <div key={hours.id} className="space-y-2">
+                  {/* Working hour row */}
+                  <div className="flex items-center gap-2">
+                    <Select
+                      value={hours.start}
+                      onValueChange={(value) => updateWorkingHours(index, 'start', value)}
+                    >
+                      <SelectTrigger className="w-[110px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {timeOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <span>{t('common.to')}</span>
+                    <Select
+                      value={hours.end}
+                      onValueChange={(value) => updateWorkingHours(index, 'end', value)}
+                    >
+                      <SelectTrigger className="w-[110px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getEndTimeOptions(hours.start).map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {/* Filter button with visual feedback */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setExpandedFilterId(isExpanded ? null : hours.id)}
+                      className="relative"
+                    >
+                      {/* Both icons are rendered, opacity transitions between them */}
+                      <div className="relative w-4 h-4">
+                        <Filter
+                          className={`absolute inset-0 h-4 w-4 text-muted-foreground transition-opacity duration-[400ms] ease-out ${
+                            isRecentlySaved ? 'opacity-0' : 'opacity-100'
+                          }`}
+                        />
+                        <Check
+                          className={`absolute inset-0 h-4 w-4 text-green-600 transition-opacity duration-[400ms] ease-out ${
+                            isRecentlySaved ? 'opacity-100' : 'opacity-0'
+                          }`}
+                        />
+                      </div>
+                      {/* Blue dot indicator when filter is set (hide when showing checkmark) */}
+                      {hasFilterSet && (
+                        <span
+                          className={`absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-primary transition-opacity duration-[400ms] ease-out ${
+                            isRecentlySaved ? 'opacity-0' : 'opacity-100'
+                          }`}
+                        />
+                      )}
+                    </Button>
+
+                    {/* Remove button */}
+                    {localSettings.workingHours.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeWorkingHoursRange(index)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Inline expandable filter panel */}
+                  {isExpanded && (
+                    <WorkingHourFilterPanel
+                      workingHourId={hours.id}
+                      timeRange={`${hours.start}-${hours.end}`}
+                      filter={getFilter(hours.id)}
+                      onSave={(filter) => handleFilterSave(hours.id, filter)}
+                      onClose={() => setExpandedFilterId(null)}
+                      timeFormat={localSettings.timeFormat}
+                      t={t}
+                    />
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           <div className="flex items-center space-x-2">

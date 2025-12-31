@@ -1,7 +1,30 @@
-import { GoogleTask, GoogleCalendarEvent, UserSettings, TaskPlacement, TimeSlot, AutoFitResult } from '@/types';
+import { GoogleTask, GoogleCalendarEvent, UserSettings, TaskPlacement, TimeSlot, AutoFitResult, WorkingHourFilter } from '@/types';
 import { TIME_SLOT_INTERVAL } from './constants';
 import { DateTime } from 'luxon';
 import { normalizeIanaTimeZone, wallTimeOnDateToUtc } from '@/lib/timezone';
+import { applyTaskFilter } from '@/lib/filter-utils';
+
+// Helper to get slots within a specific time range
+function _getSlotsInTimeRange(slots: TimeSlot[], startTime: Date, endTime: Date): TimeSlot[] {
+  const result: TimeSlot[] = [];
+
+  for (const slot of slots) {
+    // If slot is completely outside the range, skip it
+    if (slot.end <= startTime || slot.start >= endTime) {
+      continue;
+    }
+
+    // If slot overlaps with the range, clip it to the range
+    const clippedStart = new Date(Math.max(slot.start.getTime(), startTime.getTime()));
+    const clippedEnd = new Date(Math.min(slot.end.getTime(), endTime.getTime()));
+
+    if (clippedEnd > clippedStart) {
+      result.push({ start: clippedStart, end: clippedEnd });
+    }
+  }
+
+  return result;
+}
 
 export function autoFitTasks(
   tasks: GoogleTask[],
@@ -9,52 +32,123 @@ export function autoFitTasks(
   existingPlacements: TaskPlacement[],
   settings: UserSettings,
   date: string,
-  timeZone: string = 'UTC'
+  timeZone: string = 'UTC',
+  workingHourFilters?: Record<string, WorkingHourFilter>
 ): AutoFitResult {
-  const availableSlots = _calculateAvailableSlots(
+  const effectiveTimeZone = normalizeIanaTimeZone(timeZone);
+
+  // Calculate all available slots across the entire day
+  const globalAvailableSlots = _calculateAvailableSlots(
     existingEvents,
     existingPlacements,
     settings,
     date,
-    timeZone
+    effectiveTimeZone
   );
 
-  const filteredTasks = settings.ignoreContainerTasks
+  // Apply global container task filter
+  const baseTasks = settings.ignoreContainerTasks
     ? tasks.filter((t) => !t.hasSubtasks)
     : tasks;
 
-  const sortedTasks = _sortTasksByPriority(filteredTasks);
   const placements: TaskPlacement[] = [];
-  const unplacedTasks: GoogleTask[] = [];
   const placedTaskIds = new Set<string>();
 
-  for (const task of sortedTasks) {
-    if (placedTaskIds.has(task.id)) {
-      continue;
+  // If no filters are provided, use the original algorithm
+  if (!workingHourFilters || Object.keys(workingHourFilters).length === 0) {
+    const sortedTasks = _sortTasksByPriority(baseTasks);
+
+    for (const task of sortedTasks) {
+      if (placedTaskIds.has(task.id)) {
+        continue;
+      }
+
+      const slot = _findFirstAvailableSlot(globalAvailableSlots, settings.defaultTaskDuration);
+
+      if (slot) {
+        const placement: TaskPlacement = {
+          id: `${task.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          taskId: task.id,
+          taskTitle: task.title,
+          listId: task.listId,
+          listTitle: task.listTitle,
+          startTime: slot.start.toISOString(),
+          duration: settings.defaultTaskDuration,
+        };
+
+        placements.push(placement);
+        placedTaskIds.add(task.id);
+
+        _removeSlotTime(
+          globalAvailableSlots,
+          slot.start,
+          settings.defaultTaskDuration,
+          settings.minTimeBetweenTasks
+        );
+      }
     }
+  } else {
+    // Process each working hour period in order with its filter
+    for (const workingHour of settings.workingHours) {
+      const periodFilter = workingHourFilters[workingHour.id];
 
-    const slot = _findFirstAvailableSlot(availableSlots, settings.defaultTaskDuration);
+      // Get time range for this working hour
+      const periodStart = wallTimeOnDateToUtc(date, workingHour.start, effectiveTimeZone);
+      const periodEnd = wallTimeOnDateToUtc(date, workingHour.end, effectiveTimeZone);
 
-    if (slot) {
-      const placement: TaskPlacement = {
-        id: `${task.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        taskId: task.id,
-        taskTitle: task.title,
-        listId: task.listId,
-        listTitle: task.listTitle,
-        startTime: slot.start.toISOString(),
-        duration: settings.defaultTaskDuration,
-      };
+      // Get available slots for this period (only slots that haven't been used yet)
+      const periodSlots = _getSlotsInTimeRange(globalAvailableSlots, periodStart, periodEnd);
 
-      placements.push(placement);
-      placedTaskIds.add(task.id);
+      if (periodSlots.length === 0) {
+        continue; // No available slots in this period
+      }
 
-      _removeSlotTime(availableSlots, slot.start, settings.defaultTaskDuration, settings.minTimeBetweenTasks);
-    } else {
-      unplacedTasks.push(task);
+      // Get remaining tasks that haven't been placed yet
+      const remainingTasks = baseTasks.filter((t) => !placedTaskIds.has(t.id));
+
+      // Apply filter for this period (if any)
+      const periodTasks = periodFilter
+        ? applyTaskFilter(remainingTasks, periodFilter)
+        : remainingTasks;
+
+      // Sort tasks by priority
+      const sortedPeriodTasks = _sortTasksByPriority(periodTasks);
+
+      // Place tasks in this period's slots
+      for (const task of sortedPeriodTasks) {
+        const slot = _findFirstAvailableSlot(periodSlots, settings.defaultTaskDuration);
+
+        if (slot) {
+          const placement: TaskPlacement = {
+            id: `${task.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            taskId: task.id,
+            taskTitle: task.title,
+            listId: task.listId,
+            listTitle: task.listTitle,
+            startTime: slot.start.toISOString(),
+            duration: settings.defaultTaskDuration,
+          };
+
+          placements.push(placement);
+          placedTaskIds.add(task.id);
+
+          // Remove the slot from both period slots and global slots
+          _removeSlotTime(periodSlots, slot.start, settings.defaultTaskDuration, settings.minTimeBetweenTasks);
+          _removeSlotTime(
+            globalAvailableSlots,
+            slot.start,
+            settings.defaultTaskDuration,
+            settings.minTimeBetweenTasks
+          );
+        } else {
+          break; // No more slots available in this period
+        }
+      }
     }
   }
 
+  // Collect unplaced tasks
+  const unplacedTasks = baseTasks.filter((t) => !placedTaskIds.has(t.id));
   const message = _generateResultMessage(placements, unplacedTasks);
 
   return { placements, unplacedTasks, message };
@@ -189,11 +283,20 @@ function _subtractTimeFromSlots(slots: TimeSlot[], blockStart: Date, blockEnd: D
 function _findFirstAvailableSlot(slots: TimeSlot[], durationMinutes: number): TimeSlot | null {
   const durationMs = durationMinutes * 60 * 1000;
 
+  // Find the slot with the earliest start time that has enough duration
+  let earliestSlot: TimeSlot | null = null;
+
   for (const slot of slots) {
     const slotDuration = slot.end.getTime() - slot.start.getTime();
     if (slotDuration >= durationMs) {
-      return { start: new Date(slot.start), end: new Date(slot.start.getTime() + durationMs) };
+      if (!earliestSlot || slot.start.getTime() < earliestSlot.start.getTime()) {
+        earliestSlot = slot;
+      }
     }
+  }
+
+  if (earliestSlot) {
+    return { start: new Date(earliestSlot.start), end: new Date(earliestSlot.start.getTime() + durationMs) };
   }
 
   return null;

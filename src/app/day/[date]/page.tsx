@@ -36,6 +36,7 @@ import {
 } from '@/hooks/use-data';
 import { useStarredTasks } from '@/hooks/use-starred-tasks';
 import { useLocalPlacements } from '@/hooks/use-local-placements';
+import { useWorkingHourFilters } from '@/hooks/use-working-hour-filters';
 import { autoFitTasks } from '@/lib/autofit';
 import { TaskPlacement, TaskFilter, GoogleTask } from '@/types';
 import { TIME_SLOT_INTERVAL } from '@/lib/constants';
@@ -73,6 +74,7 @@ export default function DayPage() {
     cleanupDeletedTasks,
     syncWithRedis,
   } = useStarredTasks(session?.user?.email ?? undefined);
+  const { filters: workingHourFilters, loading: filtersLoading } = useWorkingHourFilters(session?.user?.email ?? undefined);
   const t = useTranslations(locale);
   const { calendars, refetch: refetchCalendars } = useCalendars();
   const selectedTimeZone = useMemo(() => {
@@ -214,6 +216,11 @@ export default function DayPage() {
       return;
     }
 
+    if (filtersLoading) {
+      toast.info('Loading filters...');
+      return;
+    }
+
     setAutoFitLoading(true);
     try {
       const result = autoFitTasks(
@@ -222,7 +229,8 @@ export default function DayPage() {
         placements,
         settings,
         dateParam,
-        selectedTimeZone
+        selectedTimeZone,
+        workingHourFilters
       );
       const allPlacements = [...placements, ...result.placements];
       setPlacements(allPlacements);
@@ -236,6 +244,11 @@ export default function DayPage() {
 
   // Handle adding a single task via + button (mobile)
   const handleAddTask = (task: GoogleTask) => {
+    if (filtersLoading) {
+      toast.info('Loading filters...');
+      return;
+    }
+
     try {
       // Try to auto-fit this single task
       const result = autoFitTasks(
@@ -244,7 +257,8 @@ export default function DayPage() {
         placements,
         settings,
         dateParam,
-        selectedTimeZone
+        selectedTimeZone,
+        workingHourFilters
       );
 
       if (result.placements.length > 0) {
@@ -449,6 +463,7 @@ export default function DayPage() {
               triggerVariant="ghost"
               triggerClassName="md:border md:border-input md:bg-background md:hover:bg-accent"
               locale={locale}
+              userId={session?.user?.email ?? undefined}
             />
 
             <DropdownMenu>
