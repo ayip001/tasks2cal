@@ -2,58 +2,7 @@ import { GoogleTask, GoogleCalendarEvent, UserSettings, TaskPlacement, TimeSlot,
 import { TIME_SLOT_INTERVAL } from './constants';
 import { DateTime } from 'luxon';
 import { normalizeIanaTimeZone, wallTimeOnDateToUtc } from '@/lib/timezone';
-
-// Helper function to apply a filter to tasks
-// Uses the same logic as filterTasks in use-data.ts for consistency
-function _applyFilter(tasks: GoogleTask[], filter: WorkingHourFilter): GoogleTask[] {
-  return tasks.filter((task) => {
-    // Has due date filter
-    if (filter.hasDueDate !== undefined) {
-      const hasDue = !!task.due;
-      if (filter.hasDueDate !== hasDue) {
-        return false;
-      }
-    }
-
-    // Hide container tasks filter
-    if (filter.hideContainerTasks && task.hasSubtasks) {
-      return false;
-    }
-
-    // Starred only filter
-    if (filter.starredOnly && !task.isStarred) {
-      return false;
-    }
-
-    // Search text filter - same logic as task panel filter
-    if (filter.searchText) {
-      const searchTerms = filter.searchText.toLowerCase().split(/\s+/).filter((t) => t.length > 0);
-
-      for (const term of searchTerms) {
-        if (term.startsWith('-') && term.length > 1) {
-          // Negative term - exclude tasks that match
-          const negativeTerm = term.substring(1);
-          const titleMatch = task.title.toLowerCase().includes(negativeTerm);
-          const notesMatch = task.notes?.toLowerCase().includes(negativeTerm) || false;
-          const listTitleMatch = task.listTitle.toLowerCase().includes(negativeTerm);
-          if (titleMatch || notesMatch || listTitleMatch) {
-            return false;
-          }
-        } else {
-          // Positive term - task must match at least one field
-          const titleMatch = task.title.toLowerCase().includes(term);
-          const notesMatch = task.notes?.toLowerCase().includes(term) || false;
-          const listTitleMatch = task.listTitle.toLowerCase().includes(term);
-          if (!titleMatch && !notesMatch && !listTitleMatch) {
-            return false;
-          }
-        }
-      }
-    }
-
-    return true;
-  });
-}
+import { applyTaskFilter } from '@/lib/filter-utils';
 
 // Helper to get slots within a specific time range
 function _getSlotsInTimeRange(slots: TimeSlot[], startTime: Date, endTime: Date): TimeSlot[] {
@@ -159,7 +108,7 @@ export function autoFitTasks(
 
       // Apply filter for this period (if any)
       const periodTasks = periodFilter
-        ? _applyFilter(remainingTasks, periodFilter)
+        ? applyTaskFilter(remainingTasks, periodFilter)
         : remainingTasks;
 
       // Sort tasks by priority

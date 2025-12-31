@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { UserSettings, GoogleCalendar, GoogleTaskList } from '@/types';
+import { UserSettings, GoogleCalendar, GoogleTaskList, WorkingHourFilter } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';

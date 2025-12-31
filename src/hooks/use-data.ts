@@ -15,6 +15,7 @@ import { normalizeIanaTimeZone } from '@/lib/timezone';
 import { getLocaleFromCookieClient, getLocaleFromStorage, setLocaleCookie, setLocaleStorage } from '@/lib/locale';
 import { getFromCache, setInCache } from '@/lib/cache';
 import type { Locale } from '@/i18n/config';
+import { applyTaskFilter } from '@/lib/filter-utils';
 
 // Update the last data refresh timestamp in localStorage
 function updateLastRefreshTime(): void {
@@ -266,57 +267,7 @@ export function useSettings() {
 }
 
 export function filterTasks(tasks: GoogleTask[], filter: TaskFilter): GoogleTask[] {
-  return tasks.filter((task) => {
-    if (filter.listIds !== undefined) {
-      if (filter.listIds.length === 0) {
-        return false;
-      }
-      if (!filter.listIds.includes(task.listId)) {
-        return false;
-      }
-    }
-
-    if (filter.hasDueDate !== undefined) {
-      const hasDue = !!task.due;
-      if (filter.hasDueDate !== hasDue) {
-        return false;
-      }
-    }
-
-    if (filter.hideContainerTasks && task.hasSubtasks) {
-      return false;
-    }
-
-    // Starred filter
-    if (filter.starredOnly && !task.isStarred) {
-      return false;
-    }
-
-    if (filter.searchText) {
-      const searchTerms = filter.searchText.toLowerCase().split(/\s+/).filter((t) => t.length > 0);
-
-      for (const term of searchTerms) {
-        if (term.startsWith('-') && term.length > 1) {
-          const negativeTerm = term.substring(1);
-          const titleMatch = task.title.toLowerCase().includes(negativeTerm);
-          const notesMatch = task.notes?.toLowerCase().includes(negativeTerm) || false;
-          const listTitleMatch = task.listTitle.toLowerCase().includes(negativeTerm);
-          if (titleMatch || notesMatch || listTitleMatch) {
-            return false;
-          }
-        } else {
-          const titleMatch = task.title.toLowerCase().includes(term);
-          const notesMatch = task.notes?.toLowerCase().includes(term) || false;
-          const listTitleMatch = task.listTitle.toLowerCase().includes(term);
-          if (!titleMatch && !notesMatch && !listTitleMatch) {
-            return false;
-          }
-        }
-      }
-    }
-
-    return true;
-  });
+  return applyTaskFilter(tasks, filter);
 }
 
 // Re-export cache invalidation for use in components

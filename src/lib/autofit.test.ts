@@ -21,7 +21,7 @@ describe('autoFitTasks (timezone)', () => {
       defaultTaskDuration: 30,
       minTimeBetweenTasks: 0,
       ignoreContainerTasks: false,
-      workingHours: [{ start: '09:00', end: '10:00' }],
+      workingHours: [{ id: 'test-wh-1', start: '09:00', end: '10:00' }],
       slotMinTime: '00:00',
       slotMaxTime: '23:59',
       timeFormat: '24h',

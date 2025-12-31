@@ -74,7 +74,7 @@ export default function DayPage() {
     cleanupDeletedTasks,
     syncWithRedis,
   } = useStarredTasks(session?.user?.email ?? undefined);
-  const { filters: workingHourFilters } = useWorkingHourFilters(session?.user?.email ?? undefined);
+  const { filters: workingHourFilters, loading: filtersLoading } = useWorkingHourFilters(session?.user?.email ?? undefined);
   const t = useTranslations(locale);
   const { calendars, refetch: refetchCalendars } = useCalendars();
   const selectedTimeZone = useMemo(() => {
@@ -216,6 +216,11 @@ export default function DayPage() {
       return;
     }
 
+    if (filtersLoading) {
+      toast.info('Loading filters...');
+      return;
+    }
+
     setAutoFitLoading(true);
     try {
       const result = autoFitTasks(
@@ -239,6 +244,11 @@ export default function DayPage() {
 
   // Handle adding a single task via + button (mobile)
   const handleAddTask = (task: GoogleTask) => {
+    if (filtersLoading) {
+      toast.info('Loading filters...');
+      return;
+    }
+
     try {
       // Try to auto-fit this single task
       const result = autoFitTasks(
