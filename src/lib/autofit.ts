@@ -4,19 +4,15 @@ import { DateTime } from 'luxon';
 import { normalizeIanaTimeZone, wallTimeOnDateToUtc } from '@/lib/timezone';
 
 // Helper function to apply a filter to tasks
+// Uses the same logic as filterTasks in use-data.ts for consistency
 function _applyFilter(tasks: GoogleTask[], filter: WorkingHourFilter): GoogleTask[] {
   return tasks.filter((task) => {
-    // Search text filter (searches in task title and list title)
-    if (filter.searchText) {
-      const searchLower = filter.searchText.toLowerCase();
-      const titleMatch = task.title.toLowerCase().includes(searchLower);
-      const listMatch = task.listTitle?.toLowerCase().includes(searchLower);
-      if (!titleMatch && !listMatch) return false;
-    }
-
-    // Starred only filter
-    if (filter.starredOnly && !task.isStarred) {
-      return false;
+    // Has due date filter
+    if (filter.hasDueDate !== undefined) {
+      const hasDue = !!task.due;
+      if (filter.hasDueDate !== hasDue) {
+        return false;
+      }
     }
 
     // Hide container tasks filter
@@ -24,11 +20,35 @@ function _applyFilter(tasks: GoogleTask[], filter: WorkingHourFilter): GoogleTas
       return false;
     }
 
-    // Has due date filter
-    if (filter.hasDueDate !== undefined) {
-      const hasDue = !!task.due;
-      if (filter.hasDueDate && !hasDue) return false;
-      if (!filter.hasDueDate && hasDue) return false;
+    // Starred only filter
+    if (filter.starredOnly && !task.isStarred) {
+      return false;
+    }
+
+    // Search text filter - same logic as task panel filter
+    if (filter.searchText) {
+      const searchTerms = filter.searchText.toLowerCase().split(/\s+/).filter((t) => t.length > 0);
+
+      for (const term of searchTerms) {
+        if (term.startsWith('-') && term.length > 1) {
+          // Negative term - exclude tasks that match
+          const negativeTerm = term.substring(1);
+          const titleMatch = task.title.toLowerCase().includes(negativeTerm);
+          const notesMatch = task.notes?.toLowerCase().includes(negativeTerm) || false;
+          const listTitleMatch = task.listTitle.toLowerCase().includes(negativeTerm);
+          if (titleMatch || notesMatch || listTitleMatch) {
+            return false;
+          }
+        } else {
+          // Positive term - task must match at least one field
+          const titleMatch = task.title.toLowerCase().includes(term);
+          const notesMatch = task.notes?.toLowerCase().includes(term) || false;
+          const listTitleMatch = task.listTitle.toLowerCase().includes(term);
+          if (!titleMatch && !notesMatch && !listTitleMatch) {
+            return false;
+          }
+        }
+      }
     }
 
     return true;
