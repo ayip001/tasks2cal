@@ -191,8 +191,10 @@ export function useWorkingHourFilters(userId: string | undefined): UseWorkingHou
         };
         saveToLocalStorage(userId, newData);
 
-        // Notify other hook instances of the change
-        window.dispatchEvent(new CustomEvent('workingHourFiltersChanged'));
+        // Notify other hook instances of the change (defer to avoid updating during render)
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('workingHourFiltersChanged'));
+        }, 0);
 
         // Schedule debounced sync to Redis
         scheduleDebouncedSync();
