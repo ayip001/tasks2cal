@@ -106,6 +106,21 @@ export function useWorkingHourFilters(userId: string | undefined): UseWorkingHou
     };
 
     initializeFilters();
+
+    // Listen for localStorage changes from other hook instances (e.g., settings panel)
+    const handleStorageChange = () => {
+      const localData = getFromLocalStorage(userId);
+      if (localData) {
+        setFilters(localData.filters);
+      }
+    };
+
+    // Custom event for same-page updates (storage event doesn't fire on same page)
+    window.addEventListener('workingHourFiltersChanged', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('workingHourFiltersChanged', handleStorageChange);
+    };
   }, [userId]);
 
   // Debounced sync to Redis
@@ -175,6 +190,9 @@ export function useWorkingHourFilters(userId: string | undefined): UseWorkingHou
           lastModified: Date.now(),
         };
         saveToLocalStorage(userId, newData);
+
+        // Notify other hook instances of the change
+        window.dispatchEvent(new CustomEvent('workingHourFiltersChanged'));
 
         // Schedule debounced sync to Redis
         scheduleDebouncedSync();
