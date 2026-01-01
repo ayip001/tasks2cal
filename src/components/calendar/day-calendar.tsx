@@ -20,6 +20,7 @@ import { logTimezoneDebug, onTimezoneDebugRefresh } from '@/lib/debug-timezone';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTranslations, getFullCalendarLocale } from '@/hooks/use-translations';
+import { WorkingHoursOverlay } from '@/components/calendar/working-hours-overlay';
 import type { Locale } from '@/i18n/config';
 
 interface DayCalendarProps {
@@ -197,10 +198,13 @@ export function DayCalendar({
     };
   }, [nowIndicatorPosition]);
 
-  // Get the color for a placement based on listId or default
-  const getPlacementColor = (listId?: string) => {
+  // Get the color for a placement based on priority: list color > working hour color > default task color
+  const getPlacementColor = (listId?: string, workingHourColor?: string) => {
     if (listId && settings.listColors?.[listId]) {
       return settings.listColors[listId];
+    }
+    if (workingHourColor) {
+      return workingHourColor;
     }
     return settings.taskColor;
   };
@@ -219,7 +223,7 @@ export function DayCalendar({
       },
     })),
     ...placements.map((placement) => {
-      const color = getPlacementColor(placement.listId);
+      const color = getPlacementColor(placement.listId, placement.workingHourColor);
       return {
         id: `placement-${placement.id}`,
         title: placement.taskTitle,
@@ -411,7 +415,7 @@ export function DayCalendar({
         </Button>
       </div>
 
-      <div className="w-full md:flex-1 md:min-h-0">
+      <div className="w-full md:flex-1 md:min-h-0 relative">
         <FullCalendar
           ref={calendarRef}
           plugins={[timeGridPlugin, interactionPlugin, luxonPlugin]}
@@ -440,6 +444,13 @@ export function DayCalendar({
           businessHours={businessHours}
           slotLaneClassNames="fc-slot-lane"
           slotLabelContent={renderSlotLabelContent}
+        />
+        <WorkingHoursOverlay
+          workingHours={settings.workingHours}
+          slotMinTime={slotMinTime}
+          slotMaxTime={slotMaxTime}
+          date={date}
+          timeZone={selectedTimeZone}
         />
       </div>
     </div>

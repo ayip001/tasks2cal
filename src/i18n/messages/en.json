@@ -16,6 +16,10 @@
     "noEvents": "No events scheduled",
     "andMore": "and {count} more..."
   },
+  "tabs": {
+    "tasks": "Tasks",
+    "autofit": "Auto-fit"
+  },
   "day": {
     "autoFit": "Auto-fit",
     "invalidDate": "Invalid Date",
@@ -116,6 +120,16 @@
     "filterFor": "Filter for {time}",
     "clearFilter": "Clear Filter",
     "workingHourFilterDesc": "Only tasks matching this filter will be placed during this time period by Auto-fit."
+  },
+  "autofit": {
+    "title": "Auto-fit Settings",
+    "calendarRange": "Calendar Day Range",
+    "workingHours": "Working Hours",
+    "addPeriod": "Add Period",
+    "periodName": "Name",
+    "periodNamePlaceholder": "e.g., Morning Focus",
+    "periodColor": "Color",
+    "useColorForTasks": "Use color for placed tasks"
   },
   "errors": {
     "rateLimited": "Too many requests. Please wait and try again."
