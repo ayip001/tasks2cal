@@ -20,7 +20,6 @@ import { logTimezoneDebug, onTimezoneDebugRefresh } from '@/lib/debug-timezone';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTranslations, getFullCalendarLocale } from '@/hooks/use-translations';
-import { WorkingHoursOverlay } from '@/components/calendar/working-hours-overlay';
 import type { Locale } from '@/i18n/config';
 
 interface DayCalendarProps {
@@ -209,7 +208,45 @@ export function DayCalendar({
     return settings.taskColor;
   };
 
+  // Helper function to mix color with white
+  const mixColorWithWhite = (hexColor: string, intensity: number = 0.25): string => {
+    const hex = hexColor.replace('#', '');
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    const mixedR = Math.round(255 * (1 - intensity) + r * intensity);
+    const mixedG = Math.round(255 * (1 - intensity) + g * intensity);
+    const mixedB = Math.round(255 * (1 - intensity) + b * intensity);
+    return `#${mixedR.toString(16).padStart(2, '0')}${mixedG.toString(16).padStart(2, '0')}${mixedB.toString(16).padStart(2, '0')}`;
+  };
+
   const calendarEvents: EventInput[] = [
+    // Working hours as background events (reversed so last one renders on top)
+    ...settings.workingHours.slice().reverse().map((wh, index) => {
+      const originalIndex = settings.workingHours.length - 1 - index;
+      const startTime = wallTimeOnDateToUtc(date, wh.start, normalizeIanaTimeZone(selectedTimeZone));
+      const endTime = wallTimeOnDateToUtc(date, wh.end, normalizeIanaTimeZone(selectedTimeZone));
+      const color = wh.color || '#9ca3af';
+      const labelBgColor = mixColorWithWhite(color, 0.25);
+
+      return {
+        id: `working-hour-${wh.id}`,
+        start: startTime.toISOString(),
+        end: endTime.toISOString(),
+        display: 'background',
+        backgroundColor: 'transparent',
+        borderColor: color,
+        classNames: ['working-hour-outline'],
+        extendedProps: {
+          type: 'working-hour',
+          workingHourIndex: originalIndex,
+          workingHourName: wh.name || `Period ${originalIndex + 1}`,
+          workingHourColor: color,
+          labelBgColor: labelBgColor,
+          zIndex: originalIndex, // Higher z-index for later periods
+        },
+      };
+    }),
     ...events.map((event) => ({
       id: `event-${event.id}`,
       title: event.summary,
@@ -243,9 +280,33 @@ export function DayCalendar({
   ];
 
   const renderEventContent = (eventInfo: EventContentArg) => {
-    const isPlacement = eventInfo.event.extendedProps?.type === 'placement';
+    const eventType = eventInfo.event.extendedProps?.type;
+    const isPlacement = eventType === 'placement';
+    const isWorkingHour = eventType === 'working-hour';
     const listTitle = eventInfo.event.extendedProps?.listTitle;
     const placementId = eventInfo.event.extendedProps?.placementId;
+
+    // Render working hour labels
+    if (isWorkingHour) {
+      const name = eventInfo.event.extendedProps?.workingHourName;
+      const labelBgColor = eventInfo.event.extendedProps?.labelBgColor;
+
+      return (
+        <div className="absolute bottom-0 right-0 pointer-events-none" style={{ transform: 'translateY(100%)' }}>
+          <div
+            className="text-xs px-2 py-1 rounded whitespace-nowrap"
+            style={{
+              backgroundColor: labelBgColor,
+              color: '#374151',
+              fontSize: '0.75rem',
+              fontWeight: 500,
+            }}
+          >
+            {name}
+          </div>
+        </div>
+      );
+    }
 
     if (isPlacement) {
       return (
@@ -415,7 +476,7 @@ export function DayCalendar({
         </Button>
       </div>
 
-      <div className="w-full md:flex-1 md:min-h-0 relative">
+      <div className="w-full md:flex-1 md:min-h-0">
         <FullCalendar
           ref={calendarRef}
           plugins={[timeGridPlugin, interactionPlugin, luxonPlugin]}
@@ -444,13 +505,6 @@ export function DayCalendar({
           businessHours={businessHours}
           slotLaneClassNames="fc-slot-lane"
           slotLabelContent={renderSlotLabelContent}
-        />
-        <WorkingHoursOverlay
-          workingHours={settings.workingHours}
-          slotMinTime={slotMinTime}
-          slotMaxTime={slotMaxTime}
-          date={date}
-          timeZone={selectedTimeZone}
         />
       </div>
     </div>
