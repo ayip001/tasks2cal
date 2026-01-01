@@ -292,10 +292,21 @@
   padding: 0 !important;
   pointer-events: none !important;
   overflow: visible !important;
+  opacity: 1 !important;
 }
 
 .fc-event.working-hour-outline .fc-event-main {
   position: relative;
+  opacity: 1 !important;
+}
+
+/* Ensure working hour labels are fully opaque */
+.working-hour-labels {
+  opacity: 1 !important;
+}
+
+.working-hour-labels > div {
+  opacity: 1 !important;
 }
 
 /* Mobile: Prevent FullCalendar header from being sticky */

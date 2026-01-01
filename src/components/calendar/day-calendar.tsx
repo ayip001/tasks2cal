@@ -197,6 +197,69 @@ export function DayCalendar({
     };
   }, [nowIndicatorPosition]);
 
+  // Inject working hour labels after calendar renders
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const timeGridBody = containerRef.current.querySelector('.fc-timegrid-body');
+    if (!timeGridBody) return;
+
+    // Remove any existing labels
+    const existingLabels = timeGridBody.querySelectorAll('.working-hour-labels');
+    existingLabels.forEach(label => label.remove());
+
+    // Create labels container for each end time group
+    Object.entries(workingHoursByEndTime).forEach(([endTimeISO, periods]) => {
+      // Find the background event element for any period in this group (to get position)
+      const firstPeriodId = `working-hour-${periods[0].id}`;
+      const eventEl = timeGridBody.querySelector(`[data-event-id="${firstPeriodId}"]`);
+
+      if (!eventEl) return;
+
+      // Create labels container
+      const labelsContainer = document.createElement('div');
+      labelsContainer.className = 'working-hour-labels';
+      labelsContainer.style.cssText = `
+        position: absolute;
+        right: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        pointer-events: none;
+        z-index: 5;
+      `;
+
+      // Position at the bottom of the event
+      const rect = eventEl.getBoundingClientRect();
+      const parentRect = timeGridBody.getBoundingClientRect();
+      const bottom = rect.bottom - parentRect.top;
+      labelsContainer.style.top = `${bottom + 2}px`;
+
+      // Add label for each period ending at this time (in settings order)
+      periods.forEach((period) => {
+        const labelBgColor = mixColorWithWhite(period.color, 0.5);
+        const label = document.createElement('div');
+        label.className = 'text-xs px-2 py-1 rounded whitespace-nowrap';
+        label.style.cssText = `
+          background-color: ${labelBgColor};
+          color: #374151;
+          font-size: 0.75rem;
+          font-weight: 500;
+        `;
+        label.textContent = period.name;
+        labelsContainer.appendChild(label);
+      });
+
+      timeGridBody.appendChild(labelsContainer);
+    });
+
+    // Cleanup function
+    return () => {
+      const labels = timeGridBody.querySelectorAll('.working-hour-labels');
+      labels.forEach(label => label.remove());
+    };
+  }, [workingHoursByEndTime, mixColorWithWhite, calendarEvents]);
+
   // Get the color for a placement based on priority: list color > working hour color > default task color
   const getPlacementColor = (listId?: string, workingHourColor?: string) => {
     if (listId && settings.listColors?.[listId]) {
@@ -208,8 +271,8 @@ export function DayCalendar({
     return settings.taskColor;
   };
 
-  // Helper function to mix color with white
-  const mixColorWithWhite = (hexColor: string, intensity: number = 0.25): string => {
+  // Helper function to mix color with white (50/50 mix for labels)
+  const mixColorWithWhite = (hexColor: string, intensity: number = 0.5): string => {
     const hex = hexColor.replace('#', '');
     const r = parseInt(hex.slice(0, 2), 16);
     const g = parseInt(hex.slice(2, 4), 16);
@@ -220,6 +283,29 @@ export function DayCalendar({
     return `#${mixedR.toString(16).padStart(2, '0')}${mixedG.toString(16).padStart(2, '0')}${mixedB.toString(16).padStart(2, '0')}`;
   };
 
+  // Group working hours by end time for label stacking
+  const workingHoursByEndTime = useMemo(() => {
+    const groups: Record<string, Array<{ id: string; name: string; color: string; endTime: Date }>> = {};
+
+    settings.workingHours.forEach((wh, index) => {
+      const endTime = wallTimeOnDateToUtc(date, wh.end, normalizeIanaTimeZone(selectedTimeZone));
+      const key = endTime.toISOString();
+
+      if (!groups[key]) {
+        groups[key] = [];
+      }
+
+      groups[key].push({
+        id: wh.id,
+        name: wh.name || `Period ${index + 1}`,
+        color: wh.color || '#9ca3af',
+        endTime: endTime,
+      });
+    });
+
+    return groups;
+  }, [settings.workingHours, date, selectedTimeZone]);
+
   const calendarEvents: EventInput[] = [
     // Working hours as background events (reversed so last one renders on top)
     ...settings.workingHours.slice().reverse().map((wh, index) => {
@@ -227,7 +313,6 @@ export function DayCalendar({
       const startTime = wallTimeOnDateToUtc(date, wh.start, normalizeIanaTimeZone(selectedTimeZone));
       const endTime = wallTimeOnDateToUtc(date, wh.end, normalizeIanaTimeZone(selectedTimeZone));
       const color = wh.color || '#9ca3af';
-      const labelBgColor = mixColorWithWhite(color, 0.25);
 
       return {
         id: `working-hour-${wh.id}`,
@@ -242,8 +327,7 @@ export function DayCalendar({
           workingHourIndex: originalIndex,
           workingHourName: wh.name || `Period ${originalIndex + 1}`,
           workingHourColor: color,
-          labelBgColor: labelBgColor,
-          zIndex: originalIndex, // Higher z-index for later periods
+          endTimeISO: endTime.toISOString(),
         },
       };
     }),
@@ -286,26 +370,9 @@ export function DayCalendar({
     const listTitle = eventInfo.event.extendedProps?.listTitle;
     const placementId = eventInfo.event.extendedProps?.placementId;
 
-    // Render working hour labels
+    // Working hours don't render any content (labels handled separately)
     if (isWorkingHour) {
-      const name = eventInfo.event.extendedProps?.workingHourName;
-      const labelBgColor = eventInfo.event.extendedProps?.labelBgColor;
-
-      return (
-        <div className="absolute bottom-0 right-0 pointer-events-none" style={{ transform: 'translateY(100%)' }}>
-          <div
-            className="text-xs px-2 py-1 rounded whitespace-nowrap"
-            style={{
-              backgroundColor: labelBgColor,
-              color: '#374151',
-              fontSize: '0.75rem',
-              fontWeight: 500,
-            }}
-          >
-            {name}
-          </div>
-        </div>
-      );
+      return null;
     }
 
     if (isPlacement) {
