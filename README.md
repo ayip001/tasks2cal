@@ -21,7 +21,7 @@
 ---
 
 ## Why I Built This
-I wanted to automate timeboxing without paying for a bloated SaaS subscription. I needed a simple way to take my Google Tasks list and physically block out time on my Google Calendar. 
+I needed a way to **automate** timeboxing. While Google Calendar lets you drag tasks manually, I wanted a utility that solves the scheduling puzzle for me—filling my free time with tasks based on my specific rules in one click.
 
 This is a utility I made for myself to stop listing and start scheduling. If it helps you get organized, feel free to [buy me a coffee](https://buymeacoffee.com/angusflies)!
 
@@ -77,6 +77,23 @@ Each working hour period can have optional filters to auto-fit specific task sub
 - Period 2: `09:00-17:00` (no filter)
 
 **Result:** "Urgent" tasks are placed first (at 14:00), then other tasks fill the remaining gaps starting from 09:00. This happens because the algorithm processes periods in the order they appear in settings.
+
+---
+
+## 🧠 Advanced Usage: Rule-Based Scheduling
+
+The real power of Tasks2Cal lies in defining **Auto-fit Rules**. You can define multiple "Working Hour" ranges with specific filters that run in sequence.
+
+For example, you can configure your day to prioritize work, but fall back to side projects if you have free time:
+
+1.  **11:00 - 16:00** | Filter: `"Work"`
+    * *Result:* The scheduler attempts to fill this block with work tasks first.
+2.  **14:00 - 17:00** | Filter: `"Side Project"`
+    * *Result:* This overlaps with the first block! If you ran out of "Work" tasks by 14:00, this rule kicks in and fills the remaining 14:00-16:00 slots (plus the 16:00-17:00 hour) with "Side Project" tasks.
+3.  **20:00 - 22:00** | Filter: `"Housework"`
+    * *Result:* Finally, evening chores are scheduled, completely separate from your work blocks.
+
+This "waterfall" logic ensures you always prioritize your most important work while ensuring no time slot goes to waste.
 
 ---
 

@@ -77,7 +77,7 @@ function HeroSection() {
             
             {/* Sub-headline */}
             <p className="text-xl text-gray-600 max-w-lg leading-relaxed">
-              A no-nonsense, completely free timeboxing utility. Drag tasks directly onto your calendar and fill your day in seconds.
+              Auto-fit your to-do list into your calendar, <strong>on your terms</strong>. Define rules like &apos;Work tasks&apos; for 9-5 and &apos;Side projects&apos; for evenings, then let us automatically fill the gaps in your schedule.
             </p>
             
             {/* CTA */}
@@ -142,27 +142,27 @@ function BeforeAfterSection() {
               <ol className="space-y-2 text-gray-500">
                 <li className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 text-gray-400 text-sm flex items-center justify-center font-medium">1</span>
-                  <span>Open Google Calendar</span>
+                  <span>Open Google Tasks Sidebar</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 text-gray-400 text-sm flex items-center justify-center font-medium">2</span>
-                  <span>Create an event</span>
+                  <span>Drag task to calendar</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 text-gray-400 text-sm flex items-center justify-center font-medium">3</span>
-                  <span>Name the event</span>
+                  <span><em>Realize it overlaps with a meeting</em></span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 text-gray-400 text-sm flex items-center justify-center font-medium">4</span>
-                  <span>Add start and end time</span>
+                  <span>Resize the task block</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 text-gray-400 text-sm flex items-center justify-center font-medium">5</span>
-                  <span>Save the event</span>
+                  <span>Repeat for 15 other tasks</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 text-gray-400 text-sm flex items-center justify-center font-medium">6</span>
-                  <span>Repeat 2-5 <em>n</em> times until your day is filled</span>
+                  <span><em>Give up because playing calendar Tetris is exhausting</em></span>
                 </li>
               </ol>
             </div>
@@ -220,8 +220,8 @@ function FeatureGridSection() {
     {
       icon: Bot,
       emoji: '🤖',
-      title: 'Smart Auto-Fit',
-      description: 'One click fills your working hours around existing meetings.',
+      title: 'Rule-Based Auto-Fit',
+      description: "Don't just fill gaps—control them. Set specific rules to schedule 'Deep Work' in the morning and 'Admin' tasks only after 4 PM. Your schedule, your logic.",
       color: 'from-purple-400 to-indigo-500',
     },
     {
@@ -397,12 +397,12 @@ function FAQSection() {
     {
       question: 'How does "Auto-fit" work? Is it AI?',
       answer:
-        "It's AI-powered schedule optimizer that figures out the best way to timebox for you, as long as your definition of AI is just a bunch of if-statements that just takes your existing Google Calendar meetings, and fits them into your definted working hours. Timed tasks take priority. The Google Calendar API doesn't expose favorited tasks, otherwise favorited tasks would've been prioritized too.",
+        "It's a schedule optimizer that follows your instruction set. You define the slots (e.g., 9am-12pm) and the filters (e.g., 'Work' list only). It iterates through your rules, filling available time with the right tasks while respecting existing meetings. It's like a cron job for your calendar.",
     },
     {
       question: 'Why not just do X/Y on Google Calendar to timebox?',
       answer:
-        'There are many ways to timebox on Google Calendar, but the available tools on Google does not give you a quick way to move stuff on Google Tasks to Google Calendar.',
+        "Google's sidebar lets you drag tasks one by one, but it doesn't solve the planning puzzle for you. Tasks2Cal automates the 'calendar tetris'—instantly finding the perfect slots for your tasks based on the priorities you define.",
     },
     {
       question: 'I have a feature request / found a bug / want to contribute.',

@@ -77,7 +77,7 @@ function HeroSection() {
 
             {/* Sub-headline */}
             <p className="text-xl text-gray-600 max-w-lg leading-relaxed">
-              簡單實用、完全免費的時間箱（Timeboxing）工具。將代辦事項直接拖放到行事曆上，數秒內安排好整天的工作。
+              <strong>按你的規則，一鍵將代辦事項填滿行事曆</strong>。設定規則（如：早上只排「工作」，晚上只排「副業」），瞬間將代辦清單變成完美的時間表。
             </p>
 
             {/* CTA */}
@@ -142,27 +142,27 @@ function BeforeAfterSection() {
               <ol className="space-y-2 text-gray-500">
                 <li className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 text-gray-400 text-sm flex items-center justify-center font-medium">1</span>
-                  <span>開啟 Google 日曆</span>
+                  <span>開啟 Google Tasks 側邊欄</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 text-gray-400 text-sm flex items-center justify-center font-medium">2</span>
-                  <span>建立活動</span>
+                  <span>將任務拖到行事曆</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 text-gray-400 text-sm flex items-center justify-center font-medium">3</span>
-                  <span>為活動命名</span>
+                  <span><em>發現時間與會議衝突</em></span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 text-gray-400 text-sm flex items-center justify-center font-medium">4</span>
-                  <span>設定開始和結束時間</span>
+                  <span>手動調整任務長度</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 text-gray-400 text-sm flex items-center justify-center font-medium">5</span>
-                  <span>儲存活動</span>
+                  <span>重複以上步驟 15 次</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 text-gray-400 text-sm flex items-center justify-center font-medium">6</span>
-                  <span>重複步驟 2-5 <em>n</em> 次直到安排好一天的代辦事項</span>
+                  <span><em>因為太麻煩而放棄時間箱管理</em></span>
                 </li>
               </ol>
             </div>
@@ -220,8 +220,8 @@ function FeatureGridSection() {
     {
       icon: Bot,
       emoji: '🤖',
-      title: '智能自動排程',
-      description: '一鍵將代辦事項填入你的工作時間，自動避開現有會議。',
+      title: '規則導向自動排程',
+      description: '不只是填滿空檔，而是精準控制。設定早上專注於「深度工作」，下午 4 點後才處理「雜務」。讓排程邏輯完全配合你的工作習慣。',
       color: 'from-purple-400 to-indigo-500',
     },
     {
@@ -397,12 +397,12 @@ function FAQSection() {
     {
       question: '「自動排程」是如何運作的？是 AI 嗎？',
       answer:
-        '如果你認為一個能把代辦任務自動填入 Google 行事曆的小工具是 AI 的話，那就太好了。它只是讀取你的工作時間和行事曆上已安排的會議，並將代辦事項填入你的工作時間，避開現有會議。',
+        '這是一個遵循你的指令集的排程優化器。你定義時間槽（例如：上午 9 點至 12 點）和篩選條件（例如：只有「工作」清單）。它會遍歷你的規則，在尊重現有會議的同時，用合適的任務填充可用時間。就像是你的行事曆專用 cron job。',
     },
     {
       question: '為什麼不直接在 Google 行事曆上用 X/Y 方法來進行時間箱管理？',
       answer:
-        '在 Google 行事曆上有很多時間箱管理的方法，但 Google 提供的工具無法快速將 Google Tasks 的代辦事項直接拖放到 Google 行事曆。',
+        'Google 側邊欄雖然允許你手動拖放任務，但無法自動為你規劃時間。Tasks2Cal 能依據你設定的優先順序，一鍵將任務填入會議之間的空檔，省去手動「玩俄羅斯方塊」安排時間的煩惱。',
     },
     {
       question: '我有功能建議 / 發現了 bug / 想要貢獻。',
