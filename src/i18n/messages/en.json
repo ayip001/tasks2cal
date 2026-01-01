@@ -115,7 +115,7 @@
     "daysAgo": "{count} days ago",
     "filterFor": "Filter for {time}",
     "clearFilter": "Clear Filter",
-    "workingHourFilterDesc": "Only tasks matching this filter will be placed during this time period."
+    "workingHourFilterDesc": "Only tasks matching this filter will be placed during this time period by Auto-fit."
   },
   "errors": {
     "rateLimited": "Too many requests. Please wait and try again."

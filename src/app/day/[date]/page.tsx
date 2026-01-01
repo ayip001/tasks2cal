@@ -190,6 +190,10 @@ export default function DayPage() {
     updatePlacement(placementId, { startTime: newStartTime });
   };
 
+  const handlePlacementResize = (placementId: string, newDuration: number) => {
+    updatePlacement(placementId, { duration: newDuration });
+  };
+
   const handleExternalDrop = (taskId: string, taskTitle: string, startTime: string, listId?: string, listTitle?: string) => {
     const newPlacement: TaskPlacement = {
       id: `${taskId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -517,6 +521,7 @@ export default function DayPage() {
             events={events}
             placements={placements}
             onPlacementDrop={handlePlacementDrop}
+            onPlacementResize={handlePlacementResize}
             onExternalDrop={handleExternalDrop}
             onPlacementClick={handlePlacementClick}
             onPastTimeDrop={() => toast.error(t('day.cannotPlacePast'))}
@@ -553,6 +558,7 @@ export default function DayPage() {
               events={events}
               placements={placements}
               onPlacementDrop={handlePlacementDrop}
+              onPlacementResize={handlePlacementResize}
               onExternalDrop={handleExternalDrop}
               onPlacementClick={handlePlacementClick}
               onPastTimeDrop={() => toast.error(t('day.cannotPlacePast'))}

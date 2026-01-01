@@ -778,19 +778,6 @@ export function SettingsPanel({
             })}
           </div>
 
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="ignoreContainer"
-              checked={localSettings.ignoreContainerTasks}
-              onCheckedChange={(checked) =>
-                setLocalSettings({ ...localSettings, ignoreContainerTasks: checked === true })
-              }
-            />
-            <Label htmlFor="ignoreContainer" className="cursor-pointer">
-              {t('settings.ignoreContainerTasks')}
-            </Label>
-          </div>
-
           {onRefreshData && (
             <div className="space-y-2 pt-4 border-t">
               <Label>{t('settings.refreshData')}</Label>

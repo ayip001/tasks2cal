@@ -3,7 +3,7 @@
 import { useRef, useEffect, useState, useMemo } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
-import interactionPlugin from '@fullcalendar/interaction';
+import interactionPlugin, { EventResizeDoneArg } from '@fullcalendar/interaction';
 import luxonPlugin from '@fullcalendar/luxon3';
 import type { EventDropArg, EventInput, EventContentArg, SlotLabelContentArg } from '@fullcalendar/core';
 import { DateTime } from 'luxon';
@@ -27,6 +27,7 @@ interface DayCalendarProps {
   events: GoogleCalendarEvent[];
   placements: TaskPlacement[];
   onPlacementDrop: (placementId: string, newStartTime: string) => void;
+  onPlacementResize: (placementId: string, newDuration: number) => void;
   onExternalDrop: (taskId: string, taskTitle: string, startTime: string, taskListId?: string, taskListTitle?: string) => void;
   onPlacementClick: (placementId: string) => void;
   onPastTimeDrop?: () => void;
@@ -42,6 +43,7 @@ export function DayCalendar({
   events,
   placements,
   onPlacementDrop,
+  onPlacementResize,
   onExternalDrop,
   onPlacementClick,
   onPastTimeDrop,
@@ -294,6 +296,16 @@ export function DayCalendar({
     }
   };
 
+  const handleEventResize = (info: EventResizeDoneArg) => {
+    const placementId = info.event.extendedProps?.placementId;
+    if (placementId && info.event.start && info.event.end) {
+      // Calculate new duration in minutes
+      const durationMs = info.event.end.getTime() - info.event.start.getTime();
+      const durationMinutes = Math.round(durationMs / (60 * 1000));
+      onPlacementResize(placementId, durationMinutes);
+    }
+  };
+
   // Handle external drops from task panel - this fires after FullCalendar validates the drop
   const handleEventReceive = (info: { event: { start: Date | null; remove: () => void }; draggedEl: HTMLElement }) => {
     const taskId = info.draggedEl.dataset.taskId;
@@ -418,6 +430,7 @@ export function DayCalendar({
           selectable={false}
           droppable={true}
           eventDrop={handleEventDrop}
+          eventResize={handleEventResize}
           eventContent={renderEventContent}
           eventReceive={handleEventReceive}
           eventOverlap={false}
