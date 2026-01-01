@@ -199,66 +199,83 @@ export function DayCalendar({
 
   // Inject working hour labels after calendar renders
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || !calendarRef.current) return;
 
-    const timeGridBody = containerRef.current.querySelector('.fc-timegrid-body');
-    if (!timeGridBody) return;
+    // Wait for FullCalendar to finish rendering
+    const timer = setTimeout(() => {
+      const timeGridBody = containerRef.current?.querySelector('.fc-timegrid-body');
+      if (!timeGridBody) return;
 
-    // Remove any existing labels
-    const existingLabels = timeGridBody.querySelectorAll('.working-hour-labels');
-    existingLabels.forEach(label => label.remove());
+      // Remove any existing labels
+      const existingLabels = timeGridBody.querySelectorAll('.working-hour-labels');
+      existingLabels.forEach(label => label.remove());
 
-    // Create labels container for each end time group
-    Object.entries(workingHoursByEndTime).forEach(([endTimeISO, periods]) => {
-      // Find the background event element for any period in this group (to get position)
-      const firstPeriodId = `working-hour-${periods[0].id}`;
-      const eventEl = timeGridBody.querySelector(`[data-event-id="${firstPeriodId}"]`);
+      // Create labels container for each end time group
+      Object.entries(workingHoursByEndTime).forEach(([endTimeISO, periods]) => {
+        // Find all background events (working hour outlines)
+        const bgEvents = timeGridBody.querySelectorAll('.fc-bg-event.working-hour-outline');
 
-      if (!eventEl) return;
+        // Find the event that matches this end time
+        let matchingEvent: Element | null = null;
+        bgEvents.forEach((el) => {
+          const fcEvent = (el as any).fcSeg?.eventRange?.def;
+          if (fcEvent && fcEvent.publicId === `working-hour-${periods[0].id}`) {
+            matchingEvent = el;
+          }
+        });
 
-      // Create labels container
-      const labelsContainer = document.createElement('div');
-      labelsContainer.className = 'working-hour-labels';
-      labelsContainer.style.cssText = `
-        position: absolute;
-        right: 8px;
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-        pointer-events: none;
-        z-index: 5;
-      `;
+        if (!matchingEvent) return;
 
-      // Position at the bottom of the event
-      const rect = eventEl.getBoundingClientRect();
-      const parentRect = timeGridBody.getBoundingClientRect();
-      const bottom = rect.bottom - parentRect.top;
-      labelsContainer.style.top = `${bottom + 2}px`;
-
-      // Add label for each period ending at this time (in settings order)
-      periods.forEach((period) => {
-        const labelBgColor = mixColorWithWhite(period.color, 0.5);
-        const label = document.createElement('div');
-        label.className = 'text-xs px-2 py-1 rounded whitespace-nowrap';
-        label.style.cssText = `
-          background-color: ${labelBgColor};
-          color: #374151;
-          font-size: 0.75rem;
-          font-weight: 500;
+        // Create labels container
+        const labelsContainer = document.createElement('div');
+        labelsContainer.className = 'working-hour-labels';
+        labelsContainer.style.cssText = `
+          position: absolute;
+          right: 8px;
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+          align-items: flex-end;
+          pointer-events: none;
+          z-index: 5;
         `;
-        label.textContent = period.name;
-        labelsContainer.appendChild(label);
-      });
 
-      timeGridBody.appendChild(labelsContainer);
-    });
+        // Position at the bottom of the event
+        const rect = matchingEvent.getBoundingClientRect();
+        const parentRect = timeGridBody.getBoundingClientRect();
+        const bottom = rect.bottom - parentRect.top;
+        labelsContainer.style.top = `${bottom + 2}px`;
+
+        // Add label for each period ending at this time (in settings order)
+        periods.forEach((period) => {
+          const labelBgColor = mixColorWithWhite(period.color, 0.5);
+          const label = document.createElement('div');
+          label.className = 'text-xs px-2 py-1 rounded whitespace-nowrap';
+          label.style.cssText = `
+            background-color: ${labelBgColor};
+            color: #374151;
+            font-size: 0.75rem;
+            font-weight: 500;
+            opacity: 1;
+          `;
+          label.textContent = period.name;
+          labelsContainer.appendChild(label);
+        });
+
+        timeGridBody.appendChild(labelsContainer);
+      });
+    }, 100);
 
     // Cleanup function
     return () => {
-      const labels = timeGridBody.querySelectorAll('.working-hour-labels');
-      labels.forEach(label => label.remove());
+      clearTimeout(timer);
+      const timeGridBody = containerRef.current?.querySelector('.fc-timegrid-body');
+      if (timeGridBody) {
+        const labels = timeGridBody.querySelectorAll('.working-hour-labels');
+        labels.forEach(label => label.remove());
+      }
     };
-  }, [workingHoursByEndTime, mixColorWithWhite, calendarEvents]);
+  }, [workingHoursByEndTime, date, settings.workingHours]);
 
   // Get the color for a placement based on priority: list color > working hour color > default task color
   const getPlacementColor = (listId?: string, workingHourColor?: string) => {
