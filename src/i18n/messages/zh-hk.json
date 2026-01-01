@@ -115,7 +115,7 @@
     "daysAgo": "{count} 天前",
     "filterFor": "篩選 {time}",
     "clearFilter": "清除篩選",
-    "workingHourFilterDesc": "在此時段內只會放置符合此篩選條件的任務。"
+    "workingHourFilterDesc": "在此時段內只會透過自動排程放置符合此篩選條件的任務。"
   },
   "errors": {
     "rateLimited": "請求次數過多，請稍後再試。"
