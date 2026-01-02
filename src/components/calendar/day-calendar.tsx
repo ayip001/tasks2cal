@@ -209,6 +209,17 @@ export function DayCalendar({
     return `#${mixedR.toString(16).padStart(2, '0')}${mixedG.toString(16).padStart(2, '0')}${mixedB.toString(16).padStart(2, '0')}`;
   };
 
+  // Helper function to format time for labels
+  const formatTimeForLabel = (time: string): string => {
+    if (settings.timeFormat === '24h') {
+      return time;
+    }
+    const [hours, minutes] = time.split(':').map(Number);
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+  };
+
   // Group working hours by end time for label stacking
   const workingHoursByEndTime = useMemo(() => {
     const groups: Record<string, Array<{ id: string; name: string; color: string; endTime: Date }>> = {};
@@ -221,16 +232,19 @@ export function DayCalendar({
         groups[key] = [];
       }
 
+      // Default name format: "Start time to End time"
+      const defaultName = `${formatTimeForLabel(wh.start)} ${t('common.to')} ${formatTimeForLabel(wh.end)}`;
+
       groups[key].push({
         id: wh.id,
-        name: wh.name || `Period ${index + 1}`,
+        name: wh.name || defaultName,
         color: wh.color || '#9ca3af',
         endTime: endTime,
       });
     });
 
     return groups;
-  }, [settings.workingHours, date, selectedTimeZone]);
+  }, [settings.workingHours, date, selectedTimeZone, formatTimeForLabel, t]);
 
   // Inject working hour labels after calendar renders
   useEffect(() => {

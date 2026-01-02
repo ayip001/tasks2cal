@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, X, AlertTriangle, Filter, Check, GripVertical, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, X, AlertTriangle, Wrench, GripVertical, ChevronDown, ChevronUp } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useTranslations } from '@/hooks/use-translations';
 import { useWorkingHourFilters } from '@/hooks/use-working-hour-filters';
@@ -73,11 +73,10 @@ interface SortableWorkingHourProps {
   hasFilter: (id: string) => boolean;
   getFilter: (id: string) => WorkingHourFilter | undefined;
   onFilterSave: (id: string, filter: WorkingHourFilter | undefined) => void;
-  expandedFilterId: string | null;
-  setExpandedFilterId: (id: string | null) => void;
-  expandedColorId: string | null;
-  setExpandedColorId: (id: string | null) => void;
+  expandedSettingsId: string | null;
+  setExpandedSettingsId: (id: string | null) => void;
   recentlySavedFilterId: string | null;
+  anyPanelOpen: boolean;
   t: (key: string, values?: Record<string, string | number>) => string;
 }
 
@@ -94,11 +93,10 @@ function SortableWorkingHour({
   hasFilter,
   getFilter,
   onFilterSave,
-  expandedFilterId,
-  setExpandedFilterId,
-  expandedColorId,
-  setExpandedColorId,
+  expandedSettingsId,
+  setExpandedSettingsId,
   recentlySavedFilterId,
+  anyPanelOpen,
   t,
 }: SortableWorkingHourProps) {
   const {
@@ -117,8 +115,8 @@ function SortableWorkingHour({
   };
 
   const hasFilterSet = hasFilter(workingHour.id);
-  const isFilterExpanded = expandedFilterId === workingHour.id;
-  const isColorExpanded = expandedColorId === workingHour.id;
+  const hasCustomSettings = !!workingHour.name || !!workingHour.color || workingHour.useColorForTasks || hasFilterSet;
+  const isSettingsExpanded = expandedSettingsId === workingHour.id;
   const isRecentlySaved = recentlySavedFilterId === workingHour.id;
 
   const displayColor = workingHour.color || '#9ca3af'; // Default gray
@@ -127,21 +125,21 @@ function SortableWorkingHour({
     <div ref={setNodeRef} style={style} className="space-y-2">
       {/* Working hour row */}
       <div className="flex items-center gap-2">
-        {/* Drag handle */}
+        {/* Drag handle - disabled when any panel is open */}
         <button
           {...attributes}
-          {...listeners}
-          className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
+          {...(anyPanelOpen ? {} : listeners)}
+          className={anyPanelOpen ? "text-muted-foreground/50 cursor-not-allowed" : "cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"}
         >
           <GripVertical className="h-4 w-4" />
         </button>
 
-        {/* Time range selectors */}
+        {/* Time range selectors with fixed width */}
         <Select
           value={workingHour.start}
           onValueChange={(value) => onUpdateField(workingHour.id, 'start', value)}
         >
-          <SelectTrigger className="w-[110px]">
+          <SelectTrigger className="w-[100px] min-w-[100px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -157,7 +155,7 @@ function SortableWorkingHour({
           value={workingHour.end}
           onValueChange={(value) => onUpdateField(workingHour.id, 'end', value)}
         >
-          <SelectTrigger className="w-[110px]">
+          <SelectTrigger className="w-[100px] min-w-[100px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -169,49 +167,24 @@ function SortableWorkingHour({
           </SelectContent>
         </Select>
 
-        {/* Color indicator button */}
+        {/* Settings button (combined color + filter) */}
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => setExpandedColorId(isColorExpanded ? null : workingHour.id)}
+          onClick={() => setExpandedSettingsId(isSettingsExpanded ? null : workingHour.id)}
           className="relative"
         >
-          <div
-            className="w-4 h-4 rounded-full border-2"
-            style={{ backgroundColor: displayColor, borderColor: displayColor }}
-          />
-          {isColorExpanded ? (
+          <Wrench className="h-4 w-4 text-muted-foreground" />
+          {hasCustomSettings && (
+            <span
+              className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full"
+              style={{ backgroundColor: displayColor }}
+            />
+          )}
+          {isSettingsExpanded ? (
             <ChevronUp className="absolute -bottom-1 -right-1 h-3 w-3 bg-background rounded-full" />
           ) : (
             <ChevronDown className="absolute -bottom-1 -right-1 h-3 w-3 bg-background rounded-full" />
-          )}
-        </Button>
-
-        {/* Filter button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setExpandedFilterId(isFilterExpanded ? null : workingHour.id)}
-          className="relative"
-        >
-          <div className="relative w-4 h-4">
-            <Filter
-              className={`absolute inset-0 h-4 w-4 text-muted-foreground transition-opacity duration-[400ms] ease-out ${
-                isRecentlySaved ? 'opacity-0' : 'opacity-100'
-              }`}
-            />
-            <Check
-              className={`absolute inset-0 h-4 w-4 text-green-600 transition-opacity duration-[400ms] ease-out ${
-                isRecentlySaved ? 'opacity-100' : 'opacity-0'
-              }`}
-            />
-          </div>
-          {hasFilterSet && (
-            <span
-              className={`absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-primary transition-opacity duration-[400ms] ease-out ${
-                isRecentlySaved ? 'opacity-0' : 'opacity-100'
-              }`}
-            />
           )}
         </Button>
 
@@ -227,9 +200,10 @@ function SortableWorkingHour({
         )}
       </div>
 
-      {/* Expandable color/name settings */}
-      {isColorExpanded && (
+      {/* Expandable combined settings panel */}
+      {isSettingsExpanded && (
         <div className="space-y-3 p-3 bg-muted/50 rounded-lg border ml-6">
+          {/* Name and Color section */}
           <div className="space-y-2">
             <Label className="text-sm">{t('autofit.periodName')}</Label>
             <Input
@@ -296,20 +270,20 @@ function SortableWorkingHour({
               {t('autofit.useColorForTasks')}
             </Label>
           </div>
-        </div>
-      )}
 
-      {/* Inline expandable filter panel */}
-      {isFilterExpanded && (
-        <WorkingHourFilterPanel
-          workingHourId={workingHour.id}
-          timeRange={`${workingHour.start}-${workingHour.end}`}
-          filter={getFilter(workingHour.id)}
-          onSave={(filter) => onFilterSave(workingHour.id, filter)}
-          onClose={() => setExpandedFilterId(null)}
-          timeFormat={timeFormat}
-          t={t}
-        />
+          {/* Filter section */}
+          <div className="pt-3 border-t">
+            <WorkingHourFilterPanel
+              workingHourId={workingHour.id}
+              timeRange={`${workingHour.start}-${workingHour.end}`}
+              filter={getFilter(workingHour.id)}
+              onSave={(filter) => onFilterSave(workingHour.id, filter)}
+              onClose={() => setExpandedSettingsId(null)}
+              timeFormat={timeFormat}
+              t={t}
+            />
+          </div>
+        </div>
       )}
     </div>
   );
@@ -323,8 +297,7 @@ export function AutofitSettingsPanel({
 }: AutofitSettingsPanelProps) {
   const [localSettings, setLocalSettings] = useState<UserSettings>(settings);
   const [saving, setSaving] = useState(false);
-  const [expandedFilterId, setExpandedFilterId] = useState<string | null>(null);
-  const [expandedColorId, setExpandedColorId] = useState<string | null>(null);
+  const [expandedSettingsId, setExpandedSettingsId] = useState<string | null>(null);
   const [recentlySavedFilterId, setRecentlySavedFilterId] = useState<string | null>(null);
   const t = useTranslations(locale);
 
@@ -575,11 +548,10 @@ export function AutofitSettingsPanel({
                   hasFilter={hasFilter}
                   getFilter={getFilter}
                   onFilterSave={handleFilterSave}
-                  expandedFilterId={expandedFilterId}
-                  setExpandedFilterId={setExpandedFilterId}
-                  expandedColorId={expandedColorId}
-                  setExpandedColorId={setExpandedColorId}
+                  expandedSettingsId={expandedSettingsId}
+                  setExpandedSettingsId={setExpandedSettingsId}
                   recentlySavedFilterId={recentlySavedFilterId}
+                  anyPanelOpen={expandedSettingsId !== null}
                   t={t}
                 />
               ))}
