@@ -197,6 +197,41 @@ export function DayCalendar({
     };
   }, [nowIndicatorPosition]);
 
+  // Helper function to mix color with white (50/50 mix for labels)
+  const mixColorWithWhite = (hexColor: string, intensity: number = 0.5): string => {
+    const hex = hexColor.replace('#', '');
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    const mixedR = Math.round(255 * (1 - intensity) + r * intensity);
+    const mixedG = Math.round(255 * (1 - intensity) + g * intensity);
+    const mixedB = Math.round(255 * (1 - intensity) + b * intensity);
+    return `#${mixedR.toString(16).padStart(2, '0')}${mixedG.toString(16).padStart(2, '0')}${mixedB.toString(16).padStart(2, '0')}`;
+  };
+
+  // Group working hours by end time for label stacking
+  const workingHoursByEndTime = useMemo(() => {
+    const groups: Record<string, Array<{ id: string; name: string; color: string; endTime: Date }>> = {};
+
+    settings.workingHours.forEach((wh, index) => {
+      const endTime = wallTimeOnDateToUtc(date, wh.end, normalizeIanaTimeZone(selectedTimeZone));
+      const key = endTime.toISOString();
+
+      if (!groups[key]) {
+        groups[key] = [];
+      }
+
+      groups[key].push({
+        id: wh.id,
+        name: wh.name || `Period ${index + 1}`,
+        color: wh.color || '#9ca3af',
+        endTime: endTime,
+      });
+    });
+
+    return groups;
+  }, [settings.workingHours, date, selectedTimeZone]);
+
   // Inject working hour labels after calendar renders
   useEffect(() => {
     if (!containerRef.current || !calendarRef.current) return;
@@ -275,7 +310,7 @@ export function DayCalendar({
         labels.forEach(label => label.remove());
       }
     };
-  }, [workingHoursByEndTime, date, settings.workingHours]);
+  }, [workingHoursByEndTime, date, settings.workingHours, mixColorWithWhite]);
 
   // Get the color for a placement based on priority: list color > working hour color > default task color
   const getPlacementColor = (listId?: string, workingHourColor?: string) => {
@@ -287,41 +322,6 @@ export function DayCalendar({
     }
     return settings.taskColor;
   };
-
-  // Helper function to mix color with white (50/50 mix for labels)
-  const mixColorWithWhite = (hexColor: string, intensity: number = 0.5): string => {
-    const hex = hexColor.replace('#', '');
-    const r = parseInt(hex.slice(0, 2), 16);
-    const g = parseInt(hex.slice(2, 4), 16);
-    const b = parseInt(hex.slice(4, 6), 16);
-    const mixedR = Math.round(255 * (1 - intensity) + r * intensity);
-    const mixedG = Math.round(255 * (1 - intensity) + g * intensity);
-    const mixedB = Math.round(255 * (1 - intensity) + b * intensity);
-    return `#${mixedR.toString(16).padStart(2, '0')}${mixedG.toString(16).padStart(2, '0')}${mixedB.toString(16).padStart(2, '0')}`;
-  };
-
-  // Group working hours by end time for label stacking
-  const workingHoursByEndTime = useMemo(() => {
-    const groups: Record<string, Array<{ id: string; name: string; color: string; endTime: Date }>> = {};
-
-    settings.workingHours.forEach((wh, index) => {
-      const endTime = wallTimeOnDateToUtc(date, wh.end, normalizeIanaTimeZone(selectedTimeZone));
-      const key = endTime.toISOString();
-
-      if (!groups[key]) {
-        groups[key] = [];
-      }
-
-      groups[key].push({
-        id: wh.id,
-        name: wh.name || `Period ${index + 1}`,
-        color: wh.color || '#9ca3af',
-        endTime: endTime,
-      });
-    });
-
-    return groups;
-  }, [settings.workingHours, date, selectedTimeZone]);
 
   const calendarEvents: EventInput[] = [
     // Working hours as background events (reversed so last one renders on top)
