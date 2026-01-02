@@ -241,6 +241,21 @@ export function DayCalendar({
       const timeGridBody = containerRef.current?.querySelector('.fc-timegrid-body');
       if (!timeGridBody) return;
 
+      // DEBUG: Log all working hour outline elements and their styles
+      const bgEvents = timeGridBody.querySelectorAll('.fc-bg-event.working-hour-outline');
+      console.log('Found working hour outlines:', bgEvents.length);
+      bgEvents.forEach((el) => {
+        const computedStyle = window.getComputedStyle(el);
+        console.log('Working hour outline element:', {
+          element: el,
+          borderColor: computedStyle.borderColor,
+          borderWidth: computedStyle.borderWidth,
+          borderStyle: computedStyle.borderStyle,
+          backgroundColor: computedStyle.backgroundColor,
+          inlineStyle: (el as HTMLElement).style.borderColor,
+        });
+      });
+
       // Remove any existing labels
       const existingLabels = timeGridBody.querySelectorAll('.working-hour-labels');
       existingLabels.forEach(label => label.remove());
@@ -330,6 +345,14 @@ export function DayCalendar({
       const startTime = wallTimeOnDateToUtc(date, wh.start, normalizeIanaTimeZone(selectedTimeZone));
       const endTime = wallTimeOnDateToUtc(date, wh.end, normalizeIanaTimeZone(selectedTimeZone));
       const color = wh.color || '#9ca3af';
+
+      console.log('Creating working hour event:', {
+        id: wh.id,
+        name: wh.name,
+        whColor: wh.color,
+        computedColor: color,
+        borderColor: color,
+      });
 
       return {
         id: `working-hour-${wh.id}`,
