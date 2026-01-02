@@ -246,13 +246,11 @@ export function DayCalendar({
       allBgEvents.forEach((el) => {
         const fcEvent = (el as any).fcSeg?.eventRange?.def;
         if (fcEvent) {
-          const eventId = fcEvent.publicId;
           const extendedProps = fcEvent.extendedProps;
           const color = extendedProps?.workingHourColor;
 
           if (color) {
             (el as HTMLElement).style.borderColor = color;
-            console.log('Applied border color:', { eventId, color });
           }
         }
       });
@@ -284,8 +282,8 @@ export function DayCalendar({
           position: absolute;
           right: 8px;
           display: flex;
-          flex-direction: column;
-          gap: 2px;
+          flex-direction: row;
+          gap: 4px;
           align-items: flex-end;
           pointer-events: none;
           z-index: 5;
@@ -346,14 +344,6 @@ export function DayCalendar({
       const startTime = wallTimeOnDateToUtc(date, wh.start, normalizeIanaTimeZone(selectedTimeZone));
       const endTime = wallTimeOnDateToUtc(date, wh.end, normalizeIanaTimeZone(selectedTimeZone));
       const color = wh.color || '#9ca3af';
-
-      console.log('Creating working hour event:', {
-        id: wh.id,
-        name: wh.name,
-        whColor: wh.color,
-        computedColor: color,
-        borderColor: color,
-      });
 
       return {
         id: `working-hour-${wh.id}`,
@@ -606,7 +596,10 @@ export function DayCalendar({
           eventResize={handleEventResize}
           eventContent={renderEventContent}
           eventReceive={handleEventReceive}
-          eventOverlap={false}
+          eventOverlap={(stillEvent) => {
+            // Allow overlap with background events (working hours), but not with other tasks
+            return stillEvent.display === 'background';
+          }}
           slotEventOverlap={false}
           snapDuration={`00:${TIME_SLOT_INTERVAL}:00`}
           nowIndicator={true}
