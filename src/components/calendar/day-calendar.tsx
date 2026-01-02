@@ -241,19 +241,20 @@ export function DayCalendar({
       const timeGridBody = containerRef.current?.querySelector('.fc-timegrid-body');
       if (!timeGridBody) return;
 
-      // DEBUG: Log all working hour outline elements and their styles
-      const bgEvents = timeGridBody.querySelectorAll('.fc-bg-event.working-hour-outline');
-      console.log('Found working hour outlines:', bgEvents.length);
-      bgEvents.forEach((el) => {
-        const computedStyle = window.getComputedStyle(el);
-        console.log('Working hour outline element:', {
-          element: el,
-          borderColor: computedStyle.borderColor,
-          borderWidth: computedStyle.borderWidth,
-          borderStyle: computedStyle.borderStyle,
-          backgroundColor: computedStyle.backgroundColor,
-          inlineStyle: (el as HTMLElement).style.borderColor,
-        });
+      // Apply border colors to working hour outlines (FullCalendar doesn't do this for background events)
+      const allBgEvents = timeGridBody.querySelectorAll('.fc-bg-event.working-hour-outline');
+      allBgEvents.forEach((el) => {
+        const fcEvent = (el as any).fcSeg?.eventRange?.def;
+        if (fcEvent) {
+          const eventId = fcEvent.publicId;
+          const extendedProps = fcEvent.extendedProps;
+          const color = extendedProps?.workingHourColor;
+
+          if (color) {
+            (el as HTMLElement).style.borderColor = color;
+            console.log('Applied border color:', { eventId, color });
+          }
+        }
       });
 
       // Remove any existing labels
