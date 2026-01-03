@@ -310,7 +310,8 @@ function _removeSlotTime(
   durationMinutes: number,
   gapMinutes: number
 ): void {
-  const blockStart = start;
+  // Block time before the task (gap), during the task (duration), and after the task (gap)
+  const blockStart = new Date(start.getTime() - gapMinutes * 60 * 1000);
   const blockEnd = new Date(start.getTime() + (durationMinutes + gapMinutes) * 60 * 1000);
   _subtractTimeFromSlots(slots, blockStart, blockEnd);
 }
