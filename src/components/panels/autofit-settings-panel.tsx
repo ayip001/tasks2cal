@@ -71,11 +71,10 @@ interface SortableWorkingHourProps {
   onRemove: (id: string) => void;
   canRemove: boolean;
   hasFilter: (id: string) => boolean;
-  getFilter: (id: string) => WorkingHourFilter | undefined;
-  onFilterSave: (id: string, filter: WorkingHourFilter | undefined) => void;
+  filter: WorkingHourFilter | undefined;
+  onFilterChange: (id: string, filter: WorkingHourFilter | undefined) => void;
   expandedSettingsId: string | null;
   setExpandedSettingsId: (id: string | null) => void;
-  recentlySavedFilterId: string | null;
   anyPanelOpen: boolean;
   t: (key: string, values?: Record<string, string | number>) => string;
 }
@@ -91,11 +90,10 @@ function SortableWorkingHour({
   onRemove,
   canRemove,
   hasFilter,
-  getFilter,
-  onFilterSave,
+  filter,
+  onFilterChange,
   expandedSettingsId,
   setExpandedSettingsId,
-  recentlySavedFilterId,
   anyPanelOpen,
   t,
 }: SortableWorkingHourProps) {
@@ -117,7 +115,6 @@ function SortableWorkingHour({
   const hasFilterSet = hasFilter(workingHour.id);
   const hasCustomSettings = !!workingHour.name || !!workingHour.color || workingHour.useColorForTasks || hasFilterSet;
   const isSettingsExpanded = expandedSettingsId === workingHour.id;
-  const isRecentlySaved = recentlySavedFilterId === workingHour.id;
 
   const displayColor = workingHour.color || '#9ca3af'; // Default gray
 
@@ -275,8 +272,8 @@ function SortableWorkingHour({
           <div className="pt-3 border-t">
             <WorkingHourFilterPanel
               workingHourId={workingHour.id}
-              filter={getFilter(workingHour.id)}
-              onSave={(filter) => onFilterSave(workingHour.id, filter)}
+              filter={filter}
+              onChange={(f) => onFilterChange(workingHour.id, f)}
               timeFormat={timeFormat}
               t={t}
             />
@@ -297,17 +294,28 @@ export function AutofitSettingsPanel({
   const [initialSettings, setInitialSettings] = useState<UserSettings>(settings);
   const [saving, setSaving] = useState(false);
   const [expandedSettingsId, setExpandedSettingsId] = useState<string | null>(null);
-  const [recentlySavedFilterId, setRecentlySavedFilterId] = useState<string | null>(null);
   const t = useTranslations(locale);
 
   // Initialize working hour filters hook
   const { filters, getFilter, setFilter, hasFilter } = useWorkingHourFilters(userId);
 
+  // Local filter state (not saved until Save Settings is clicked)
+  const [localFilters, setLocalFilters] = useState<Record<string, WorkingHourFilter | undefined>>({});
+  const [initialFilters, setInitialFilters] = useState<Record<string, WorkingHourFilter | undefined>>({});
+
   // Update local and initial settings when settings prop changes
   useEffect(() => {
     setLocalSettings(settings);
     setInitialSettings(settings);
-  }, [settings]);
+
+    // Initialize filters from the hook
+    const currentFilters: Record<string, WorkingHourFilter | undefined> = {};
+    settings.workingHours.forEach(wh => {
+      currentFilters[wh.id] = getFilter(wh.id);
+    });
+    setLocalFilters(currentFilters);
+    setInitialFilters(currentFilters);
+  }, [settings, getFilter]);
 
   // Check if settings have changed
   const hasChanges = useMemo(() => {
@@ -331,22 +339,52 @@ export function AutofitSettingsPanel({
       if (local.useColorForTasks !== initial.useColorForTasks) return true;
     }
 
-    return false;
-  }, [localSettings, initialSettings]);
+    // Compare filters
+    const localFilterKeys = Object.keys(localFilters);
+    const initialFilterKeys = Object.keys(initialFilters);
 
-  // Handle filter save with visual feedback
-  const handleFilterSave = (workingHourId: string, filter: WorkingHourFilter | undefined) => {
-    setFilter(workingHourId, filter);
-    setRecentlySavedFilterId(workingHourId);
-    setTimeout(() => {
-      setRecentlySavedFilterId(null);
-    }, 1000);
+    // Check if filter keys have changed
+    if (localFilterKeys.length !== initialFilterKeys.length) return true;
+
+    // Deep compare each filter
+    for (const key of localFilterKeys) {
+      const localFilter = localFilters[key];
+      const initialFilter = initialFilters[key];
+
+      // If one is undefined and the other isn't
+      if ((localFilter === undefined) !== (initialFilter === undefined)) return true;
+
+      // If both are defined, compare their properties
+      if (localFilter && initialFilter) {
+        if (localFilter.searchText !== initialFilter.searchText) return true;
+        if (localFilter.starredOnly !== initialFilter.starredOnly) return true;
+        if (localFilter.hideContainerTasks !== initialFilter.hideContainerTasks) return true;
+        if (localFilter.hasDueDate !== initialFilter.hasDueDate) return true;
+      }
+    }
+
+    return false;
+  }, [localSettings, initialSettings, localFilters, initialFilters]);
+
+  // Handle filter change (update local state only, don't save yet)
+  const handleFilterChange = (workingHourId: string, filter: WorkingHourFilter | undefined) => {
+    setLocalFilters({ ...localFilters, [workingHourId]: filter });
   };
 
   const handleSave = async () => {
     setSaving(true);
     try {
+      // Save settings
       await onSave(localSettings);
+
+      // Save all filters
+      Object.entries(localFilters).forEach(([workingHourId, filter]) => {
+        setFilter(workingHourId, filter);
+      });
+
+      // Update initial state to match current state
+      setInitialSettings(localSettings);
+      setInitialFilters(localFilters);
     } finally {
       setSaving(false);
     }
@@ -386,11 +424,17 @@ export function AutofitSettingsPanel({
       ...localSettings,
       workingHours: [...localSettings.workingHours, newWorkingHour],
     });
+    // Initialize filter for new working hour
+    setLocalFilters({ ...localFilters, [newWorkingHour.id]: undefined });
   };
 
   const removeWorkingHoursRange = (id: string) => {
     const newWorkingHours = localSettings.workingHours.filter((wh) => wh.id !== id);
     setLocalSettings({ ...localSettings, workingHours: newWorkingHours });
+    // Remove filter for deleted working hour
+    const newLocalFilters = { ...localFilters };
+    delete newLocalFilters[id];
+    setLocalFilters(newLocalFilters);
   };
 
   const colorOptions = [
@@ -576,11 +620,10 @@ export function AutofitSettingsPanel({
                   onRemove={removeWorkingHoursRange}
                   canRemove={localSettings.workingHours.length > 1}
                   hasFilter={hasFilter}
-                  getFilter={getFilter}
-                  onFilterSave={handleFilterSave}
+                  filter={localFilters[workingHour.id]}
+                  onFilterChange={handleFilterChange}
                   expandedSettingsId={expandedSettingsId}
                   setExpandedSettingsId={setExpandedSettingsId}
-                  recentlySavedFilterId={recentlySavedFilterId}
                   anyPanelOpen={expandedSettingsId !== null}
                   t={t}
                 />

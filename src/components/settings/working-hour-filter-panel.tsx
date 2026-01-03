@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { WorkingHourFilter } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -19,7 +18,7 @@ import type { Locale } from '@/i18n/config';
 interface WorkingHourFilterPanelProps {
   workingHourId: string;
   filter: WorkingHourFilter | undefined;
-  onSave: (filter: WorkingHourFilter | undefined) => void;
+  onChange: (filter: WorkingHourFilter | undefined) => void;
   timeFormat: '12h' | '24h';
   t: (key: string, values?: Record<string, string | number>) => string;
 }
@@ -27,24 +26,16 @@ interface WorkingHourFilterPanelProps {
 export function WorkingHourFilterPanel({
   workingHourId,
   filter,
-  onSave,
+  onChange,
   timeFormat,
   t,
 }: WorkingHourFilterPanelProps) {
-  // Initialize with hideContainerTasks: true by default if no filter exists
-  const [localFilter, setLocalFilter] = useState<WorkingHourFilter>(
-    filter || { hideContainerTasks: true }
-  );
+  // Use filter directly from props (controlled component)
+  const localFilter = filter || { hideContainerTasks: true };
 
-  // Update local filter when prop changes
-  useEffect(() => {
-    setLocalFilter(filter || { hideContainerTasks: true });
-  }, [filter]);
-
-  // Helper to update filter and save immediately
+  // Helper to update filter (notify parent, don't save)
   const updateFilter = (updates: Partial<WorkingHourFilter>) => {
     const newFilter = { ...localFilter, ...updates };
-    setLocalFilter(newFilter);
 
     // Check if any filter values are set
     const hasAnyFilterValue =
@@ -53,13 +44,12 @@ export function WorkingHourFilterPanel({
       !!newFilter.hideContainerTasks ||
       newFilter.hasDueDate !== undefined;
 
-    // Save immediately (only save if there are actual filter values)
-    onSave(hasAnyFilterValue ? newFilter : undefined);
+    // Notify parent of change (will be saved when Save Settings is clicked)
+    onChange(hasAnyFilterValue ? newFilter : undefined);
   };
 
   const handleClearFilter = () => {
-    setLocalFilter({});
-    onSave(undefined);
+    onChange(undefined);
   };
 
   // Check if any filter values are set
