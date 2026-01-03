@@ -75,6 +75,7 @@ export function SettingsPanel({
   userId
 }: SettingsPanelProps) {
   const [localSettings, setLocalSettings] = useState<UserSettings>(settings);
+  const [initialSettings, setInitialSettings] = useState<UserSettings>(settings);
   const [saving, setSaving] = useState(false);
   const [open, setOpen] = useState(false);
   const [refreshingCalendars, setRefreshingCalendars] = useState(false);
@@ -89,6 +90,38 @@ export function SettingsPanel({
 
   // Initialize working hour filters hook
   const { filters, getFilter, setFilter, hasFilter } = useWorkingHourFilters(userId);
+
+  // Update local and initial settings when settings prop changes
+  useEffect(() => {
+    setLocalSettings(settings);
+    setInitialSettings(settings);
+  }, [settings]);
+
+  // Check if settings have changed
+  const hasChanges = useMemo(() => {
+    // Compare basic fields
+    if (localSettings.defaultTaskDuration !== initialSettings.defaultTaskDuration) return true;
+    if (localSettings.minTimeBetweenTasks !== initialSettings.minTimeBetweenTasks) return true;
+    if (localSettings.timeFormat !== initialSettings.timeFormat) return true;
+    if (localSettings.taskColor !== initialSettings.taskColor) return true;
+    if (localSettings.selectedCalendarId !== initialSettings.selectedCalendarId) return true;
+    if (localSettings.timezone !== initialSettings.timezone) return true;
+    if (localSettings.ignoreContainerTasks !== initialSettings.ignoreContainerTasks) return true;
+
+    // Compare listColors object
+    const localListColors = localSettings.listColors || {};
+    const initialListColors = initialSettings.listColors || {};
+    const localKeys = Object.keys(localListColors);
+    const initialKeys = Object.keys(initialListColors);
+
+    if (localKeys.length !== initialKeys.length) return true;
+
+    for (const key of localKeys) {
+      if (localListColors[key] !== initialListColors[key]) return true;
+    }
+
+    return false;
+  }, [localSettings, initialSettings]);
 
   // Handle filter save with visual feedback
   const handleFilterSave = (workingHourId: string, filter: WorkingHourFilter | undefined) => {
@@ -608,176 +641,6 @@ export function SettingsPanel({
             </p>
           </div>
 
-          <div className="space-y-2">
-            <Label>{t('settings.calendarDayRange')}</Label>
-            <div className="flex items-center gap-2">
-              <Select
-                value={localSettings.slotMinTime || '06:00'}
-                onValueChange={(value) =>
-                  setLocalSettings({ ...localSettings, slotMinTime: value })
-                }
-              >
-                <SelectTrigger className="w-[120px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {hourOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <span>{t('common.to')}</span>
-              <Select
-                value={localSettings.slotMaxTime || '22:00'}
-                onValueChange={(value) =>
-                  setLocalSettings({ ...localSettings, slotMaxTime: value })
-                }
-              >
-                <SelectTrigger className="w-[120px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {hourOptionsAfterMin.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {t('settings.calendarDayRangeDesc')}
-            </p>
-            {workingHoursWarnings.length > 0 && (
-              <div className="flex items-start gap-2 text-xs text-amber-600 mt-2">
-                <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-medium">{t('settings.workingHoursWarning')}</p>
-                  <ul className="list-disc list-inside">
-                    {workingHoursWarnings.map((warning, i) => (
-                      <li key={i}>{warning}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label>{t('settings.workingHours')}</Label>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {t('settings.workingHoursDesc')}
-                </p>
-              </div>
-              <Button variant="ghost" size="sm" onClick={addWorkingHoursRange}>
-                <Plus className="h-4 w-4 mr-1" />
-                {t('settings.addRange')}
-              </Button>
-            </div>
-            {localSettings.workingHours.map((hours, index) => {
-              const hasFilterSet = hasFilter(hours.id);
-              const isExpanded = expandedFilterId === hours.id;
-              const isRecentlySaved = recentlySavedFilterId === hours.id;
-
-              return (
-                <div key={hours.id} className="space-y-2">
-                  {/* Working hour row */}
-                  <div className="flex items-center gap-2">
-                    <Select
-                      value={hours.start}
-                      onValueChange={(value) => updateWorkingHours(index, 'start', value)}
-                    >
-                      <SelectTrigger className="w-[110px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {timeOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <span>{t('common.to')}</span>
-                    <Select
-                      value={hours.end}
-                      onValueChange={(value) => updateWorkingHours(index, 'end', value)}
-                    >
-                      <SelectTrigger className="w-[110px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {getEndTimeOptions(hours.start).map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-
-                    {/* Filter button with visual feedback */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setExpandedFilterId(isExpanded ? null : hours.id)}
-                      className="relative"
-                    >
-                      {/* Both icons are rendered, opacity transitions between them */}
-                      <div className="relative w-4 h-4">
-                        <Filter
-                          className={`absolute inset-0 h-4 w-4 text-muted-foreground transition-opacity duration-[400ms] ease-out ${
-                            isRecentlySaved ? 'opacity-0' : 'opacity-100'
-                          }`}
-                        />
-                        <Check
-                          className={`absolute inset-0 h-4 w-4 text-green-600 transition-opacity duration-[400ms] ease-out ${
-                            isRecentlySaved ? 'opacity-100' : 'opacity-0'
-                          }`}
-                        />
-                      </div>
-                      {/* Blue dot indicator when filter is set (hide when showing checkmark) */}
-                      {hasFilterSet && (
-                        <span
-                          className={`absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-primary transition-opacity duration-[400ms] ease-out ${
-                            isRecentlySaved ? 'opacity-0' : 'opacity-100'
-                          }`}
-                        />
-                      )}
-                    </Button>
-
-                    {/* Remove button */}
-                    {localSettings.workingHours.length > 1 && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeWorkingHoursRange(index)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-
-                  {/* Inline expandable filter panel */}
-                  {isExpanded && (
-                    <WorkingHourFilterPanel
-                      workingHourId={hours.id}
-                      timeRange={`${hours.start}-${hours.end}`}
-                      filter={getFilter(hours.id)}
-                      onSave={(filter) => handleFilterSave(hours.id, filter)}
-                      onClose={() => setExpandedFilterId(null)}
-                      timeFormat={localSettings.timeFormat}
-                      t={t}
-                    />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
           {onRefreshData && (
             <div className="space-y-2 pt-4 border-t">
               <Label>{t('settings.refreshData')}</Label>
@@ -801,7 +664,7 @@ export function SettingsPanel({
             </div>
           )}
 
-          <Button onClick={handleSave} disabled={saving} className="w-full">
+          <Button onClick={handleSave} disabled={saving || !hasChanges} className="w-full">
             {saving ? t('settings.saving') : t('settings.saveSettings')}
           </Button>
         </div>

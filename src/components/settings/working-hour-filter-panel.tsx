@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { WorkingHourFilter } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -18,32 +17,40 @@ import type { Locale } from '@/i18n/config';
 
 interface WorkingHourFilterPanelProps {
   workingHourId: string;
-  timeRange: string; // For display only (e.g., "11:00-12:15")
   filter: WorkingHourFilter | undefined;
-  onSave: (filter: WorkingHourFilter | undefined) => void;
-  onClose: () => void;
+  onChange: (filter: WorkingHourFilter | undefined) => void;
   timeFormat: '12h' | '24h';
   t: (key: string, values?: Record<string, string | number>) => string;
 }
 
 export function WorkingHourFilterPanel({
   workingHourId,
-  timeRange,
   filter,
-  onSave,
-  onClose,
+  onChange,
   timeFormat,
   t,
 }: WorkingHourFilterPanelProps) {
-  // Initialize with hideContainerTasks: true by default if no filter exists
-  const [localFilter, setLocalFilter] = useState<WorkingHourFilter>(
-    filter || { hideContainerTasks: true }
-  );
+  // Use filter directly from props (controlled component)
+  const localFilter = filter || { hideContainerTasks: true };
 
-  // Update local filter when prop changes
-  useEffect(() => {
-    setLocalFilter(filter || { hideContainerTasks: true });
-  }, [filter]);
+  // Helper to update filter (notify parent, don't save)
+  const updateFilter = (updates: Partial<WorkingHourFilter>) => {
+    const newFilter = { ...localFilter, ...updates };
+
+    // Check if any filter values are set
+    const hasAnyFilterValue =
+      !!newFilter.searchText ||
+      !!newFilter.starredOnly ||
+      !!newFilter.hideContainerTasks ||
+      newFilter.hasDueDate !== undefined;
+
+    // Notify parent of change (will be saved when Save Settings is clicked)
+    onChange(hasAnyFilterValue ? newFilter : undefined);
+  };
+
+  const handleClearFilter = () => {
+    onChange(undefined);
+  };
 
   // Check if any filter values are set
   const hasAnyFilterValue =
@@ -52,61 +59,24 @@ export function WorkingHourFilterPanel({
     !!localFilter.hideContainerTasks ||
     localFilter.hasDueDate !== undefined;
 
-  const handleClearFilter = () => {
-    setLocalFilter({});
-    onSave(undefined);
-    onClose();
-  };
-
-  const handleSave = () => {
-    // Only save if there are actual filter values
-    if (hasAnyFilterValue) {
-      onSave(localFilter);
-    } else {
-      onSave(undefined);
-    }
-    onClose();
-  };
-
-  // Format time range for display
-  const formatTimeRange = (range: string): string => {
-    const [start, end] = range.split('-');
-    if (timeFormat === '24h') {
-      return `${start} - ${end}`;
-    }
-    // Convert to 12h format
-    const formatTime = (time: string): string => {
-      const [hours, minutes] = time.split(':').map(Number);
-      const period = hours >= 12 ? 'PM' : 'AM';
-      const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
-      return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
-    };
-    return `${formatTime(start)} - ${formatTime(end)}`;
-  };
-
   return (
-    <div className="space-y-3 p-3 bg-muted/50 rounded-lg border ml-2">
+    <div className="space-y-3">
       {/* Header */}
       <div className="flex items-center justify-between">
         <Label className="text-sm font-medium">
-          {t('settings.filterFor', { time: formatTimeRange(timeRange) })}
+          {t('settings.customFilters')}
         </Label>
-        <div className="flex items-center gap-1">
-          {hasAnyFilterValue && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleClearFilter}
-              className="h-7 text-xs"
-            >
-              <RotateCcw className="h-3 w-3 mr-1" />
-              {t('settings.clearFilter')}
-            </Button>
-          )}
-          <Button variant="ghost" size="icon" onClick={onClose} className="h-7 w-7">
-            <X className="h-4 w-4" />
+        {hasAnyFilterValue && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleClearFilter}
+            className="h-7 text-xs"
+          >
+            <RotateCcw className="h-3 w-3 mr-1" />
+            {t('settings.clearFilter')}
           </Button>
-        </div>
+        )}
       </div>
 
       {/* Description */}
@@ -118,9 +88,7 @@ export function WorkingHourFilterPanel({
         <Input
           placeholder={t('tasks.searchPlaceholder')}
           value={localFilter.searchText || ''}
-          onChange={(e) =>
-            setLocalFilter({ ...localFilter, searchText: e.target.value || undefined })
-          }
+          onChange={(e) => updateFilter({ searchText: e.target.value || undefined })}
           className="h-8 text-sm"
         />
       </div>
@@ -137,8 +105,7 @@ export function WorkingHourFilterPanel({
               : 'none'
           }
           onValueChange={(value) => {
-            setLocalFilter({
-              ...localFilter,
+            updateFilter({
               hasDueDate: value === 'all' ? undefined : value === 'has',
             });
           }}
@@ -161,10 +128,7 @@ export function WorkingHourFilterPanel({
             id={`starred-${workingHourId}`}
             checked={localFilter.starredOnly || false}
             onCheckedChange={(checked) => {
-              setLocalFilter({
-                ...localFilter,
-                starredOnly: checked ? true : undefined,
-              });
+              updateFilter({ starredOnly: checked ? true : undefined });
             }}
           />
           <Label htmlFor={`starred-${workingHourId}`} className="text-sm cursor-pointer">
@@ -177,23 +141,13 @@ export function WorkingHourFilterPanel({
             id={`hideContainer-${workingHourId}`}
             checked={localFilter.hideContainerTasks || false}
             onCheckedChange={(checked) => {
-              setLocalFilter({
-                ...localFilter,
-                hideContainerTasks: checked ? true : undefined,
-              });
+              updateFilter({ hideContainerTasks: checked ? true : undefined });
             }}
           />
           <Label htmlFor={`hideContainer-${workingHourId}`} className="text-sm cursor-pointer">
             {t('tasks.hideContainers')}
           </Label>
         </div>
-      </div>
-
-      {/* Save button */}
-      <div className="flex justify-end pt-2">
-        <Button onClick={handleSave} size="sm" className="h-8">
-          {t('common.save')}
-        </Button>
       </div>
     </div>
   );

@@ -2,6 +2,9 @@ export interface WorkingHours {
   id: string;      // Unique identifier for the working hour period
   start: string;
   end: string;
+  name?: string;              // Display name for the period
+  color?: string;             // Color for outline and optionally tasks
+  useColorForTasks?: boolean; // Apply this color to tasks placed here
 }
 
 export interface UserSettings {
@@ -28,6 +31,7 @@ export interface TaskPlacement {
   listTitle?: string;
   startTime: string;
   duration: number;
+  workingHourColor?: string; // Color applied from working hour period
 }
 
 export interface GoogleTask {
