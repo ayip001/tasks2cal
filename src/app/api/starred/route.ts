@@ -1,14 +1,13 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { getStarredTasks, setStarredTasks } from '@/lib/kv';
-import { StarredTasksData } from '@/types';
-import { MAX_STARRED_TASKS } from '@/lib/constants';
 import {
   checkRateLimit,
   getClientIdentifier,
   createRateLimitHeaders,
   getRetryAfterSeconds,
 } from '@/lib/rate-limit';
+import { validate, StarredTasksDataSchema } from '@/lib/validation';
 
 // GET - Fetch starred data with timestamp
 export async function GET(request: Request) {
@@ -78,12 +77,13 @@ export async function PUT(request: Request) {
   }
 
   try {
-    const body = await request.json() as StarredTasksData;
+    const body = await request.json();
 
-    // Validate the data structure
-    if (!Array.isArray(body.taskIds) || typeof body.lastModified !== 'number') {
+    // Validate input with Zod schema (includes size limits)
+    const validationResult = validate(StarredTasksDataSchema, body);
+    if (!validationResult.success) {
       return NextResponse.json(
-        { error: 'Invalid data format' },
+        { error: validationResult.error },
         {
           status: 400,
           headers: createRateLimitHeaders(rateLimitResult),
@@ -91,18 +91,7 @@ export async function PUT(request: Request) {
       );
     }
 
-    // Enforce maximum starred tasks limit
-    if (body.taskIds.length > MAX_STARRED_TASKS) {
-      return NextResponse.json(
-        { error: `Maximum of ${MAX_STARRED_TASKS} starred tasks allowed` },
-        {
-          status: 400,
-          headers: createRateLimitHeaders(rateLimitResult),
-        }
-      );
-    }
-
-    await setStarredTasks(session.user.email, body);
+    await setStarredTasks(session.user.email, validationResult.data);
     return NextResponse.json({ success: true }, {
       headers: createRateLimitHeaders(rateLimitResult),
     });

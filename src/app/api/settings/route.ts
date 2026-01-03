@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { getUserSettings, setUserSettings } from '@/lib/kv';
-import { UserSettings } from '@/types';
 import {
   checkRateLimit,
   getClientIdentifier,
   createRateLimitHeaders,
   getRetryAfterSeconds,
 } from '@/lib/rate-limit';
+import { validate, UserSettingsUpdateSchema } from '@/lib/validation';
 
 export async function GET(request: Request) {
   const session = await auth();
@@ -76,9 +76,20 @@ export async function PUT(request: Request) {
 
   try {
     const body = await request.json();
-    const updates = body as Partial<UserSettings>;
 
-    const settings = await setUserSettings(session.user.email, updates);
+    // Validate input with Zod schema
+    const validationResult = validate(UserSettingsUpdateSchema, body);
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { error: validationResult.error },
+        {
+          status: 400,
+          headers: createRateLimitHeaders(rateLimitResult),
+        }
+      );
+    }
+
+    const settings = await setUserSettings(session.user.email, validationResult.data);
     return NextResponse.json(settings, {
       headers: createRateLimitHeaders(rateLimitResult),
     });

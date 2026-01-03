@@ -61,6 +61,12 @@ export const STARRED_SYNC_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes
 export const STARRED_STORAGE_KEY = (userId: string) => `starred:${userId}`;
 export const MAX_STARRED_TASKS = 500;
 
+// Payload size limits for Redis-stored data
+export const MAX_WORKING_HOUR_FILTERS = 50;
+export const MAX_SEARCH_TEXT_LENGTH = 200;
+export const MAX_WORKING_HOURS = 20;
+export const MAX_LIST_COLORS = 100;
+
 // Working hour filters configuration
 export const WORKING_HOUR_FILTERS_SYNC_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes
 export const WORKING_HOUR_FILTERS_STORAGE_KEY = (userId: string) => `workingHourFilters:${userId}`;

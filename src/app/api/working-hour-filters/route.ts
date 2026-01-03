@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { getWorkingHourFilters, setWorkingHourFilters } from '@/lib/kv';
-import { WorkingHourFiltersData } from '@/types';
 import {
   checkRateLimit,
   getClientIdentifier,
   createRateLimitHeaders,
   getRetryAfterSeconds,
 } from '@/lib/rate-limit';
+import { validate, WorkingHourFiltersDataSchema } from '@/lib/validation';
 
 // GET - Fetch working hour filters with timestamp
 export async function GET(request: Request) {
@@ -77,12 +77,13 @@ export async function PUT(request: Request) {
   }
 
   try {
-    const body = await request.json() as WorkingHourFiltersData;
+    const body = await request.json();
 
-    // Validate the data structure
-    if (typeof body.filters !== 'object' || typeof body.lastModified !== 'number') {
+    // Validate input with Zod schema (includes size limits)
+    const validationResult = validate(WorkingHourFiltersDataSchema, body);
+    if (!validationResult.success) {
       return NextResponse.json(
-        { error: 'Invalid data format' },
+        { error: validationResult.error },
         {
           status: 400,
           headers: createRateLimitHeaders(rateLimitResult),
@@ -90,7 +91,7 @@ export async function PUT(request: Request) {
       );
     }
 
-    await setWorkingHourFilters(session.user.email, body);
+    await setWorkingHourFilters(session.user.email, validationResult.data);
     return NextResponse.json({ success: true }, {
       headers: createRateLimitHeaders(rateLimitResult),
     });
