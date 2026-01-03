@@ -75,6 +75,7 @@ export function SettingsPanel({
   userId
 }: SettingsPanelProps) {
   const [localSettings, setLocalSettings] = useState<UserSettings>(settings);
+  const [initialSettings, setInitialSettings] = useState<UserSettings>(settings);
   const [saving, setSaving] = useState(false);
   const [open, setOpen] = useState(false);
   const [refreshingCalendars, setRefreshingCalendars] = useState(false);
@@ -89,6 +90,38 @@ export function SettingsPanel({
 
   // Initialize working hour filters hook
   const { filters, getFilter, setFilter, hasFilter } = useWorkingHourFilters(userId);
+
+  // Update local and initial settings when settings prop changes
+  useEffect(() => {
+    setLocalSettings(settings);
+    setInitialSettings(settings);
+  }, [settings]);
+
+  // Check if settings have changed
+  const hasChanges = useMemo(() => {
+    // Compare basic fields
+    if (localSettings.defaultTaskDuration !== initialSettings.defaultTaskDuration) return true;
+    if (localSettings.minTimeBetweenTasks !== initialSettings.minTimeBetweenTasks) return true;
+    if (localSettings.timeFormat !== initialSettings.timeFormat) return true;
+    if (localSettings.taskColor !== initialSettings.taskColor) return true;
+    if (localSettings.selectedCalendarId !== initialSettings.selectedCalendarId) return true;
+    if (localSettings.timezone !== initialSettings.timezone) return true;
+    if (localSettings.ignoreContainerTasks !== initialSettings.ignoreContainerTasks) return true;
+
+    // Compare listColors object
+    const localListColors = localSettings.listColors || {};
+    const initialListColors = initialSettings.listColors || {};
+    const localKeys = Object.keys(localListColors);
+    const initialKeys = Object.keys(initialListColors);
+
+    if (localKeys.length !== initialKeys.length) return true;
+
+    for (const key of localKeys) {
+      if (localListColors[key] !== initialListColors[key]) return true;
+    }
+
+    return false;
+  }, [localSettings, initialSettings]);
 
   // Handle filter save with visual feedback
   const handleFilterSave = (workingHourId: string, filter: WorkingHourFilter | undefined) => {
@@ -631,7 +664,7 @@ export function SettingsPanel({
             </div>
           )}
 
-          <Button onClick={handleSave} disabled={saving} className="w-full">
+          <Button onClick={handleSave} disabled={saving || !hasChanges} className="w-full">
             {saving ? t('settings.saving') : t('settings.saveSettings')}
           </Button>
         </div>

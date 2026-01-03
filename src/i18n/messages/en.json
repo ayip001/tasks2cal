@@ -118,6 +118,7 @@
     "hoursAgo": "{count} hours ago",
     "daysAgo": "{count} days ago",
     "filterFor": "Filter for {time}",
+    "customFilters": "Custom Filters",
     "clearFilter": "Clear Filter",
     "workingHourFilterDesc": "Only tasks matching this filter will be placed during this time period by Auto-fit."
   },

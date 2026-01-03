@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { UserSettings, GoogleTaskList, WorkingHourFilter, WorkingHours } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -275,10 +275,8 @@ function SortableWorkingHour({
           <div className="pt-3 border-t">
             <WorkingHourFilterPanel
               workingHourId={workingHour.id}
-              timeRange={`${workingHour.start}-${workingHour.end}`}
               filter={getFilter(workingHour.id)}
               onSave={(filter) => onFilterSave(workingHour.id, filter)}
-              onClose={() => setExpandedSettingsId(null)}
               timeFormat={timeFormat}
               t={t}
             />
@@ -296,6 +294,7 @@ export function AutofitSettingsPanel({
   userId
 }: AutofitSettingsPanelProps) {
   const [localSettings, setLocalSettings] = useState<UserSettings>(settings);
+  const [initialSettings, setInitialSettings] = useState<UserSettings>(settings);
   const [saving, setSaving] = useState(false);
   const [expandedSettingsId, setExpandedSettingsId] = useState<string | null>(null);
   const [recentlySavedFilterId, setRecentlySavedFilterId] = useState<string | null>(null);
@@ -303,6 +302,37 @@ export function AutofitSettingsPanel({
 
   // Initialize working hour filters hook
   const { filters, getFilter, setFilter, hasFilter } = useWorkingHourFilters(userId);
+
+  // Update local and initial settings when settings prop changes
+  useEffect(() => {
+    setLocalSettings(settings);
+    setInitialSettings(settings);
+  }, [settings]);
+
+  // Check if settings have changed
+  const hasChanges = useMemo(() => {
+    // Compare slotMinTime and slotMaxTime
+    if (localSettings.slotMinTime !== initialSettings.slotMinTime) return true;
+    if (localSettings.slotMaxTime !== initialSettings.slotMaxTime) return true;
+
+    // Compare workingHours array
+    if (localSettings.workingHours.length !== initialSettings.workingHours.length) return true;
+
+    // Deep compare each working hour
+    for (let i = 0; i < localSettings.workingHours.length; i++) {
+      const local = localSettings.workingHours[i];
+      const initial = initialSettings.workingHours[i];
+
+      if (local.id !== initial.id) return true;
+      if (local.start !== initial.start) return true;
+      if (local.end !== initial.end) return true;
+      if (local.name !== initial.name) return true;
+      if (local.color !== initial.color) return true;
+      if (local.useColorForTasks !== initial.useColorForTasks) return true;
+    }
+
+    return false;
+  }, [localSettings, initialSettings]);
 
   // Handle filter save with visual feedback
   const handleFilterSave = (workingHourId: string, filter: WorkingHourFilter | undefined) => {
@@ -562,7 +592,7 @@ export function AutofitSettingsPanel({
 
       {/* Save Button - Sticky at bottom */}
       <div className="p-4 border-t bg-background">
-        <Button onClick={handleSave} disabled={saving} className="w-full">
+        <Button onClick={handleSave} disabled={saving || !hasChanges} className="w-full">
           {saving ? t('settings.saving') : t('settings.saveSettings')}
         </Button>
       </div>

@@ -118,6 +118,7 @@
     "hoursAgo": "{count} 小時前",
     "daysAgo": "{count} 天前",
     "filterFor": "篩選 {time}",
+    "customFilters": "自訂篩選",
     "clearFilter": "清除篩選",
     "workingHourFilterDesc": "在此時段內只會透過自動排程放置符合此篩選條件的任務。"
   },
