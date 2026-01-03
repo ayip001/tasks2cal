@@ -304,7 +304,7 @@ export function DayCalendar({
         `;
 
         // Position at the bottom of the event
-        const rect = matchingEvent.getBoundingClientRect();
+        const rect = (matchingEvent as Element).getBoundingClientRect();
         const parentRect = timeGridBody.getBoundingClientRect();
         const bottom = rect.bottom - parentRect.top;
         labelsContainer.style.top = `${bottom + 2}px`;
