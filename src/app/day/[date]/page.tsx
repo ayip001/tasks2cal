@@ -9,6 +9,7 @@ import { DateTime } from 'luxon';
 import { DayCalendar } from '@/components/calendar/day-calendar';
 import { TaskPanel } from '@/components/tasks/task-panel';
 import { RightPanel } from '@/components/panels/right-panel';
+import { AutofitSettingsPanel } from '@/components/panels/autofit-settings-panel';
 import { SettingsPanel } from '@/components/settings/settings-panel';
 import { ConfirmDialog } from '@/components/calendar/confirm-dialog';
 import { Button } from '@/components/ui/button';
@@ -224,7 +225,7 @@ export default function DayPage() {
     }
 
     if (filtersLoading) {
-      toast.info('Loading filters...');
+      toast.info(t('day.loadingFilters'));
       return;
     }
 
@@ -241,7 +242,19 @@ export default function DayPage() {
       );
       const allPlacements = [...placements, ...result.placements];
       setPlacements(allPlacements);
-      toast.success(result.message);
+
+      // Generate translated message based on result
+      const placedCount = result.placements.length;
+      const unplacedCount = result.unplacedTasks.length;
+      let message: string;
+      if (unplacedCount === 0) {
+        message = t('day.autoFitAllPlaced', { count: placedCount });
+      } else if (placedCount === 0) {
+        message = t('day.autoFitNonePlaced');
+      } else {
+        message = t('day.autoFitPartialPlaced', { placed: placedCount, unplaced: unplacedCount });
+      }
+      toast.success(message);
     } catch {
       toast.error(t('day.failedAutoFit'));
     } finally {
@@ -252,7 +265,7 @@ export default function DayPage() {
   // Handle adding a single task via + button (mobile)
   const handleAddTask = (task: GoogleTask) => {
     if (filtersLoading) {
-      toast.info('Loading filters...');
+      toast.info(t('day.loadingFilters'));
       return;
     }
 
@@ -606,22 +619,10 @@ export default function DayPage() {
           </div>
         ) : (
           <div className="flex-1 overflow-hidden">
-            <RightPanel
-              activeTab="autofit"
-              onTabChange={() => {}}
-              taskLists={taskLists}
-              placements={placements}
-              loading={tasksLoading}
-              filter={filter}
-              onFilterChange={setFilter}
-              filteredTasks={filteredTasks}
-              onToggleStar={toggleStar}
-              isMobile={true}
-              locale={locale}
-              taskColor={settings.taskColor}
-              listColors={settings.listColors}
+            <AutofitSettingsPanel
               settings={settings}
-              onSaveSettings={updateSettings}
+              onSave={updateSettings}
+              locale={locale}
               userId={session?.user?.email ?? undefined}
             />
           </div>
