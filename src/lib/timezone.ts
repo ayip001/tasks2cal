@@ -10,7 +10,7 @@ export function normalizeIanaTimeZone(zone: string | undefined | null): string {
   return IANAZone.isValidZone(zone) ? zone : UTC_ZONE;
 }
 
-export function parseTimeLabelToHHMM(label: string, timeFormat: TimeFormatPreference): string | null {
+export function parseTimeLabelToHHMM(label: string, _timeFormat: TimeFormatPreference): string | null {
   const raw = label.trim();
   if (!raw) return null;
 

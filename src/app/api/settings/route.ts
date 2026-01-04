@@ -4,7 +4,7 @@ import { validate, UserSettingsUpdateSchema } from '@/lib/validation';
 import { withAuth } from '@/lib/api-utils';
 import { createRateLimitHeaders } from '@/lib/rate-limit';
 
-export const GET = withAuth(async (request, { session, rateLimitResult }) => {
+export const GET = withAuth(async (_request, { session }) => {
   try {
     const settings = await getUserSettings(session.user!.email!);
     return NextResponse.json(settings);

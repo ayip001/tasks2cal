@@ -66,7 +66,7 @@ interface SortableWorkingHourProps {
 
 function SortableWorkingHour({
   workingHour,
-  index,
+  index: _index,
   timeFormat,
   timeOptions,
   getEndTimeOptions,
@@ -282,7 +282,7 @@ export function AutofitSettingsPanel({
   const t = useTranslations(locale);
 
   // Initialize working hour filters hook
-  const { filters, getFilter, setFilter, hasFilter } = useWorkingHourFilters(userId);
+  const { filters: _filters, getFilter, setFilter, hasFilter } = useWorkingHourFilters(userId);
 
   // Local filter state (not saved until Save Settings is clicked)
   const [localFilters, setLocalFilters] = useState<Record<string, WorkingHourFilter | undefined>>({});

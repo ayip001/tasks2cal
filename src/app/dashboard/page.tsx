@@ -109,7 +109,7 @@ export default function DashboardPage() {
       setLoadingMonth(false);
       fetchingRef.current = null;
     }
-  }, [settings.selectedCalendarId]);
+  }, [settings.selectedCalendarId, settings.timezone]);
 
   // Fetch events when month changes or on initial load
   useEffect(() => {

@@ -12,8 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { X, RotateCcw } from 'lucide-react';
-import type { Locale } from '@/i18n/config';
+import { RotateCcw } from 'lucide-react';
 
 interface WorkingHourFilterPanelProps {
   workingHourId: string;
@@ -24,10 +23,10 @@ interface WorkingHourFilterPanelProps {
 }
 
 export function WorkingHourFilterPanel({
-  workingHourId,
+  workingHourId: _workingHourId,
   filter,
   onChange,
-  timeFormat,
+  timeFormat: _timeFormat,
   t,
 }: WorkingHourFilterPanelProps) {
   // Use filter directly from props (controlled component)

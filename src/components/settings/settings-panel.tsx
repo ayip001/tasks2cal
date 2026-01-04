@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { UserSettings, GoogleCalendar, GoogleTaskList, WorkingHourFilter } from '@/types';
+import { UserSettings, GoogleCalendar, GoogleTaskList } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
@@ -25,9 +25,7 @@ import { TimezonePicker } from '@/components/settings/timezone-picker';
 import { Input } from '@/components/ui/input';
 import { requestTimezoneDebugRefresh } from '@/lib/debug-timezone';
 import { useTranslations } from '@/hooks/use-translations';
-import { useWorkingHourFilters } from '@/hooks/use-working-hour-filters';
 import type { Locale } from '@/i18n/config';
-import { timeToMinutes, formatTime } from '@/lib/time-utils';
 import { getLocalizedColorOptions } from '@/lib/constants';
 
 interface SettingsPanelProps {
@@ -41,7 +39,6 @@ interface SettingsPanelProps {
   triggerClassName?: string;
   triggerVariant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
   locale?: Locale;
-  userId?: string;
 }
 
 export function SettingsPanel({
@@ -55,7 +52,6 @@ export function SettingsPanel({
   triggerClassName = "",
   triggerVariant,
   locale = 'en',
-  userId
 }: SettingsPanelProps) {
   const [localSettings, setLocalSettings] = useState<UserSettings>(settings);
   const [initialSettings, setInitialSettings] = useState<UserSettings>(settings);
@@ -67,12 +63,7 @@ export function SettingsPanel({
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null);
   const [, setForceUpdate] = useState(0);
-  const [expandedFilterId, setExpandedFilterId] = useState<string | null>(null);
-  const [recentlySavedFilterId, setRecentlySavedFilterId] = useState<string | null>(null);
   const t = useTranslations(locale);
-
-  // Initialize working hour filters hook
-  const { filters, getFilter, setFilter, hasFilter } = useWorkingHourFilters(userId);
 
   // Update local and initial settings when settings prop changes
   useEffect(() => {
@@ -105,16 +96,6 @@ export function SettingsPanel({
 
     return false;
   }, [localSettings, initialSettings]);
-
-  // Handle filter save with visual feedback
-  const handleFilterSave = (workingHourId: string, filter: WorkingHourFilter | undefined) => {
-    setFilter(workingHourId, filter);
-    setRecentlySavedFilterId(workingHourId);
-    // Clear the saved indicator after 1 second
-    setTimeout(() => {
-      setRecentlySavedFilterId(null);
-    }, 1000);
-  };
 
   // Load last refresh time from localStorage on mount
   useEffect(() => {
@@ -196,139 +177,7 @@ export function SettingsPanel({
     return selectedCalendar?.timeZone || '';
   }, [calendars, localSettings.selectedCalendarId]);
 
-  const updateWorkingHours = (index: number, field: 'start' | 'end', value: string) => {
-    const newWorkingHours = [...localSettings.workingHours];
-    newWorkingHours[index] = { ...newWorkingHours[index], [field]: value };
-
-    // If changing start time, ensure end time is still valid (after start)
-    if (field === 'start') {
-      const startMinutes = timeToMinutes(value);
-      const endMinutes = timeToMinutes(newWorkingHours[index].end);
-      if (endMinutes <= startMinutes) {
-        // Set end to 1 hour after start, or 23:45 if that would exceed midnight
-        const newEndMinutes = Math.min(startMinutes + 60, 23 * 60 + 45);
-        const newEndHours = Math.floor(newEndMinutes / 60);
-        const newEndMins = newEndMinutes % 60;
-        newWorkingHours[index].end = `${newEndHours.toString().padStart(2, '0')}:${newEndMins.toString().padStart(2, '0')}`;
-      }
-    }
-
-    setLocalSettings({ ...localSettings, workingHours: newWorkingHours });
-  };
-
-  const addWorkingHoursRange = () => {
-    const newWorkingHour = {
-      id: `wh-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      start: '09:00',
-      end: '17:00',
-    };
-    setLocalSettings({
-      ...localSettings,
-      workingHours: [...localSettings.workingHours, newWorkingHour],
-    });
-  };
-
-  const removeWorkingHoursRange = (index: number) => {
-    const newWorkingHours = localSettings.workingHours.filter((_, i) => i !== index);
-    setLocalSettings({ ...localSettings, workingHours: newWorkingHours });
-  };
-
   const colorOptions = useMemo(() => getLocalizedColorOptions(t), [t]);
-
-  // Generate hour options for calendar range "from" dropdown
-  const hourOptions = useMemo(() => {
-    return Array.from({ length: 24 }, (_, i) => {
-      const value = `${i.toString().padStart(2, '0')}:00`;
-      return { value, label: formatTime(value, localSettings.timeFormat) };
-    });
-  }, [localSettings.timeFormat]);
-
-  // Generate hour options for calendar range "to" dropdown (only hours after minTime + 1 hour)
-  const hourOptionsAfterMin = useMemo(() => {
-    const minMinutes = timeToMinutes(localSettings.slotMinTime);
-    const minHourForMax = Math.floor(minMinutes / 60) + 1; // At least 1 hour after
-    return Array.from({ length: 24 - minHourForMax }, (_, i) => {
-      const hour = minHourForMax + i;
-      const value = `${hour.toString().padStart(2, '0')}:00`;
-      return { value, label: formatTime(value, localSettings.timeFormat) };
-    });
-  }, [localSettings.timeFormat, localSettings.slotMinTime]);
-
-  // Generate 15-minute interval options for working hours
-  const timeOptions = useMemo(() => {
-    return Array.from({ length: 24 * 4 }, (_, i) => {
-      const hours = Math.floor(i / 4);
-      const minutes = (i % 4) * 15;
-      const value = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-      return { value, label: formatTime(value, localSettings.timeFormat) };
-    });
-  }, [localSettings.timeFormat]);
-
-  // Get filtered "to" options for a specific working hours entry (only times after start)
-  const getEndTimeOptions = (startTime: string) => {
-    const startMinutes = timeToMinutes(startTime);
-    return timeOptions.filter((option) => timeToMinutes(option.value) > startMinutes);
-  };
-
-  // Check if calendar range is valid (at least 1 hour)
-  const calendarRangeValid = useMemo(() => {
-    const minMinutes = timeToMinutes(localSettings.slotMinTime);
-    const maxMinutes = timeToMinutes(localSettings.slotMaxTime);
-    return maxMinutes - minMinutes >= 60;
-  }, [localSettings.slotMinTime, localSettings.slotMaxTime]);
-
-  // Check which working hours are outside calendar range
-  const workingHoursWarnings = useMemo(() => {
-    const calendarMin = timeToMinutes(localSettings.slotMinTime);
-    const calendarMax = timeToMinutes(localSettings.slotMaxTime);
-
-    return localSettings.workingHours.map((hours, index) => {
-      const start = timeToMinutes(hours.start);
-      const end = timeToMinutes(hours.end);
-
-      if (start < calendarMin || end > calendarMax) {
-        return `Range ${index + 1} (${formatTime(hours.start, localSettings.timeFormat)} - ${formatTime(hours.end, localSettings.timeFormat)}) is outside calendar view`;
-      }
-      return null;
-    }).filter(Boolean);
-  }, [localSettings.workingHours, localSettings.slotMinTime, localSettings.slotMaxTime, localSettings.timeFormat]);
-
-  // Handle calendar range change with validation
-  const handleSlotMinTimeChange = (value: string) => {
-    const newMin = timeToMinutes(value);
-    const currentMax = timeToMinutes(localSettings.slotMaxTime);
-
-    // Ensure at least 1 hour gap
-    if (currentMax - newMin < 60) {
-      // Adjust max time to be 1 hour after new min
-      const newMaxHour = Math.min(23, Math.floor(newMin / 60) + 1);
-      setLocalSettings({
-        ...localSettings,
-        slotMinTime: value,
-        slotMaxTime: `${newMaxHour.toString().padStart(2, '0')}:00`,
-      });
-    } else {
-      setLocalSettings({ ...localSettings, slotMinTime: value });
-    }
-  };
-
-  const handleSlotMaxTimeChange = (value: string) => {
-    const currentMin = timeToMinutes(localSettings.slotMinTime);
-    const newMax = timeToMinutes(value);
-
-    // Ensure at least 1 hour gap
-    if (newMax - currentMin < 60) {
-      // Adjust min time to be 1 hour before new max
-      const newMinHour = Math.max(0, Math.floor(newMax / 60) - 1);
-      setLocalSettings({
-        ...localSettings,
-        slotMinTime: `${newMinHour.toString().padStart(2, '0')}:00`,
-        slotMaxTime: value,
-      });
-    } else {
-      setLocalSettings({ ...localSettings, slotMaxTime: value });
-    }
-  };
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>

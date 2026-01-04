@@ -246,19 +246,34 @@ export function DayCalendar({
     return groups;
   }, [settings.workingHours, date, selectedTimeZone, formatTimeForLabel, t]);
 
+  // Type for FullCalendar's internal element with segment data
+  interface FcSegElement extends Element {
+    fcSeg?: {
+      eventRange?: {
+        def?: {
+          publicId?: string;
+          extendedProps?: {
+            workingHourColor?: string;
+          };
+        };
+      };
+    };
+  }
+
   // Inject working hour labels after calendar renders
   useEffect(() => {
-    if (!containerRef.current || !calendarRef.current) return;
+    const container = containerRef.current;
+    if (!container || !calendarRef.current) return;
 
     // Wait for FullCalendar to finish rendering
     const timer = setTimeout(() => {
-      const timeGridBody = containerRef.current?.querySelector('.fc-timegrid-body');
+      const timeGridBody = container.querySelector('.fc-timegrid-body');
       if (!timeGridBody) return;
 
       // Apply border colors to working hour outlines (FullCalendar doesn't do this for background events)
       const allBgEvents = timeGridBody.querySelectorAll('.fc-bg-event.working-hour-outline');
       allBgEvents.forEach((el) => {
-        const fcEvent = (el as any).fcSeg?.eventRange?.def;
+        const fcEvent = (el as FcSegElement).fcSeg?.eventRange?.def;
         if (fcEvent) {
           const extendedProps = fcEvent.extendedProps;
           const color = extendedProps?.workingHourColor;
@@ -274,14 +289,14 @@ export function DayCalendar({
       existingLabels.forEach(label => label.remove());
 
       // Create labels container for each end time group
-      Object.entries(workingHoursByEndTime).forEach(([endTimeISO, periods]) => {
+      Object.entries(workingHoursByEndTime).forEach(([_endTimeISO, periods]) => {
         // Find all background events (working hour outlines)
         const bgEvents = timeGridBody.querySelectorAll('.fc-bg-event.working-hour-outline');
 
         // Find the event that matches this end time
         let matchingEvent: Element | null = null;
         bgEvents.forEach((el) => {
-          const fcEvent = (el as any).fcSeg?.eventRange?.def;
+          const fcEvent = (el as FcSegElement).fcSeg?.eventRange?.def;
           if (fcEvent && fcEvent.publicId === `working-hour-${periods[0].id}`) {
             matchingEvent = el;
           }
@@ -332,7 +347,7 @@ export function DayCalendar({
     // Cleanup function
     return () => {
       clearTimeout(timer);
-      const timeGridBody = containerRef.current?.querySelector('.fc-timegrid-body');
+      const timeGridBody = container.querySelector('.fc-timegrid-body');
       if (timeGridBody) {
         const labels = timeGridBody.querySelectorAll('.working-hour-labels');
         labels.forEach(label => label.remove());

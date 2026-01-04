@@ -41,7 +41,7 @@ export default function PrivacyPage() {
           
           <h2 className="text-xl font-semibold text-foreground pt-4">1. Introduction</h2>
           <p>
-            Tasks2Cal ("we", "us", or "our") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you use our web application.
+            Tasks2Cal (&quot;we&quot;, &quot;us&quot;, or &quot;our&quot;) is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you use our web application.
           </p>
 
           <h2 className="text-xl font-semibold text-foreground pt-4">2. Information We Access</h2>

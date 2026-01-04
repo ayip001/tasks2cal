@@ -2,7 +2,7 @@
 
 import { useSession, signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, Suspense } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Footer } from '@/components/ui/footer';
@@ -248,7 +248,7 @@ function FeatureGridSection() {
       <div className="container mx-auto px-6 relative z-10">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Features that should've been there from the start
+            Features that should&apos;ve been there from the start
           </h2>
         </div>
         
@@ -474,14 +474,11 @@ function LandingContent() {
   const { status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const errorParam = searchParams.get('error');
-    if (errorParam) {
-      setError('An error occurred during sign in. Please try again.');
-    }
-  }, [searchParams]);
+  // Compute error from URL params (avoids setState in effect)
+  const error = searchParams.get('error')
+    ? 'An error occurred during sign in. Please try again.'
+    : null;
 
   useEffect(() => {
     if (status === 'authenticated') {

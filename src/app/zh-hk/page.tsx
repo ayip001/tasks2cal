@@ -2,7 +2,7 @@
 
 import { useSession, signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, Suspense } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Footer } from '@/components/ui/footer';
@@ -474,14 +474,11 @@ function LandingContent() {
   const { status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const errorParam = searchParams.get('error');
-    if (errorParam) {
-      setError('登入時發生錯誤，請重試。');
-    }
-  }, [searchParams]);
+  // Compute error from URL params (avoids setState in effect)
+  const error = searchParams.get('error')
+    ? '登入時發生錯誤，請重試。'
+    : null;
 
   useEffect(() => {
     if (status === 'authenticated') {

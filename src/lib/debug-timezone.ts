@@ -73,7 +73,6 @@ export function logTimezoneDebug(params: DebugParams): void {
       })
     : 'N/A (no rendered labels found)';
 
-  // eslint-disable-next-line no-console
   console.log(
     [
       `Calendar Timezone: ${calendarZone} (UTC${calendarOffset >= 0 ? '+' : ''}${calendarOffsetHours})`,

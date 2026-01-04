@@ -133,7 +133,38 @@ export function validate<T>(
   return { success: false, error: message };
 }
 
+/**
+ * Task Placement schema (for calendar event creation)
+ */
+export const TaskPlacementSchema = z.object({
+  id: z.string().max(256, 'ID too long'),
+  taskId: z.string().regex(taskIdRegex, 'Invalid task ID format'),
+  taskTitle: z.string().max(1024, 'Task title too long'),
+  listId: z.string().regex(listIdRegex, 'Invalid list ID format').optional(),
+  listTitle: z.string().max(256, 'List title too long').optional(),
+  startTime: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/, 'Invalid datetime format'),
+  duration: z.number().int().min(1).max(1440, 'Duration must be 1-1440 minutes'),
+  workingHourColor: z.string().regex(hexColorRegex, 'Invalid color format').optional(),
+});
+
+/**
+ * Calendar create events request schema
+ */
+export const CalendarCreateEventsSchema = z.object({
+  calendarId: z.string().regex(calendarIdRegex, 'Invalid calendar ID'),
+  placements: z.array(TaskPlacementSchema).max(100, 'Maximum of 100 placements allowed'),
+  taskColor: z.string().regex(hexColorRegex, 'Invalid task color format'),
+  listColors: z.record(
+    z.string().regex(listIdRegex),
+    z.string().regex(hexColorRegex)
+  ).refine(
+    (obj) => Object.keys(obj).length <= MAX_LIST_COLORS,
+    { message: `Maximum of ${MAX_LIST_COLORS} list colors allowed` }
+  ).optional(),
+});
+
 // Export types inferred from schemas
 export type ValidatedUserSettingsUpdate = z.infer<typeof UserSettingsUpdateSchema>;
 export type ValidatedStarredTasksData = z.infer<typeof StarredTasksDataSchema>;
 export type ValidatedWorkingHourFiltersData = z.infer<typeof WorkingHourFiltersDataSchema>;
+export type ValidatedCalendarCreateEvents = z.infer<typeof CalendarCreateEventsSchema>;

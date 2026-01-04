@@ -3,7 +3,7 @@ import { auth } from '@/lib/auth';
 import { getCalendars, getEventsForDay, getEventsForMonth, createCalendarEvents } from '@/lib/google/calendar';
 import { getUserSettings } from '@/lib/kv';
 import { normalizeIanaTimeZone } from '@/lib/timezone';
-import { TaskPlacement } from '@/types';
+import { validate, CalendarCreateEventsSchema } from '@/lib/validation';
 import {
   checkRateLimit,
   getClientIdentifier,
@@ -118,20 +118,20 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { calendarId, placements, taskColor, listColors } = body as {
-      calendarId: string;
-      placements: TaskPlacement[];
-      taskColor: string;
-      listColors?: Record<string, string>;
-    };
 
-    if (!calendarId || !placements || !Array.isArray(placements) || !taskColor) {
-      return NextResponse.json({ error: 'Invalid request body' }, {
-        status: 400,
-        headers: createRateLimitHeaders(rateLimitResult),
-      });
+    // Validate input with Zod schema
+    const validationResult = validate(CalendarCreateEventsSchema, body);
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { error: validationResult.error },
+        {
+          status: 400,
+          headers: createRateLimitHeaders(rateLimitResult),
+        }
+      );
     }
 
+    const { calendarId, placements, taskColor, listColors } = validationResult.data;
     const result = await createCalendarEvents(session.accessToken, calendarId, placements, taskColor, listColors);
 
     return NextResponse.json({
