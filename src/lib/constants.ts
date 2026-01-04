@@ -18,6 +18,7 @@ export function isUtilityCreatedEvent(summary: string): boolean {
 export const DEFAULT_TASK_COLOR = '#4285F4';
 export const DEFAULT_MIN_TIME_BETWEEN_TASKS = 15;
 export const TIME_SLOT_INTERVAL = 15;
+export const SNAP_INTERVAL = 5;
 
 export const DEFAULT_WORKING_HOURS = [
   { id: 'wh-default-1', start: '11:00', end: '12:15' },

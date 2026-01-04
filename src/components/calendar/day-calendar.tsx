@@ -8,7 +8,7 @@ import luxonPlugin from '@fullcalendar/luxon3';
 import type { EventDropArg, EventInput, EventContentArg, SlotLabelContentArg } from '@fullcalendar/core';
 import { DateTime } from 'luxon';
 import { GoogleCalendarEvent, TaskPlacement, UserSettings } from '@/types';
-import { TIME_SLOT_INTERVAL } from '@/lib/constants';
+import { TIME_SLOT_INTERVAL, SNAP_INTERVAL } from '@/lib/constants';
 import {
   formatTimeForDisplay,
   normalizeIanaTimeZone,
@@ -630,7 +630,7 @@ export function DayCalendar({
             return stillEvent.display === 'background';
           }}
           slotEventOverlap={false}
-          snapDuration={`00:${TIME_SLOT_INTERVAL}:00`}
+          snapDuration={`00:${String(SNAP_INTERVAL).padStart(2, '0')}:00`}
           nowIndicator={true}
           businessHours={businessHours}
           slotLaneClassNames="fc-slot-lane"
