@@ -9,6 +9,7 @@ import { DateTime } from 'luxon';
 import { DayCalendar } from '@/components/calendar/day-calendar';
 import { TaskPanel } from '@/components/tasks/task-panel';
 import { RightPanel } from '@/components/panels/right-panel';
+import { AutofitSettingsPanel } from '@/components/panels/autofit-settings-panel';
 import { SettingsPanel } from '@/components/settings/settings-panel';
 import { ConfirmDialog } from '@/components/calendar/confirm-dialog';
 import { Button } from '@/components/ui/button';
@@ -68,6 +69,7 @@ export default function DayPage() {
   const [saving, setSaving] = useState(false);
   const [mobileView, setMobileView] = useState<'calendar' | 'tasks' | 'autofit'>('calendar');
   const [rightPanelTab, setRightPanelTab] = useState<'tasks' | 'autofit'>('tasks');
+  const [unviewedPlacementCount, setUnviewedPlacementCount] = useState(0);
 
   const { tasks, taskLists, loading: tasksLoading, refetch: refetchTasks } = useTasks();
   const { settings, loading: settingsLoading, updateSettings, locale } = useSettings();
@@ -224,7 +226,7 @@ export default function DayPage() {
     }
 
     if (filtersLoading) {
-      toast.info('Loading filters...');
+      toast.info(t('day.loadingFilters'));
       return;
     }
 
@@ -241,7 +243,19 @@ export default function DayPage() {
       );
       const allPlacements = [...placements, ...result.placements];
       setPlacements(allPlacements);
-      toast.success(result.message);
+
+      // Generate translated message based on result
+      const placedCount = result.placements.length;
+      const unplacedCount = result.unplacedTasks.length;
+      let message: string;
+      if (unplacedCount === 0) {
+        message = t('day.autoFitAllPlaced', { count: placedCount });
+      } else if (placedCount === 0) {
+        message = t('day.autoFitNonePlaced');
+      } else {
+        message = t('day.autoFitPartialPlaced', { placed: placedCount, unplaced: unplacedCount });
+      }
+      toast.success(message);
     } catch {
       toast.error(t('day.failedAutoFit'));
     } finally {
@@ -250,105 +264,81 @@ export default function DayPage() {
   };
 
   // Handle adding a single task via + button (mobile)
+  // Places task at first available slot in calendar range
   const handleAddTask = (task: GoogleTask) => {
-    if (filtersLoading) {
-      toast.info('Loading filters...');
-      return;
-    }
-
     try {
-      // Try to auto-fit this single task
-      const result = autoFitTasks(
-        [task],
-        events,
-        placements,
-        settings,
-        dateParam,
-        selectedTimeZone,
-        workingHourFilters
-      );
+      // Calculate all busy times from events and existing placements
+      const busySlots: { start: Date; end: Date }[] = [];
 
-      if (result.placements.length > 0) {
-        // Task was placed in working hours
-        const allPlacements = [...placements, ...result.placements];
-        setPlacements(allPlacements);
-        toast.success(t('day.addedToCalendar', { title: task.title }));
-        setMobileView('calendar'); // Switch to calendar view to show result
-      } else {
-        // No working hours slot available, try to find any available slot
-        // Calculate all busy times from events and existing placements
-        const busySlots: { start: Date; end: Date }[] = [];
-
-        // Add existing events as busy
-        events.forEach((event) => {
-          if (event.start.dateTime && event.end.dateTime) {
-            busySlots.push({
-              start: new Date(event.start.dateTime),
-              end: new Date(event.end.dateTime),
-            });
-          }
-        });
-
-        // Add existing placements as busy
-        placements.forEach((p) => {
+      // Add existing events as busy
+      events.forEach((event) => {
+        if (event.start.dateTime && event.end.dateTime) {
           busySlots.push({
-            start: new Date(p.startTime),
-            end: new Date(new Date(p.startTime).getTime() + p.duration * 60 * 1000),
+            start: new Date(event.start.dateTime),
+            end: new Date(event.end.dateTime),
           });
+        }
+      });
+
+      // Add existing placements as busy
+      placements.forEach((p) => {
+        busySlots.push({
+          start: new Date(p.startTime),
+          end: new Date(new Date(p.startTime).getTime() + p.duration * 60 * 1000),
+        });
+      });
+
+      // Sort busy slots by start time
+      busySlots.sort((a, b) => a.start.getTime() - b.start.getTime());
+
+      // Find first available slot in calendar range
+      const slotMinTime = settings.slotMinTime || '06:00';
+      const slotMaxTime = settings.slotMaxTime || '22:00';
+      const calendarStart = wallTimeOnDateToUtc(dateParam, slotMinTime, selectedTimeZone);
+      const calendarEnd = wallTimeOnDateToUtc(dateParam, slotMaxTime, selectedTimeZone);
+      const taskDuration = settings.defaultTaskDuration * 60 * 1000;
+
+      let foundSlot: Date | null = null;
+      const isTodayInSelectedZone = DateTime.now().setZone(selectedTimeZone).toISODate() === dateParam;
+      const startMs = isTodayInSelectedZone
+        ? Math.max(calendarStart.getTime(), Date.now())
+        : calendarStart.getTime();
+      const intervalMs = TIME_SLOT_INTERVAL * 60 * 1000;
+      let currentTimeMs = Math.ceil(startMs / intervalMs) * intervalMs;
+
+      while (currentTimeMs + taskDuration <= calendarEnd.getTime()) {
+        const slotStart = new Date(currentTimeMs);
+        const slotEnd = new Date(currentTimeMs + taskDuration);
+
+        // Check if this slot overlaps with any busy slot
+        const hasConflict = busySlots.some((busy) => {
+          return slotStart < busy.end && slotEnd > busy.start;
         });
 
-        // Sort busy slots by start time
-        busySlots.sort((a, b) => a.start.getTime() - b.start.getTime());
-
-        // Find first available slot in calendar range
-        const slotMinTime = settings.slotMinTime || '06:00';
-        const slotMaxTime = settings.slotMaxTime || '22:00';
-        const calendarStart = wallTimeOnDateToUtc(dateParam, slotMinTime, selectedTimeZone);
-        const calendarEnd = wallTimeOnDateToUtc(dateParam, slotMaxTime, selectedTimeZone);
-        const taskDuration = settings.defaultTaskDuration * 60 * 1000;
-
-        let foundSlot: Date | null = null;
-        const isTodayInSelectedZone = DateTime.now().setZone(selectedTimeZone).toISODate() === dateParam;
-        const startMs = isTodayInSelectedZone
-          ? Math.max(calendarStart.getTime(), Date.now())
-          : calendarStart.getTime();
-        const intervalMs = TIME_SLOT_INTERVAL * 60 * 1000;
-        let currentTimeMs = Math.ceil(startMs / intervalMs) * intervalMs;
-
-        while (currentTimeMs + taskDuration <= calendarEnd.getTime()) {
-          const slotStart = new Date(currentTimeMs);
-          const slotEnd = new Date(currentTimeMs + taskDuration);
-
-          // Check if this slot overlaps with any busy slot
-          const hasConflict = busySlots.some((busy) => {
-            return slotStart < busy.end && slotEnd > busy.start;
-          });
-
-          if (!hasConflict) {
-            foundSlot = slotStart;
-            break;
-          }
-
-          currentTimeMs += intervalMs;
+        if (!hasConflict) {
+          foundSlot = slotStart;
+          break;
         }
 
-        if (foundSlot) {
-          const newPlacement: TaskPlacement = {
-            id: `${task.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            taskId: task.id,
-            taskTitle: task.title,
-            listId: task.listId,
-            listTitle: task.listTitle,
-            startTime: foundSlot.toISOString(),
-            duration: settings.defaultTaskDuration,
-          };
+        currentTimeMs += intervalMs;
+      }
 
-          addPlacement(newPlacement);
-          toast.success(t('day.addedToCalendar', { title: task.title }));
-          setMobileView('calendar');
-        } else {
-          toast.error(t('day.noAvailableSlots'));
-        }
+      if (foundSlot) {
+        const newPlacement: TaskPlacement = {
+          id: `${task.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          taskId: task.id,
+          taskTitle: task.title,
+          listId: task.listId,
+          listTitle: task.listTitle,
+          startTime: foundSlot.toISOString(),
+          duration: settings.defaultTaskDuration,
+        };
+
+        addPlacement(newPlacement);
+        toast.success(t('day.addedToCalendar', { title: task.title }));
+        setUnviewedPlacementCount((prev) => prev + 1);
+      } else {
+        toast.error(t('day.noAvailableSlots'));
       }
     } catch {
       toast.error(t('day.failedToAdd'));
@@ -443,7 +433,7 @@ export default function DayPage() {
                 >
                   <Save className="h-4 w-4 md:mr-2" />
                   <span className="ml-1 md:ml-0">
-                    <span className="hidden md:inline">Save </span>
+                    <span className="hidden md:inline">{t('common.save')} </span>
                     ({placements.length})
                   </span>
                 </Button>
@@ -492,7 +482,10 @@ export default function DayPage() {
       {/* Mobile: Tab switcher */}
       <div className="md:hidden border-b flex">
         <button
-          onClick={() => setMobileView('calendar')}
+          onClick={() => {
+            setMobileView('calendar');
+            setUnviewedPlacementCount(0);
+          }}
           className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 border-b-2 transition-colors ${
             mobileView === 'calendar'
               ? 'border-primary text-primary'
@@ -501,6 +494,9 @@ export default function DayPage() {
         >
           <CalendarDays className="h-4 w-4" />
           {t('day.calendar')}
+          {unviewedPlacementCount > 0 && (
+            <span className="text-xs">({unviewedPlacementCount})</span>
+          )}
         </button>
         <button
           onClick={() => setMobileView('tasks')}
@@ -606,22 +602,10 @@ export default function DayPage() {
           </div>
         ) : (
           <div className="flex-1 overflow-hidden">
-            <RightPanel
-              activeTab="autofit"
-              onTabChange={() => {}}
-              taskLists={taskLists}
-              placements={placements}
-              loading={tasksLoading}
-              filter={filter}
-              onFilterChange={setFilter}
-              filteredTasks={filteredTasks}
-              onToggleStar={toggleStar}
-              isMobile={true}
-              locale={locale}
-              taskColor={settings.taskColor}
-              listColors={settings.listColors}
+            <AutofitSettingsPanel
               settings={settings}
-              onSaveSettings={updateSettings}
+              onSave={updateSettings}
+              locale={locale}
               userId={session?.user?.email ?? undefined}
             />
           </div>
