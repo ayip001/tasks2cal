@@ -443,7 +443,7 @@ export default function DayPage() {
                 >
                   <Save className="h-4 w-4 md:mr-2" />
                   <span className="ml-1 md:ml-0">
-                    <span className="hidden md:inline">Save </span>
+                    <span className="hidden md:inline">{t('common.save')} </span>
                     ({placements.length})
                   </span>
                 </Button>
