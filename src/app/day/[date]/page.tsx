@@ -8,6 +8,7 @@ import { DateTime } from 'luxon';
 
 import { DayCalendar } from '@/components/calendar/day-calendar';
 import { TaskPanel } from '@/components/tasks/task-panel';
+import { RightPanel } from '@/components/panels/right-panel';
 import { SettingsPanel } from '@/components/settings/settings-panel';
 import { ConfirmDialog } from '@/components/calendar/confirm-dialog';
 import { Button } from '@/components/ui/button';
@@ -51,6 +52,7 @@ import {
   Trash2,
   CalendarDays,
   ListTodo,
+  Settings as SettingsIcon,
 } from 'lucide-react';
 import { DayPageLoadingSkeleton } from '@/components/ui/loading-skeletons';
 
@@ -64,7 +66,8 @@ export default function DayPage() {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [mobileView, setMobileView] = useState<'calendar' | 'tasks'>('calendar');
+  const [mobileView, setMobileView] = useState<'calendar' | 'tasks' | 'autofit'>('calendar');
+  const [rightPanelTab, setRightPanelTab] = useState<'tasks' | 'autofit'>('tasks');
 
   const { tasks, taskLists, loading: tasksLoading, refetch: refetchTasks } = useTasks();
   const { settings, loading: settingsLoading, updateSettings, locale } = useSettings();
@@ -511,6 +514,17 @@ export default function DayPage() {
           <ListTodo className="h-4 w-4" />
           {t('day.tasks')}
         </button>
+        <button
+          onClick={() => setMobileView('autofit')}
+          className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 border-b-2 transition-colors ${
+            mobileView === 'autofit'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground'
+          }`}
+        >
+          <SettingsIcon className="h-4 w-4" />
+          {t('tabs.autofit')}
+        </button>
       </div>
 
       {/* Desktop: Split view */}
@@ -534,7 +548,9 @@ export default function DayPage() {
         </div>
 
         <div className="w-96 flex-shrink-0 overflow-hidden">
-          <TaskPanel
+          <RightPanel
+            activeTab={rightPanelTab}
+            onTabChange={setRightPanelTab}
             taskLists={taskLists}
             placements={placements}
             loading={tasksLoading}
@@ -545,6 +561,9 @@ export default function DayPage() {
             locale={locale}
             taskColor={settings.taskColor}
             listColors={settings.listColors}
+            settings={settings}
+            onSaveSettings={updateSettings}
+            userId={session?.user?.email ?? undefined}
           />
         </div>
       </main>
@@ -569,7 +588,7 @@ export default function DayPage() {
               locale={locale}
             />
           </div>
-        ) : (
+        ) : mobileView === 'tasks' ? (
           <div className="flex-1 overflow-hidden">
             <TaskPanel
               taskLists={taskLists}
@@ -584,6 +603,27 @@ export default function DayPage() {
               locale={locale}
               taskColor={settings.taskColor}
               listColors={settings.listColors}
+            />
+          </div>
+        ) : (
+          <div className="flex-1 overflow-hidden">
+            <RightPanel
+              activeTab="autofit"
+              onTabChange={() => {}}
+              taskLists={taskLists}
+              placements={placements}
+              loading={tasksLoading}
+              filter={filter}
+              onFilterChange={setFilter}
+              filteredTasks={filteredTasks}
+              onToggleStar={toggleStar}
+              isMobile={true}
+              locale={locale}
+              taskColor={settings.taskColor}
+              listColors={settings.listColors}
+              settings={settings}
+              onSaveSettings={updateSettings}
+              userId={session?.user?.email ?? undefined}
             />
           </div>
         )}

@@ -16,6 +16,10 @@
     "noEvents": "暫無活動安排",
     "andMore": "還有 {count} 項..."
   },
+  "tabs": {
+    "tasks": "任務",
+    "autofit": "自動排程"
+  },
   "day": {
     "autoFit": "自動排程",
     "invalidDate": "日期無效",
@@ -114,8 +118,19 @@
     "hoursAgo": "{count} 小時前",
     "daysAgo": "{count} 天前",
     "filterFor": "篩選 {time}",
+    "customFilters": "自訂篩選",
     "clearFilter": "清除篩選",
     "workingHourFilterDesc": "在此時段內只會透過自動排程放置符合此篩選條件的任務。"
+  },
+  "autofit": {
+    "title": "自動排程設定",
+    "calendarRange": "日曆顯示範圍",
+    "workingHours": "工作時間",
+    "addPeriod": "新增時段",
+    "periodName": "名稱",
+    "periodNamePlaceholder": "例如：早上專注時段",
+    "periodColor": "顏色",
+    "useColorForTasks": "將此顏色套用到已排程的代辦事項"
   },
   "errors": {
     "rateLimited": "請求次數過多，請稍後再試。"

@@ -127,6 +127,8 @@ export function autoFitTasks(
             listTitle: task.listTitle,
             startTime: slot.start.toISOString(),
             duration: settings.defaultTaskDuration,
+            // Apply working hour color if enabled
+            workingHourColor: workingHour.useColorForTasks ? workingHour.color : undefined,
           };
 
           placements.push(placement);

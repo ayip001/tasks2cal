@@ -117,8 +117,8 @@ export async function createCalendarEvent(
   const startTime = new Date(placement.startTime);
   const endTime = new Date(startTime.getTime() + placement.duration * 60 * 1000);
 
-  // Use list-specific color if available, otherwise use default taskColor
-  const effectiveColor = (placement.listId && listColors?.[placement.listId]) || taskColor;
+  // Priority: list color > working hour color > default taskColor
+  const effectiveColor = (placement.listId && listColors?.[placement.listId]) || placement.workingHourColor || taskColor;
 
   const response = await calendar.events.insert({
     calendarId,
