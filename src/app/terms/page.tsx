@@ -56,7 +56,7 @@ export default function TermsPage() {
 
           <h2 className="text-xl font-semibold text-foreground pt-4">4. Limitation of Liability</h2>
           <p>
-            Tasks2Cal is provided "as is" and "as available" without any warranties. We shall not be liable for any direct, indirect, incidental, special, or consequential damages resulting from the use or inability to use the service, including but not limited to data loss or errors in scheduling.
+            Tasks2Cal is provided &quot;as is&quot; and &quot;as available&quot; without any warranties. We shall not be liable for any direct, indirect, incidental, special, or consequential damages resulting from the use or inability to use the service, including but not limited to data loss or errors in scheduling.
           </p>
 
           <h2 className="text-xl font-semibold text-foreground pt-4">5. Modifications to Service</h2>

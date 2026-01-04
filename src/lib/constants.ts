@@ -50,6 +50,35 @@ export const GOOGLE_CALENDAR_COLORS: Record<string, string> = {
   '11': '#dc2127',
 };
 
+// Color options for task/event color pickers (used in settings panels)
+// These map to Google Calendar's color palette
+export const GOOGLE_CALENDAR_COLOR_OPTIONS = [
+  { value: '#4285f4', labelKey: 'settings.colorBlue' },
+  { value: '#a4bdfc', labelKey: 'settings.colorLavender' },
+  { value: '#7ae7bf', labelKey: 'settings.colorSage' },
+  { value: '#dbadff', labelKey: 'settings.colorGrape' },
+  { value: '#ff887c', labelKey: 'settings.colorFlamingo' },
+  { value: '#fbd75b', labelKey: 'settings.colorBanana' },
+  { value: '#ffb878', labelKey: 'settings.colorTangerine' },
+  { value: '#46d6db', labelKey: 'settings.colorPeacock' },
+  { value: '#5484ed', labelKey: 'settings.colorBlueberry' },
+  { value: '#51b749', labelKey: 'settings.colorBasil' },
+  { value: '#dc2127', labelKey: 'settings.colorTomato' },
+] as const;
+
+/**
+ * Get localized color options for dropdowns
+ * @param t - Translation function that takes a key and returns localized string
+ */
+export function getLocalizedColorOptions(
+  t: (key: string) => string
+): Array<{ value: string; label: string }> {
+  return GOOGLE_CALENDAR_COLOR_OPTIONS.map((option) => ({
+    value: option.value,
+    label: t(option.labelKey),
+  }));
+}
+
 export const KV_KEYS = {
   settings: (userId: string) => `settings:${userId}`,
   starred: (userId: string) => `starred:${userId}`,
@@ -60,6 +89,12 @@ export const KV_KEYS = {
 export const STARRED_SYNC_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes
 export const STARRED_STORAGE_KEY = (userId: string) => `starred:${userId}`;
 export const MAX_STARRED_TASKS = 500;
+
+// Payload size limits for Redis-stored data
+export const MAX_WORKING_HOUR_FILTERS = 50;
+export const MAX_SEARCH_TEXT_LENGTH = 200;
+export const MAX_WORKING_HOURS = 20;
+export const MAX_LIST_COLORS = 100;
 
 // Working hour filters configuration
 export const WORKING_HOUR_FILTERS_SYNC_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes

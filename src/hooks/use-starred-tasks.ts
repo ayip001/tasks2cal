@@ -14,6 +14,9 @@ interface UseStarredTasksReturn {
   lastSynced: number | null;
 }
 
+// Request deduplication: cache in-flight promises to prevent duplicate concurrent requests
+let pendingFetchPromise: Promise<StarredTasksData | null> | null = null;
+
 function getFromLocalStorage(userId: string): StarredTasksData | null {
   if (typeof window === 'undefined') return null;
 
@@ -37,13 +40,24 @@ function saveToLocalStorage(userId: string, data: StarredTasksData): void {
 }
 
 async function fetchFromRedis(): Promise<StarredTasksData | null> {
-  try {
-    const response = await fetch('/api/starred');
-    if (!response.ok) return null;
-    return await response.json();
-  } catch {
-    return null;
+  // Return existing promise if request is in-flight (deduplication)
+  if (pendingFetchPromise) {
+    return pendingFetchPromise;
   }
+
+  pendingFetchPromise = (async () => {
+    try {
+      const response = await fetch('/api/starred');
+      if (!response.ok) return null;
+      return await response.json();
+    } catch {
+      return null;
+    } finally {
+      pendingFetchPromise = null;
+    }
+  })();
+
+  return pendingFetchPromise;
 }
 
 async function pushToRedis(data: StarredTasksData): Promise<boolean> {

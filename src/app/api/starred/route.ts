@@ -1,119 +1,48 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
 import { getStarredTasks, setStarredTasks } from '@/lib/kv';
-import { StarredTasksData } from '@/types';
-import { MAX_STARRED_TASKS } from '@/lib/constants';
-import {
-  checkRateLimit,
-  getClientIdentifier,
-  createRateLimitHeaders,
-  getRetryAfterSeconds,
-} from '@/lib/rate-limit';
+import { validate, StarredTasksDataSchema } from '@/lib/validation';
+import { withAuth } from '@/lib/api-utils';
+import { createRateLimitHeaders } from '@/lib/rate-limit';
 
-// GET - Fetch starred data with timestamp
-export async function GET(request: Request) {
-  const session = await auth();
-
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  // Rate limiting
-  const identifier = getClientIdentifier(request, session.user.email);
-  const rateLimitResult = await checkRateLimit(identifier, 'read');
-
-  if (!rateLimitResult.allowed) {
-    return NextResponse.json(
-      { error: 'Too many requests. Please try again later.' },
-      {
-        status: 429,
-        headers: {
-          ...createRateLimitHeaders(rateLimitResult),
-          'Retry-After': getRetryAfterSeconds(rateLimitResult).toString(),
-        },
-      }
-    );
-  }
-
+export const GET = withAuth(async (request, { session }) => {
   try {
-    const starredData = await getStarredTasks(session.user.email);
-    return NextResponse.json(starredData, {
-      headers: createRateLimitHeaders(rateLimitResult),
-    });
+    const starredData = await getStarredTasks(session.user!.email!);
+    return NextResponse.json(starredData);
   } catch (error) {
     console.error('Error fetching starred tasks:', error);
     return NextResponse.json(
       { error: 'Failed to fetch starred tasks' },
-      {
-        status: 500,
-        headers: createRateLimitHeaders(rateLimitResult),
-      }
+      { status: 500 }
     );
   }
-}
+});
 
-// PUT - Update starred data (full replace with timestamp)
-export async function PUT(request: Request) {
-  const session = await auth();
+export const PUT = withAuth(
+  async (request, { session, rateLimitResult }) => {
+    try {
+      const body = await request.json();
 
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  // Rate limiting (write operations are more restricted)
-  const identifier = getClientIdentifier(request, session.user.email);
-  const rateLimitResult = await checkRateLimit(identifier, 'write');
-
-  if (!rateLimitResult.allowed) {
-    return NextResponse.json(
-      { error: 'Too many requests. Please try again later.' },
-      {
-        status: 429,
-        headers: {
-          ...createRateLimitHeaders(rateLimitResult),
-          'Retry-After': getRetryAfterSeconds(rateLimitResult).toString(),
-        },
+      // Validate input with Zod schema (includes size limits)
+      const validationResult = validate(StarredTasksDataSchema, body);
+      if (!validationResult.success) {
+        return NextResponse.json(
+          { error: validationResult.error },
+          {
+            status: 400,
+            headers: createRateLimitHeaders(rateLimitResult),
+          }
+        );
       }
-    );
-  }
 
-  try {
-    const body = await request.json() as StarredTasksData;
-
-    // Validate the data structure
-    if (!Array.isArray(body.taskIds) || typeof body.lastModified !== 'number') {
+      await setStarredTasks(session.user!.email!, validationResult.data);
+      return NextResponse.json({ success: true });
+    } catch (error) {
+      console.error('Error updating starred tasks:', error);
       return NextResponse.json(
-        { error: 'Invalid data format' },
-        {
-          status: 400,
-          headers: createRateLimitHeaders(rateLimitResult),
-        }
+        { error: 'Failed to update starred tasks' },
+        { status: 500 }
       );
     }
-
-    // Enforce maximum starred tasks limit
-    if (body.taskIds.length > MAX_STARRED_TASKS) {
-      return NextResponse.json(
-        { error: `Maximum of ${MAX_STARRED_TASKS} starred tasks allowed` },
-        {
-          status: 400,
-          headers: createRateLimitHeaders(rateLimitResult),
-        }
-      );
-    }
-
-    await setStarredTasks(session.user.email, body);
-    return NextResponse.json({ success: true }, {
-      headers: createRateLimitHeaders(rateLimitResult),
-    });
-  } catch (error) {
-    console.error('Error updating starred tasks:', error);
-    return NextResponse.json(
-      { error: 'Failed to update starred tasks' },
-      {
-        status: 500,
-        headers: createRateLimitHeaders(rateLimitResult),
-      }
-    );
-  }
-}
+  },
+  { limitType: 'write' }
+);

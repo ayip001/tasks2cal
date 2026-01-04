@@ -1,95 +1,48 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
 import { getUserSettings, setUserSettings } from '@/lib/kv';
-import { UserSettings } from '@/types';
-import {
-  checkRateLimit,
-  getClientIdentifier,
-  createRateLimitHeaders,
-  getRetryAfterSeconds,
-} from '@/lib/rate-limit';
+import { validate, UserSettingsUpdateSchema } from '@/lib/validation';
+import { withAuth } from '@/lib/api-utils';
+import { createRateLimitHeaders } from '@/lib/rate-limit';
 
-export async function GET(request: Request) {
-  const session = await auth();
-
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  // Rate limiting
-  const identifier = getClientIdentifier(request, session.user.email);
-  const rateLimitResult = await checkRateLimit(identifier, 'read');
-
-  if (!rateLimitResult.allowed) {
-    return NextResponse.json(
-      { error: 'Too many requests. Please try again later.' },
-      {
-        status: 429,
-        headers: {
-          ...createRateLimitHeaders(rateLimitResult),
-          'Retry-After': getRetryAfterSeconds(rateLimitResult).toString(),
-        },
-      }
-    );
-  }
-
+export const GET = withAuth(async (_request, { session }) => {
   try {
-    const settings = await getUserSettings(session.user.email);
-    return NextResponse.json(settings, {
-      headers: createRateLimitHeaders(rateLimitResult),
-    });
+    const settings = await getUserSettings(session.user!.email!);
+    return NextResponse.json(settings);
   } catch (error) {
     console.error('Error fetching settings:', error);
     return NextResponse.json(
       { error: 'Failed to fetch settings' },
-      {
-        status: 500,
-        headers: createRateLimitHeaders(rateLimitResult),
-      }
+      { status: 500 }
     );
   }
-}
+});
 
-export async function PUT(request: Request) {
-  const session = await auth();
+export const PUT = withAuth(
+  async (request, { session, rateLimitResult }) => {
+    try {
+      const body = await request.json();
 
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  // Rate limiting (write operations are more restricted)
-  const identifier = getClientIdentifier(request, session.user.email);
-  const rateLimitResult = await checkRateLimit(identifier, 'write');
-
-  if (!rateLimitResult.allowed) {
-    return NextResponse.json(
-      { error: 'Too many requests. Please try again later.' },
-      {
-        status: 429,
-        headers: {
-          ...createRateLimitHeaders(rateLimitResult),
-          'Retry-After': getRetryAfterSeconds(rateLimitResult).toString(),
-        },
+      // Validate input with Zod schema
+      const validationResult = validate(UserSettingsUpdateSchema, body);
+      if (!validationResult.success) {
+        return NextResponse.json(
+          { error: validationResult.error },
+          {
+            status: 400,
+            headers: createRateLimitHeaders(rateLimitResult),
+          }
+        );
       }
-    );
-  }
 
-  try {
-    const body = await request.json();
-    const updates = body as Partial<UserSettings>;
-
-    const settings = await setUserSettings(session.user.email, updates);
-    return NextResponse.json(settings, {
-      headers: createRateLimitHeaders(rateLimitResult),
-    });
-  } catch (error) {
-    console.error('Error updating settings:', error);
-    return NextResponse.json(
-      { error: 'Failed to update settings' },
-      {
-        status: 500,
-        headers: createRateLimitHeaders(rateLimitResult),
-      }
-    );
-  }
-}
+      const settings = await setUserSettings(session.user!.email!, validationResult.data);
+      return NextResponse.json(settings);
+    } catch (error) {
+      console.error('Error updating settings:', error);
+      return NextResponse.json(
+        { error: 'Failed to update settings' },
+        { status: 500 }
+      );
+    }
+  },
+  { limitType: 'write' }
+);

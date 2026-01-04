@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { UserSettings, GoogleTaskList, WorkingHourFilter, WorkingHours } from '@/types';
+import { UserSettings, WorkingHourFilter, WorkingHours } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -35,29 +35,14 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { timeToMinutes, formatTime } from '@/lib/time-utils';
+import { getLocalizedColorOptions } from '@/lib/constants';
 
 interface AutofitSettingsPanelProps {
   settings: UserSettings;
   onSave: (updates: Partial<UserSettings>) => Promise<void>;
   locale?: Locale;
   userId?: string;
-}
-
-// Convert HH:MM to minutes since midnight
-function timeToMinutes(time: string): number {
-  const [hours, minutes] = time.split(':').map(Number);
-  return hours * 60 + minutes;
-}
-
-// Format time based on 12h/24h preference
-function formatTime(time: string, format: '12h' | '24h'): string {
-  const [hours, minutes] = time.split(':').map(Number);
-  if (format === '24h') {
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-  }
-  const period = hours >= 12 ? 'PM' : 'AM';
-  const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
-  return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
 }
 
 interface SortableWorkingHourProps {
@@ -81,7 +66,7 @@ interface SortableWorkingHourProps {
 
 function SortableWorkingHour({
   workingHour,
-  index,
+  index: _index,
   timeFormat,
   timeOptions,
   getEndTimeOptions,
@@ -297,7 +282,7 @@ export function AutofitSettingsPanel({
   const t = useTranslations(locale);
 
   // Initialize working hour filters hook
-  const { filters, getFilter, setFilter, hasFilter } = useWorkingHourFilters(userId);
+  const { filters: _filters, getFilter, setFilter, hasFilter } = useWorkingHourFilters(userId);
 
   // Local filter state (not saved until Save Settings is clicked)
   const [localFilters, setLocalFilters] = useState<Record<string, WorkingHourFilter | undefined>>({});
@@ -437,19 +422,7 @@ export function AutofitSettingsPanel({
     setLocalFilters(newLocalFilters);
   };
 
-  const colorOptions = [
-    { value: '#4285f4', label: t('settings.colorBlue') },
-    { value: '#a4bdfc', label: t('settings.colorLavender') },
-    { value: '#7ae7bf', label: t('settings.colorSage') },
-    { value: '#dbadff', label: t('settings.colorGrape') },
-    { value: '#ff887c', label: t('settings.colorFlamingo') },
-    { value: '#fbd75b', label: t('settings.colorBanana') },
-    { value: '#ffb878', label: t('settings.colorTangerine') },
-    { value: '#46d6db', label: t('settings.colorPeacock') },
-    { value: '#5484ed', label: t('settings.colorBlueberry') },
-    { value: '#51b749', label: t('settings.colorBasil') },
-    { value: '#dc2127', label: t('settings.colorTomato') },
-  ];
+  const colorOptions = useMemo(() => getLocalizedColorOptions(t), [t]);
 
   // Generate hour options for calendar range "from" dropdown
   const hourOptions = useMemo(() => {

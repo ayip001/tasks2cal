@@ -1,18 +1,6 @@
-import Redis from 'ioredis';
 import { UserSettings, StarredTasksData, WorkingHours, WorkingHourFiltersData } from '@/types';
 import { DEFAULT_SETTINGS, KV_KEYS } from '../constants';
-
-function _createRedisClient(): Redis {
-  const redisUrl = process.env.REDIS_URL;
-
-  if (!redisUrl) {
-    throw new Error('REDIS_URL environment variable is not set');
-  }
-
-  return new Redis(redisUrl);
-}
-
-const redis = _createRedisClient();
+import { getRedisClient } from '../redis';
 
 // Migration helper: Auto-generate IDs for working hours that don't have them
 function migrateWorkingHours(workingHours: WorkingHours[]): WorkingHours[] {
@@ -24,6 +12,7 @@ function migrateWorkingHours(workingHours: WorkingHours[]): WorkingHours[] {
 
 export async function getUserSettings(userId: string): Promise<UserSettings> {
   const key = KV_KEYS.settings(userId);
+  const redis = getRedisClient();
   const data = await redis.get(key);
 
   if (!data) {
@@ -57,6 +46,7 @@ export async function setUserSettings(
   settings: Partial<UserSettings>
 ): Promise<UserSettings> {
   const key = KV_KEYS.settings(userId);
+  const redis = getRedisClient();
   const currentSettings = await getUserSettings(userId);
   const newSettings = { ...currentSettings, ...settings };
   await redis.set(key, JSON.stringify(newSettings));
@@ -65,6 +55,7 @@ export async function setUserSettings(
 
 export async function getStarredTasks(userId: string): Promise<StarredTasksData | null> {
   const key = KV_KEYS.starred(userId);
+  const redis = getRedisClient();
   const data = await redis.get(key);
 
   if (!data) {
@@ -80,11 +71,13 @@ export async function getStarredTasks(userId: string): Promise<StarredTasksData 
 
 export async function setStarredTasks(userId: string, data: StarredTasksData): Promise<void> {
   const key = KV_KEYS.starred(userId);
+  const redis = getRedisClient();
   await redis.set(key, JSON.stringify(data));
 }
 
 export async function getWorkingHourFilters(userId: string): Promise<WorkingHourFiltersData | null> {
   const key = KV_KEYS.workingHourFilters(userId);
+  const redis = getRedisClient();
   const data = await redis.get(key);
 
   if (!data) {
@@ -100,5 +93,6 @@ export async function getWorkingHourFilters(userId: string): Promise<WorkingHour
 
 export async function setWorkingHourFilters(userId: string, data: WorkingHourFiltersData): Promise<void> {
   const key = KV_KEYS.workingHourFilters(userId);
+  const redis = getRedisClient();
   await redis.set(key, JSON.stringify(data));
 }

@@ -5,24 +5,8 @@
  * more accurate rate limiting than fixed window approaches.
  */
 
-import Redis from 'ioredis';
 import { RATE_LIMITS, RateLimitType } from './constants';
-
-// Lazy Redis client initialization
-let redis: Redis | null = null;
-
-function getRedisClient(): Redis {
-  if (!redis) {
-    const redisUrl = process.env.REDIS_URL;
-
-    if (!redisUrl) {
-      throw new Error('REDIS_URL environment variable is not set');
-    }
-
-    redis = new Redis(redisUrl);
-  }
-  return redis;
-}
+import { getRedisClient } from './redis';
 
 export interface RateLimitResult {
   allowed: boolean;

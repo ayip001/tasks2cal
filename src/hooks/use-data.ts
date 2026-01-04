@@ -216,11 +216,16 @@ export function useSettings() {
           // Save cookie locale to Redis and localStorage
           setLocale(cookieLocale);
           setLocaleStorage(cookieLocale);
-          await fetch('/api/settings', {
+          const updateRes = await fetch('/api/settings', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ locale: cookieLocale }),
           });
+          // Use PUT response to update settings (avoids redundant fetch)
+          if (updateRes.ok) {
+            const updatedSettings = await updateRes.json();
+            setSettings(updatedSettings);
+          }
         } else if (redisLocale !== cookieLocale) {
           // Redis is source of truth - sync cookie and localStorage
           setLocaleCookie(redisLocale); // This also updates localStorage
