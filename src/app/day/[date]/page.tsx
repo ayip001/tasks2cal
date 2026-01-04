@@ -470,7 +470,6 @@ export default function DayPage() {
               triggerVariant="ghost"
               triggerClassName="md:border md:border-input md:bg-background md:hover:bg-accent"
               locale={locale}
-              userId={session?.user?.email ?? undefined}
             />
 
             <DropdownMenu>

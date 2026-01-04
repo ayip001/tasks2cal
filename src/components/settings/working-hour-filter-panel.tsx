@@ -23,7 +23,7 @@ interface WorkingHourFilterPanelProps {
 }
 
 export function WorkingHourFilterPanel({
-  workingHourId: _workingHourId,
+  workingHourId,
   filter,
   onChange,
   timeFormat: _timeFormat,
