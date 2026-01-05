@@ -72,9 +72,10 @@ export default function PrivacyPage() {
             We retain Google user data only for the minimum time necessary to provide our service:
           </p>
           <ul className="list-disc pl-6 space-y-2">
-            <li><strong>Session data:</strong> Your authentication tokens and cached task/calendar data are stored in Redis for up to 24 hours or until you sign out, whichever comes first.</li>
-            <li><strong>User preferences:</strong> Settings you configure (such as default task duration, working hours, and calendar preferences) are stored in Redis and retained until you delete your account or request deletion.</li>
-            <li><strong>No permanent storage:</strong> We do not permanently store your Google Tasks content or Google Calendar events on our servers. This data is fetched in real-time from Google&apos;s APIs when you use the application.</li>
+            <li><strong>Session data:</strong> Your authentication session persists until you sign out or revoke access. We use OAuth refresh tokens to maintain your session securely.</li>
+            <li><strong>Cached data:</strong> Task and calendar data is cached locally in your browser for up to 15 minutes to improve performance. This cache is automatically cleared when it expires or when you sign out.</li>
+            <li><strong>User preferences:</strong> Settings you configure (such as default task duration, working hours, and calendar preferences) are stored securely and retained until you delete your account or request deletion.</li>
+            <li><strong>No permanent storage of Google content:</strong> We do not permanently store your Google Tasks content or Google Calendar events on our servers. This data is fetched in real-time from Google&apos;s APIs when you use the application.</li>
           </ul>
 
           <h2 className="text-xl font-semibold text-foreground pt-4">5. Data Deletion</h2>

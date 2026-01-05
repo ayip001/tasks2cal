@@ -72,9 +72,10 @@ export default function PrivacyPage() {
             我們僅在提供服務所需的最短時間內保留 Google 用戶資料：
           </p>
           <ul className="list-disc pl-6 space-y-2">
-            <li><strong>會話資料：</strong>您的驗證權杖和緩存的任務/日曆資料會儲存在 Redis 中，最長保留 24 小時或直到您登出為止，以先發生者為準。</li>
-            <li><strong>用戶偏好設定：</strong>您配置的設定（如預設任務時長、工作時間和日曆偏好）會儲存在 Redis 中，並保留至您刪除帳戶或請求刪除為止。</li>
-            <li><strong>無永久儲存：</strong>我們不會在伺服器上永久儲存您的 Google Tasks 內容或 Google 日曆事件。這些資料會在您使用應用程式時即時從 Google API 獲取。</li>
+            <li><strong>會話資料：</strong>您的驗證會話會持續至您登出或撤銷存取權為止。我們使用 OAuth 更新權杖來安全地維持您的會話。</li>
+            <li><strong>緩存資料：</strong>任務和日曆資料會在您的瀏覽器本地緩存最多 15 分鐘，以提升效能。此緩存會在過期或您登出時自動清除。</li>
+            <li><strong>用戶偏好設定：</strong>您配置的設定（如預設任務時長、工作時間和日曆偏好）會安全儲存，並保留至您刪除帳戶或請求刪除為止。</li>
+            <li><strong>不永久儲存 Google 內容：</strong>我們不會在伺服器上永久儲存您的 Google Tasks 內容或 Google 日曆事件。這些資料會在您使用應用程式時即時從 Google API 獲取。</li>
           </ul>
 
           <h2 className="text-xl font-semibold text-foreground pt-4">5. 資料刪除</h2>
