@@ -45,7 +45,7 @@ function SignInButton({ size = 'lg', className = '' }: { size?: 'default' | 'lg'
       className={`bg-[#1a73e8] hover:bg-[#1557b0] text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 ${className}`}
     >
       <GoogleIcon className="mr-2 h-5 w-5" />
-      使用 Google 帳戶登入
+      登入
     </Button>
   );
 }
