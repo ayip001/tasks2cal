@@ -72,7 +72,7 @@ export default function PrivacyPage() {
             We retain Google user data only for the minimum time necessary to provide our service:
           </p>
           <ul className="list-disc pl-6 space-y-2">
-            <li><strong>Session data:</strong> Your authentication session persists until you sign out or revoke access. We use OAuth refresh tokens to maintain your session securely.</li>
+            <li><strong>Session data:</strong> Your authentication session is retained for up to 7 days, after which you will need to sign in again. You can also sign out at any time to end your session immediately.</li>
             <li><strong>Cached data:</strong> Task and calendar data is cached locally in your browser for up to 15 minutes to improve performance. This cache is automatically cleared when it expires or when you sign out.</li>
             <li><strong>User preferences:</strong> Settings you configure (such as default task duration, working hours, and calendar preferences) are stored securely and retained until you delete your account or request deletion.</li>
             <li><strong>No permanent storage of Google content:</strong> We do not permanently store your Google Tasks content or Google Calendar events on our servers. This data is fetched in real-time from Google&apos;s APIs when you use the application.</li>
