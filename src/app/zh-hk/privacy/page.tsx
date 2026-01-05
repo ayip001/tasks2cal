@@ -37,7 +37,7 @@ export default function PrivacyPage() {
         <h1 className="text-3xl font-bold mb-6">私隱政策</h1>
 
         <section className="space-y-4 text-muted-foreground">
-          <p>最後更新日期：2025 年 12 月 26 日</p>
+          <p>最後更新日期：2026 年 1 月 5 日</p>
 
           <h2 className="text-xl font-semibold text-foreground pt-4">1. 簡介</h2>
           <p>
@@ -67,12 +67,32 @@ export default function PrivacyPage() {
             <li>將已安排的任務作為新事件提交回您的 Google 日曆。</li>
           </ul>
 
-          <h2 className="text-xl font-semibold text-foreground pt-4">4. 資料安全</h2>
+          <h2 className="text-xl font-semibold text-foreground pt-4">4. 資料保留</h2>
+          <p>
+            我們僅在提供服務所需的最短時間內保留 Google 用戶資料：
+          </p>
+          <ul className="list-disc pl-6 space-y-2">
+            <li><strong>會話資料：</strong>您的驗證權杖和緩存的任務/日曆資料會儲存在 Redis 中，最長保留 24 小時或直到您登出為止，以先發生者為準。</li>
+            <li><strong>用戶偏好設定：</strong>您配置的設定（如預設任務時長、工作時間和日曆偏好）會儲存在 Redis 中，並保留至您刪除帳戶或請求刪除為止。</li>
+            <li><strong>無永久儲存：</strong>我們不會在伺服器上永久儲存您的 Google Tasks 內容或 Google 日曆事件。這些資料會在您使用應用程式時即時從 Google API 獲取。</li>
+          </ul>
+
+          <h2 className="text-xl font-semibold text-foreground pt-4">5. 資料刪除</h2>
+          <p>
+            您可以隨時通過以下方式刪除您的資料：
+          </p>
+          <ul className="list-disc pl-6 space-y-2">
+            <li><strong>登出：</strong>登出 Tasks2Cal 將立即使您的會話失效並清除緩存資料。</li>
+            <li><strong>撤銷存取權：</strong>您可以隨時通過您的 <a href="https://myaccount.google.com/permissions" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">Google 帳戶權限頁面</a> 撤銷 Tasks2Cal 對您 Google 帳戶的存取權。這將阻止 Tasks2Cal 存取您的資料。</li>
+            <li><strong>請求刪除：</strong>如需請求完全刪除與您帳戶相關的所有資料（包括已儲存的偏好設定），請使用下方電郵聯絡我們。我們將在 30 天內處理您的請求。</li>
+          </ul>
+
+          <h2 className="text-xl font-semibold text-foreground pt-4">6. 資料安全</h2>
           <p>
             我們採用業界標準的安全措施來保護您的資料。您的驗證權杖會安全地儲存在加密的會話中。我們不會向第三方出售或分享您的個人資料。
           </p>
 
-          <h2 className="text-xl font-semibold text-foreground pt-4">5. 聯絡我們</h2>
+          <h2 className="text-xl font-semibold text-foreground pt-4">7. 聯絡我們</h2>
           <p>
             如您對本私隱政策有任何疑問，請透過以下方式聯絡我們：
           </p>

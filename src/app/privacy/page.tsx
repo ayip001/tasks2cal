@@ -37,7 +37,7 @@ export default function PrivacyPage() {
         <h1 className="text-3xl font-bold mb-6">Privacy Policy</h1>
         
         <section className="space-y-4 text-muted-foreground">
-          <p>Last Updated: December 26, 2025</p>
+          <p>Last Updated: January 5, 2026</p>
           
           <h2 className="text-xl font-semibold text-foreground pt-4">1. Introduction</h2>
           <p>
@@ -67,12 +67,32 @@ export default function PrivacyPage() {
             <li>Commit the scheduled tasks back to your Google Calendar as new events.</li>
           </ul>
 
-          <h2 className="text-xl font-semibold text-foreground pt-4">4. Data Security</h2>
+          <h2 className="text-xl font-semibold text-foreground pt-4">4. Data Retention</h2>
+          <p>
+            We retain Google user data only for the minimum time necessary to provide our service:
+          </p>
+          <ul className="list-disc pl-6 space-y-2">
+            <li><strong>Session data:</strong> Your authentication tokens and cached task/calendar data are stored in Redis for up to 24 hours or until you sign out, whichever comes first.</li>
+            <li><strong>User preferences:</strong> Settings you configure (such as default task duration, working hours, and calendar preferences) are stored in Redis and retained until you delete your account or request deletion.</li>
+            <li><strong>No permanent storage:</strong> We do not permanently store your Google Tasks content or Google Calendar events on our servers. This data is fetched in real-time from Google&apos;s APIs when you use the application.</li>
+          </ul>
+
+          <h2 className="text-xl font-semibold text-foreground pt-4">5. Data Deletion</h2>
+          <p>
+            You can delete your data at any time through the following methods:
+          </p>
+          <ul className="list-disc pl-6 space-y-2">
+            <li><strong>Sign out:</strong> Signing out of Tasks2Cal will immediately invalidate your session and clear cached data.</li>
+            <li><strong>Revoke access:</strong> You can revoke Tasks2Cal&apos;s access to your Google account at any time through your <a href="https://myaccount.google.com/permissions" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">Google Account permissions page</a>. This will prevent Tasks2Cal from accessing your data.</li>
+            <li><strong>Request deletion:</strong> To request complete deletion of all data associated with your account (including stored preferences), please contact us using the email below. We will process your request within 30 days.</li>
+          </ul>
+
+          <h2 className="text-xl font-semibold text-foreground pt-4">6. Data Security</h2>
           <p>
             We use industry-standard security measures to protect your information. Your authentication tokens are stored securely in an encrypted session. We do not sell or share your personal data with third parties.
           </p>
 
-          <h2 className="text-xl font-semibold text-foreground pt-4">5. Contact Us</h2>
+          <h2 className="text-xl font-semibold text-foreground pt-4">7. Contact Us</h2>
           <p>
             If you have any questions about this Privacy Policy, please contact us at:
           </p>
